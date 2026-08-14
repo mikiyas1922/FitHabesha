@@ -1,0 +1,72 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --app-bg: #f8f9fa;
+  --app-surface: #ffffff;
+  --app-foreground: #111827;
+  --app-muted: #6b7280;
+  --app-border: #e5e7eb;
+  --app-input: #ffffff;
+  --app-hover: #f3f4f6;
+  --app-subtle: #f9fafb;
+  --app-sidebar: #0d0d0d;
+  --app-sidebar-hover: #1a1a1a;
+}
+
+.dark {
+  --app-bg: #0d0d0d;
+  --app-surface: #141414;
+  --app-foreground: #f9fafb;
+  --app-muted: #9ca3af;
+  --app-border: rgba(255, 255, 255, 0.1);
+  --app-input: #1a1a1a;
+  --app-hover: #1f1f1f;
+  --app-subtle: #121212;
+  --app-sidebar: #0d0d0d;
+  --app-sidebar-hover: #1a1a1a;
+}
+
+@theme {
+  --color-primary: #D4AF37;
+  --color-primary-dark: #B8960C;
+  --color-primary-light: #E5C158;
+  --color-sidebar: var(--app-sidebar);
+  --color-sidebar-hover: var(--app-sidebar-hover);
+  --color-sidebar-active: #D4AF37;
+  --color-surface: var(--app-surface);
+  --color-bg: var(--app-bg);
+  --color-foreground: var(--app-foreground);
+  --color-muted: var(--app-muted);
+  --color-border: var(--app-border);
+  --color-input: var(--app-input);
+  --color-hover: var(--app-hover);
+  --color-subtle: var(--app-subtle);
+  --color-dark: #0d0d0d;
+  --color-dark-card: #141414;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background-color: var(--app-bg);
+    color: var(--app-foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
