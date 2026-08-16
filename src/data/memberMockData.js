@@ -3,8 +3,8 @@
 export const memberWorkoutPlans = [
   {
     id: 'WP-001',
-    name: 'Upper Body Strength',
-    trainer: 'Daniel Tadesse',
+    name: ' Body Strength',
+    trainer: 'Daniel',
     day: 'Today',
     status: 'active',
     exercises: [
