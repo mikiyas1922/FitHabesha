@@ -3,38 +3,46 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --app-bg: #f8f9fa;
-  --app-surface: #ffffff;
-  --app-foreground: #111827;
-  --app-muted: #6b7280;
-  --app-border: #e5e7eb;
-  --app-input: #ffffff;
-  --app-hover: #f3f4f6;
-  --app-subtle: #f9fafb;
-  --app-sidebar: #0d0d0d;
-  --app-sidebar-hover: #1a1a1a;
+  --app-bg: #F8FAFC;
+  --app-surface: #FFFFFF;
+  --app-foreground: #0B1224;
+  --app-muted: #64748B;
+  --app-border: #CBD5E1;
+  --app-input: #F1F5F9;
+  --app-hover: #E2E8F0;
+  --app-subtle: #F8FAFC;
+  --app-sidebar: #0A1128;
+  --app-sidebar-hover: #162032;
+  --app-sidebar-active: #0B1224;
+  --app-sidebar-text: #FFFFFF;
+  --app-sidebar-text-muted: #94A3B8;
 }
 
 .dark {
-  --app-bg: #0d0d0d;
-  --app-surface: #141414;
-  --app-foreground: #f9fafb;
-  --app-muted: #9ca3af;
-  --app-border: rgba(255, 255, 255, 0.1);
-  --app-input: #1a1a1a;
-  --app-hover: #1f1f1f;
-  --app-subtle: #121212;
-  --app-sidebar: #0d0d0d;
-  --app-sidebar-hover: #1a1a1a;
+  --app-bg: #0B1224;
+  --app-surface: #0A1128;
+  --app-foreground: #F8FAFC;
+  --app-muted: #94A3B8;
+  --app-border: #1E293B;
+  --app-input: #162032;
+  --app-hover: #1E293B;
+  --app-subtle: #060A16;
+  --app-sidebar: #0A1128;
+  --app-sidebar-hover: #162032;
+  --app-sidebar-active: #0B1224;
+  --app-sidebar-text: #FFFFFF;
+  --app-sidebar-text-muted: #94A3B8;
 }
 
 @theme {
-  --color-primary: #D4AF37;
-  --color-primary-dark: #B8960C;
-  --color-primary-light: #E5C158;
+  --color-primary: #00F299;
+  --color-primary-dark: #00C87A;
+  --color-primary-light: #33FFB8;
   --color-sidebar: var(--app-sidebar);
   --color-sidebar-hover: var(--app-sidebar-hover);
-  --color-sidebar-active: #D4AF37;
+  --color-sidebar-active: var(--app-sidebar-active);
+  --color-sidebar-text: var(--app-sidebar-text);
+  --color-sidebar-text-muted: var(--app-sidebar-text-muted);
   --color-surface: var(--app-surface);
   --color-bg: var(--app-bg);
   --color-foreground: var(--app-foreground);
@@ -43,9 +51,19 @@
   --color-input: var(--app-input);
   --color-hover: var(--app-hover);
   --color-subtle: var(--app-subtle);
-  --color-dark: #0d0d0d;
-  --color-dark-card: #141414;
+  --color-dark: #0A1128;
+  --color-dark-card: #0B1224;
+  --color-dark-bg: #060A16;
+  --color-section-bg: #0B1224;
+  --color-border-secondary: #1F2E45;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --spacing-sidebar-width: 260px;
+  --spacing-section-padding: 80px;
+  --spacing-section-padding-vertical: 120px;
+  --spacing-card-padding: 40px;
+  --spacing-gap-large: 64px;
+  --spacing-gap-medium: 32px;
+  --radius-card: 16px;
 }
 
 @layer base {

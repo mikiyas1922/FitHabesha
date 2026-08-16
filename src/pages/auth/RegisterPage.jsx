@@ -104,7 +104,7 @@ export function RegisterPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-lg">
-        <div className="bg-surface rounded-2xl shadow-2xl overflow-hidden border border-border">
+        <div className="bg-surface rounded-2xl shadow-2xl overflow-hidden border border-border" style={{ width: '522px', borderRadius: '16px', boxShadow: '0px 12px 24px 0px #00000040' }}>
           <div className="p-6 border-b border-border">
             <div className="mb-4">
               <BrandMark size="sm" />

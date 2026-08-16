@@ -319,14 +319,11 @@ export function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative pt-28 pb-12 px-6 lg:pt-32 lg:pb-16">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-32 right-0 size-[500px] rounded-full bg-primary/5 blur-3xl" />
-        </div>
+      <section className="relative" style={{ paddingTop: '180px', paddingBottom: '96px', paddingLeft: '80px', paddingRight: '80px', gap: '64px', background: 'linear-gradient(0deg, #0B1224, #0B1224), radial-gradient(100% 80% at 50% 20%, rgba(0, 242, 153, 0.0823529) 0%, rgba(0, 0, 0, 0) 80%)' }}>
         <div className="relative mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] uppercase">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] uppercase text-white">
                 Be Strong.
                 <br />
                 Be <span className="text-primary">Ethiopian.</span>
@@ -381,10 +378,10 @@ export function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-20 px-6">
+      <section id="features" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '64px', backgroundColor: '#060A16' }}>
         <div className="mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-8 mb-12 items-end">
-            <h2 className="text-3xl md:text-4xl font-bold leading-tight">
+            <h2 className="text-3xl md:text-4xl font-bold leading-tight text-white">
               Engineered For
               <br />
               <span className="text-primary">Peak Performance</span>
@@ -416,10 +413,10 @@ export function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-20 px-6 bg-dark-card/40">
+      <section id="how-it-works" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '80px', backgroundColor: '#0B1224' }}>
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold">Three Steps to Peak Performance</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Three Steps to Peak Performance</h2>
             <p className="mt-3 text-gray-400">Get started in three simple steps.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
@@ -441,10 +438,10 @@ export function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 px-6">
+      <section id="pricing" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '80px', backgroundColor: '#060A16' }}>
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold">Invest In Your Performance</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Invest In Your Performance</h2>
             <p className="mt-3 text-gray-400">Choose the plan that fits your fitness goals.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -490,10 +487,10 @@ export function LandingPage() {
       </section>
 
       {/* Testimonials */}
-      <section id="testimonials" className="py-20 px-6 bg-dark-card/40">
+      <section id="testimonials" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '80px', backgroundColor: '#0B1224' }}>
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold">What Our Athletes Say</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">What Our Athletes Say</h2>
             <p className="mt-3 text-gray-400">Real stories from real members who transformed their lives.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
@@ -525,10 +522,10 @@ export function LandingPage() {
       </section>
 
       {/* Coaches */}
-      <section id="coaches" className="py-20 px-6">
+      <section id="coaches" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '80px', backgroundColor: '#060A16' }}>
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold">Match With Premium Trainers</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Match With Premium Trainers</h2>
             <p className="mt-3 text-gray-400">Connect with expert coaches tailored to your specific goals.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
@@ -561,7 +558,7 @@ export function LandingPage() {
       </section>
 
       {/* CTA Banner */}
-      <section className="py-16 px-6">
+      <section style={{ paddingTop: '96px', paddingBottom: '96px', paddingLeft: '80px', paddingRight: '80px', gap: '32px', borderTop: '1px solid #1F2E45', borderBottom: '1px solid #1F2E45', background: 'linear-gradient(0deg, #121B2E, #121B2E), linear-gradient(135deg, rgba(0, 242, 153, 0.0627451) 25%, rgba(0, 0, 0, 0) 75%)' }}>
         <div className="mx-auto max-w-7xl">
           <div className="rounded-3xl bg-primary px-8 py-14 text-center">
             <h2 className="text-3xl md:text-4xl font-extrabold text-dark mb-3">
@@ -588,8 +585,8 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer id="about" className="border-t border-white/10 bg-[#0a0a0a]">
-        <div className="mx-auto max-w-7xl px-6 py-14">
+      <footer id="about" style={{ paddingTop: '80px', paddingBottom: '40px', paddingLeft: '80px', paddingRight: '80px', gap: '64px', backgroundColor: '#0A1128' }}>
+        <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <Logo />
