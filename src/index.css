@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 
+/* Tailwind CSS v4 @custom-variant syntax - supported by Tailwind but may show as unknown in some linters */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -34,6 +35,7 @@
   --app-sidebar-text-muted: #94A3B8;
 }
 
+/* Tailwind CSS v4 @theme syntax - supported by Tailwind but may show as unknown in some linters */
 @theme {
   --color-primary: #00F299;
   --color-primary-dark: #00C87A;
