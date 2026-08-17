@@ -198,7 +198,7 @@ export function ReceptionistDashboard() {
           </div>
           <div className="space-y-3">
             {equipmentAlerts.map((alert, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white border border-red-100">
+              <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-card border border-red-100">
                 <div className="flex size-8 items-center justify-center rounded-full bg-red-100">
                   <AlertTriangle className="size-4 text-red-600" />
                 </div>

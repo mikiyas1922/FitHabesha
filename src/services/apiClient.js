@@ -41,7 +41,11 @@ apiClient.interceptors.request.use(
     if (refreshToken && config.headers) {
       config.headers['x-refresh-token'] = refreshToken
     }
-    console.log('API Request:', config.method?.toUpperCase(), config.baseURL + config.url)
+    // Reduce logging for admin endpoints that may not exist
+    const isAdminEndpoint = config.url?.includes('/admin/')
+    if (!isAdminEndpoint) {
+      console.log('API Request:', config.method?.toUpperCase(), config.baseURL + config.url)
+    }
     return config
   },
   (error) => {
@@ -85,8 +89,12 @@ apiClient.interceptors.response.use(
 
     // Handle 401 Unauthorized - redirect to login
     if (error.response?.status === 401 && !skipRefresh) {
-      tokenStorage.clearTokens()
-      window.location.href = '/login'
+      // Don't redirect for trainer list calls in modal context
+      const isTrainerListCall = originalRequest?.url?.includes('/trainers')
+      if (!isTrainerListCall) {
+        tokenStorage.clearTokens()
+        window.location.href = '/login'
+      }
     }
 
     // Handle other errors

@@ -97,7 +97,10 @@ export const adminService = {
           break
         }
       } catch (error) {
-        errors.push(wrapAdminError(error))
+        // Ignore 404 errors for fallback endpoints - they may not exist on the backend
+        if (error?.status !== 404) {
+          errors.push(wrapAdminError(error))
+        }
       }
     }
 
@@ -110,8 +113,10 @@ export const adminService = {
       return combined
     }
 
-    if (errors.length > 0) {
-      throw errors[0]
+    // Only throw error if we have non-404 errors
+    const non404Errors = errors.filter(err => err?.status !== 404)
+    if (non404Errors.length > 0) {
+      throw non404Errors[0]
     }
 
     return combined

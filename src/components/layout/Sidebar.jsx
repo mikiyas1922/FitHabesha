@@ -58,12 +58,12 @@ export function Sidebar({ role }) {
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex flex-col" style={{ width: '260px', padding: '24px', backgroundColor: '#0A1128', borderRight: '1px solid #1E293B' }}>
+    <aside className="fixed inset-y-0 left-0 z-30 flex flex-col bg-dark border-r border-border" style={{ width: '260px', padding: '24px' }}>
       <div className="flex h-16 items-center gap-2.5 px-6 border-b border-border">
         <div className="flex size-8 items-center justify-center rounded-full bg-primary">
-          <Dumbbell className="size-4 text-white" />
+          <Dumbbell className="size-4 text-foreground" />
         </div>
-        <p className="text-base font-bold text-white">Fit Habesha</p>
+        <p className="text-base font-bold text-foreground">Fit Habesha</p>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
@@ -77,15 +77,15 @@ export function Sidebar({ role }) {
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-primary text-white'
-                    : 'text-gray-400 hover:bg-sidebar-hover hover:text-white'
+                    ? 'bg-primary text-foreground'
+                    : 'text-muted hover:bg-sidebar-hover hover:text-foreground'
                 }`
               }
             >
               {Icon && <Icon className="size-[18px] shrink-0" />}
               <span className="flex-1">{item.label}</span>
               {item.badge && (
-                <span className="flex size-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                <span className="flex size-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-foreground">
                   {item.badge}
                 </span>
               )}
@@ -103,14 +103,14 @@ export function Sidebar({ role }) {
             {displayUser.initials}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">{displayUser.name}</p>
-            <p className="text-xs text-gray-400 truncate">{displayUser.title}</p>
+            <p className="text-sm font-medium text-foreground truncate">{displayUser.name}</p>
+            <p className="text-xs text-muted truncate">{displayUser.title}</p>
           </div>
         </NavLink>
         <button
           type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-400 hover:bg-sidebar-hover hover:text-white transition-colors"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted hover:bg-sidebar-hover hover:text-foreground transition-colors"
         >
           <LogOut className="size-4" />
           Sign Out

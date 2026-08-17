@@ -181,28 +181,28 @@ export function MemberWorkouts() {
       <div className="rounded-xl border border-primary bg-primary/5 p-6">
         <h3 className="font-semibold text-foreground mb-4">Today's Focus</h3>
         <div className="grid md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg bg-white border border-primary/20">
+          <div className="p-4 rounded-lg bg-card border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <Target className="size-4 text-primary" />
               <p className="text-sm font-medium text-foreground">Target Area</p>
             </div>
             <p className="text-lg font-bold text-foreground">Upper Body</p>
           </div>
-          <div className="p-4 rounded-lg bg-white border border-primary/20">
+          <div className="p-4 rounded-lg bg-card border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <Dumbbell className="size-4 text-primary" />
               <p className="text-sm font-medium text-foreground">Exercises</p>
             </div>
             <p className="text-lg font-bold text-foreground">8</p>
           </div>
-          <div className="p-4 rounded-lg bg-white border border-primary/20">
+          <div className="p-4 rounded-lg bg-card border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <Clock className="size-4 text-primary" />
               <p className="text-sm font-medium text-foreground">Duration</p>
             </div>
             <p className="text-lg font-bold text-foreground">60 min</p>
           </div>
-          <div className="p-4 rounded-lg bg-white border border-primary/20">
+          <div className="p-4 rounded-lg bg-card border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="size-4 text-primary" />
               <p className="text-sm font-medium text-foreground">Intensity</p>

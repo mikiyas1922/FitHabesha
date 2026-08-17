@@ -83,21 +83,21 @@ export function MemberSubscriptions() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-4 mb-4">
-          <div className="p-4 rounded-lg bg-white border border-primary/20">
+          <div className="p-4 rounded-lg bg-card border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <Calendar className="size-4 text-primary" />
               <span className="text-sm text-muted">Start Date</span>
             </div>
             <p className="font-medium text-foreground">{currentSubscription.startDate}</p>
           </div>
-          <div className="p-4 rounded-lg bg-white border border-primary/20">
+          <div className="p-4 rounded-lg bg-card border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <Calendar className="size-4 text-primary" />
               <span className="text-sm text-muted">Renewal Date</span>
             </div>
             <p className="font-medium text-foreground">{currentSubscription.endDate}</p>
           </div>
-          <div className="p-4 rounded-lg bg-white border border-primary/20">
+          <div className="p-4 rounded-lg bg-card border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
               <CreditCard className="size-4 text-primary" />
               <span className="text-sm text-muted">Payment Method</span>
@@ -130,7 +130,7 @@ export function MemberSubscriptions() {
                 : 'border-border bg-surface hover:border-primary/30'
             }`}>
               {plan.popular && (
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary text-white mb-3">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-primary text-foreground mb-3">
                   Most Popular
                 </span>
               )}

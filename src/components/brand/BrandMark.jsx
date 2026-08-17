@@ -6,11 +6,11 @@ export function BrandMark({ size = 'md', showText = true, theme = 'light', class
   }
 
   const styles = sizes[size] || sizes.md
-  const textColor = theme === 'dark' ? 'text-white' : 'text-foreground'
+  const textColor = theme === 'dark' ? 'text-foreground' : 'text-foreground'
 
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      <div className={`flex ${styles.box} items-center justify-center rounded-lg bg-primary font-bold text-white`}>
+      <div className={`flex ${styles.box} items-center justify-center rounded-lg bg-primary font-bold text-foreground`}>
         FH
       </div>
       {showText && <span className={`${styles.text} font-bold ${textColor}`}>Fit Habesha</span>}

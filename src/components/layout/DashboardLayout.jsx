@@ -4,7 +4,7 @@ import { Header } from './Header'
 
 export function DashboardLayout({ role, title }) {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F8FAFC' }}>
+    <div className="min-h-screen bg-bg">
       <Sidebar role={role} />
       <div className="pl-[260px]">
         <Header role={role} title={title} showSearch={role === 'admin' || role === 'trainer'} />

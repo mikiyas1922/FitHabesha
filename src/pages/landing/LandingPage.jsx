@@ -193,16 +193,16 @@ function HeroDashboard() {
         <div className="rounded-xl bg-[#1a1a1a] border border-white/5 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Flame className="size-4 text-primary" />
-            <span className="text-xs text-gray-500 uppercase tracking-wide">Calories</span>
+            <span className="text-xs text-muted uppercase tracking-wide">Calories</span>
           </div>
           <p className="text-2xl font-bold text-white">3,420</p>
         </div>
         <div className="rounded-xl bg-[#1a1a1a] border border-white/5 p-4">
           <div className="flex items-center gap-2 mb-2">
             <Target className="size-4 text-primary" />
-            <span className="text-xs text-gray-500 uppercase tracking-wide">Protein</span>
+            <span className="text-xs text-muted uppercase tracking-wide">Protein</span>
           </div>
-          <p className="text-2xl font-bold text-white">5.2<span className="text-sm text-gray-400">g</span></p>
+          <p className="text-2xl font-bold text-white">5.2<span className="text-sm text-muted">g</span></p>
         </div>
       </div>
       <div className="rounded-xl bg-primary p-4 flex items-center gap-3">
@@ -240,7 +240,7 @@ function FeatureCard({ icon: Icon, title, description, highlight = false, classN
         <Icon className="size-5" />
       </div>
       <h3 className={`text-base font-bold mb-2 ${highlight ? 'text-dark' : 'text-white'}`}>{title}</h3>
-      <p className={`text-sm leading-relaxed flex-1 ${highlight ? 'text-dark/70' : 'text-gray-400'}`}>
+      <p className={`text-sm leading-relaxed flex-1 ${highlight ? 'text-dark/70' : 'text-muted'}`}>
         {description}
       </p>
       <a
@@ -260,7 +260,7 @@ function SocialIcon({ children, label, href }) {
     <a
       href={href}
       aria-label={label}
-      className="flex size-9 items-center justify-center rounded-full border border-white/10 text-gray-400 hover:border-primary/30 hover:text-primary transition-colors"
+      className="flex size-9 items-center justify-center rounded-full border border-white/10 text-muted hover:border-primary/30 hover:text-primary transition-colors"
     >
       {children}
     </a>
@@ -279,14 +279,14 @@ export function LandingPage() {
 
           <div className="hidden items-center gap-7 lg:flex">
             {navLinks.map((link) => (
-              <a key={link.href} href={link.href} className="text-sm text-gray-400 hover:text-white transition-colors">
+              <a key={link.href} href={link.href} className="text-sm text-muted hover:text-white transition-colors">
                 {link.label}
               </a>
             ))}
           </div>
 
           <div className="flex items-center gap-3">
-            <Link to="/login" className="hidden sm:block text-sm text-gray-300 hover:text-white transition-colors">
+            <Link to="/login" className="hidden sm:block text-sm text-muted hover:text-white transition-colors">
               Sign In
             </Link>
             <Link to="/register" className="hidden sm:block">
@@ -294,7 +294,7 @@ export function LandingPage() {
             </Link>
             <button
               type="button"
-              className="lg:hidden flex size-9 items-center justify-center rounded-lg border border-white/10 text-gray-300"
+              className="lg:hidden flex size-9 items-center justify-center rounded-lg border border-white/10 text-muted"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -306,12 +306,12 @@ export function LandingPage() {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-white/10 px-6 py-4 space-y-3">
             {navLinks.map((link) => (
-              <a key={link.href} href={link.href} className="block text-sm text-gray-400 py-1" onClick={() => setMobileMenuOpen(false)}>
+              <a key={link.href} href={link.href} className="block text-sm text-muted py-1" onClick={() => setMobileMenuOpen(false)}>
                 {link.label}
               </a>
             ))}
             <div className="flex gap-3 pt-2">
-              <Link to="/login" className="flex-1"><Button variant="ghost" className="w-full text-gray-300">Sign In</Button></Link>
+              <Link to="/login" className="flex-1"><Button variant="ghost" className="w-full text-muted">Sign In</Button></Link>
               <Link to="/register" className="flex-1"><Button className="w-full text-dark font-bold">Get Started</Button></Link>
             </div>
           </div>
@@ -328,7 +328,7 @@ export function LandingPage() {
                 <br />
                 Be <span className="text-primary">Ethiopian.</span>
               </h1>
-              <p className="mt-6 max-w-lg text-gray-400 leading-relaxed">
+              <p className="mt-6 max-w-lg text-muted leading-relaxed">
                 Engineered for Ethiopian athletes. Transform your fitness journey with cutting-edge
                 technology, personalized training, and a community dedicated to your success.
               </p>
@@ -350,7 +350,7 @@ export function LandingPage() {
                 ].map((s) => (
                   <div key={s.label}>
                     <p className="text-xl font-bold text-primary">{s.value}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                    <p className="text-xs text-muted mt-0.5">{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -371,7 +371,7 @@ export function LandingPage() {
           ].map((s) => (
             <div key={s.label} className="text-center">
               <p className="text-2xl md:text-3xl font-bold text-primary">{s.value}</p>
-              <p className="text-sm text-gray-500 mt-1">{s.label}</p>
+              <p className="text-sm text-muted mt-1">{s.label}</p>
             </div>
           ))}
         </div>
@@ -386,7 +386,7 @@ export function LandingPage() {
               <br />
               <span className="text-primary">Peak Performance</span>
             </h2>
-            <p className="text-gray-400 leading-relaxed lg:pb-1">
+            <p className="text-muted leading-relaxed lg:pb-1">
               Powerful tools designed to elevate every aspect of your fitness experience — from
               personalized workouts to real-time progress tracking.
             </p>
@@ -417,7 +417,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-white">Three Steps to Peak Performance</h2>
-            <p className="mt-3 text-gray-400">Get started in three simple steps.</p>
+            <p className="mt-3 text-muted">Get started in three simple steps.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {steps.map((step) => (
@@ -429,7 +429,7 @@ export function LandingPage() {
                 </div>
                 <div className={`rounded-xl p-5 ${step.highlight ? 'bg-primary' : 'bg-dark-card border border-white/10'}`}>
                   <h3 className={`font-bold text-lg mb-1 ${step.highlight ? 'text-dark' : 'text-white'}`}>{step.title}</h3>
-                  <p className={`text-sm leading-relaxed ${step.highlight ? 'text-dark/70' : 'text-gray-400'}`}>{step.description}</p>
+                  <p className={`text-sm leading-relaxed ${step.highlight ? 'text-dark/70' : 'text-muted'}`}>{step.description}</p>
                 </div>
               </div>
             ))}
@@ -442,7 +442,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-white">Invest In Your Performance</h2>
-            <p className="mt-3 text-gray-400">Choose the plan that fits your fitness goals.</p>
+            <p className="mt-3 text-muted">Choose the plan that fits your fitness goals.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {plans.map((plan) => (
@@ -462,11 +462,11 @@ export function LandingPage() {
                 <h3 className={`text-lg font-bold ${plan.popular ? 'text-dark' : 'text-white'}`}>{plan.name}</h3>
                 <div className="mt-3 mb-6">
                   <span className={`text-4xl font-extrabold ${plan.popular ? 'text-dark' : 'text-white'}`}>{plan.price}</span>
-                  <span className={plan.popular ? 'text-dark/60' : 'text-gray-500'}>{plan.period}</span>
+                  <span className={plan.popular ? 'text-dark/60' : 'text-muted'}>{plan.period}</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((f) => (
-                    <li key={f} className={`flex items-center gap-2 text-sm ${plan.popular ? 'text-dark/80' : 'text-gray-300'}`}>
+                    <li key={f} className={`flex items-center gap-2 text-sm ${plan.popular ? 'text-dark/80' : 'text-muted'}`}>
                       <Check className={`size-4 shrink-0 ${plan.popular ? 'text-dark' : 'text-primary'}`} />
                       {f}
                     </li>
@@ -491,7 +491,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-white">What Our Athletes Say</h2>
-            <p className="mt-3 text-gray-400">Real stories from real members who transformed their lives.</p>
+            <p className="mt-3 text-muted">Real stories from real members who transformed their lives.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((item) => (
@@ -508,12 +508,12 @@ export function LandingPage() {
                     <Star key={i} className={`size-4 fill-current ${item.highlight ? 'text-dark' : 'text-primary'}`} />
                   ))}
                 </div>
-                <p className={`text-sm leading-relaxed mb-5 ${item.highlight ? 'text-dark/80' : 'text-gray-300'}`}>
+                <p className={`text-sm leading-relaxed mb-5 ${item.highlight ? 'text-dark/80' : 'text-muted'}`}>
                   &ldquo;{item.text}&rdquo;
                 </p>
                 <div>
                   <p className={`font-bold ${item.highlight ? 'text-dark' : 'text-white'}`}>{item.name}</p>
-                  <p className={`text-sm ${item.highlight ? 'text-dark/60' : 'text-gray-500'}`}>{item.role}</p>
+                  <p className={`text-sm ${item.highlight ? 'text-dark/60' : 'text-muted'}`}>{item.role}</p>
                 </div>
               </div>
             ))}
@@ -526,7 +526,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-7xl">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-white">Match With Premium Trainers</h2>
-            <p className="mt-3 text-gray-400">Connect with expert coaches tailored to your specific goals.</p>
+            <p className="mt-3 text-muted">Connect with expert coaches tailored to your specific goals.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {coaches.map((coach) => (
@@ -549,7 +549,7 @@ export function LandingPage() {
                       <span className="text-sm font-semibold">{coach.rating}</span>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm font-semibold text-gray-400">{coach.price}</p>
+                  <p className="mt-3 text-sm font-semibold text-muted">{coach.price}</p>
                 </div>
               </div>
             ))}
@@ -590,7 +590,7 @@ export function LandingPage() {
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <Logo />
-              <p className="mt-4 max-w-xs text-sm text-gray-500 leading-relaxed">
+              <p className="mt-4 max-w-xs text-sm text-muted leading-relaxed">
                 Ethiopia&apos;s premier fitness platform. Built for athletes who demand peak performance.
               </p>
             </div>
@@ -600,7 +600,7 @@ export function LandingPage() {
               <ul className="space-y-2.5">
                 {footerLinks.platform.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-sm text-gray-500 hover:text-primary transition-colors">{link.label}</a>
+                    <a href={link.href} className="text-sm text-muted hover:text-primary transition-colors">{link.label}</a>
                   </li>
                 ))}
               </ul>
@@ -611,7 +611,7 @@ export function LandingPage() {
               <ul className="space-y-2.5">
                 {footerLinks.company.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-sm text-gray-500 hover:text-primary transition-colors">{link.label}</a>
+                    <a href={link.href} className="text-sm text-muted hover:text-primary transition-colors">{link.label}</a>
                   </li>
                 ))}
               </ul>
@@ -622,7 +622,7 @@ export function LandingPage() {
               <ul className="space-y-2.5">
                 {footerLinks.resources.map((link) => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-sm text-gray-500 hover:text-primary transition-colors">{link.label}</a>
+                    <a href={link.href} className="text-sm text-muted hover:text-primary transition-colors">{link.label}</a>
                   </li>
                 ))}
               </ul>
@@ -630,7 +630,7 @@ export function LandingPage() {
           </div>
 
           <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-8">
-            <p className="text-sm text-gray-600">© 2024 FitHabesha Inc. All rights reserved.</p>
+            <p className="text-sm text-muted">© 2024 FitHabesha Inc. All rights reserved.</p>
             <div className="flex items-center gap-3">
               <SocialIcon label="X / Twitter" href="#">
                 <svg className="size-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>

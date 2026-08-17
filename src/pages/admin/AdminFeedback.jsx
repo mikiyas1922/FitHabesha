@@ -168,7 +168,7 @@ export function AdminFeedback() {
         </div>
         <div className="space-y-3">
           {flaggedReviews.map((review, i) => (
-            <div key={i} className="flex items-start gap-4 p-4 rounded-lg bg-white border border-red-100">
+            <div key={i} className="flex items-start gap-4 p-4 rounded-lg bg-card border border-red-100">
               <div className="flex size-8 items-center justify-center rounded-full bg-red-100">
                 <Flag className="size-4 text-red-600" />
               </div>

@@ -46,8 +46,8 @@ export function ForgotPasswordPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-dark via-dark/95 to-dark/80" />
         <div className="relative max-w-md">
           <BrandMark theme="dark" className="mb-8" />
-          <h2 className="text-3xl font-bold text-white mb-4">Reset your password</h2>
-          <p className="text-gray-400 leading-relaxed">
+          <h2 className="text-3xl font-bold text-foreground mb-4">Reset your password</h2>
+          <p className="text-muted leading-relaxed">
             Enter the email linked to your Fit Habesha account and we&apos;ll send a password reset link.
           </p>
         </div>

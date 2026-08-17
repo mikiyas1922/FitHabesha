@@ -214,7 +214,7 @@ export function AdminClasses() {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         cls.status === 'scheduled' ? 'bg-green-100 text-green-700' :
                         cls.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
+                        'bg-surface text-muted'
                       }`}>
                         {cls.status || 'Unknown'}
                       </span>

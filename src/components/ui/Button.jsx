@@ -2,8 +2,8 @@ const variants = {
   primary: 'bg-primary text-dark hover:bg-primary-dark shadow-sm font-semibold',
   secondary: 'bg-surface text-foreground border border-border hover:bg-hover',
   ghost: 'text-muted hover:bg-hover hover:text-foreground',
-  danger: 'bg-red-500 text-white hover:bg-red-600',
-  dark: 'bg-dark text-white hover:bg-dark/90 shadow-sm',
+  danger: 'bg-red-500 text-foreground hover:bg-red-600',
+  dark: 'bg-dark text-foreground hover:bg-dark/90 shadow-sm',
 }
 
 const sizes = {

@@ -46,8 +46,8 @@ export function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-dark via-dark/95 to-dark/80" />
         <div className="relative max-w-md">
           <BrandMark theme="dark" className="mb-8" />
-          <h2 className="text-3xl font-bold text-white mb-4">Welcome back</h2>
-          <p className="text-gray-400 leading-relaxed">
+          <h2 className="text-3xl font-bold text-foreground mb-4">Welcome back</h2>
+          <p className="text-muted leading-relaxed">
             Sign in to access your dashboard. Manage members, track workouts, and grow your gym business with Fit Habesha.
           </p>
         </div>
