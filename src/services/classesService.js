@@ -20,6 +20,7 @@ export const classesService = {
       ...(filters.discipline && { discipline: filters.discipline }),
       ...(filters.trainer_id && { trainer_id: filters.trainer_id }),
     }
+    console.log('Fetching classes with params:', params)
     return await api.get(API_ENDPOINTS.CLASSES.LIST, params)
   },
 

@@ -3,6 +3,10 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   'https://gym-management-system-backend-xb5m.onrender.com/api'
 
+export const API_BASE_URL_V1 =
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://gym-management-system-backend-xb5m.onrender.com/api/v1'
+
 // API Endpoints
 export const API_ENDPOINTS = {
   // Auth

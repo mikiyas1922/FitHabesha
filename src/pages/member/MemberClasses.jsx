@@ -21,10 +21,11 @@ export function MemberClasses() {
       const response = await classesService.getClasses({
         discipline: selectedDiscipline || undefined,
       })
-      setClasses(response.data || [])
+      setClasses(Array.isArray(response.data) ? response.data : [])
     } catch (err) {
       setError(err.message || 'Failed to load classes')
       console.error('Error fetching classes:', err)
+      setClasses([])
     } finally {
       setLoading(false)
     }

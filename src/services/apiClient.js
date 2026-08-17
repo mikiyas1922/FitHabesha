@@ -34,8 +34,12 @@ console.log('API Base URL:', API_BASE_URL)
 apiClient.interceptors.request.use(
   (config) => {
     const token = tokenStorage.getAccessToken()
+    const refreshToken = tokenStorage.getRefreshToken()
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+    if (refreshToken && config.headers) {
+      config.headers['x-refresh-token'] = refreshToken
     }
     console.log('API Request:', config.method?.toUpperCase(), config.baseURL + config.url)
     return config
@@ -46,9 +50,26 @@ apiClient.interceptors.request.use(
   }
 )
 
-// Response interceptor for error handling
+// Response interceptor for error handling and token refresh
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Check if backend sent a new access token in headers
+    const newAccessToken = response.headers['x-access-token']
+    if (newAccessToken) {
+      tokenStorage.setAccessToken(newAccessToken)
+      console.log('Access token refreshed from response header')
+    }
+
+    // Check refresh token status from backend middleware
+    const refreshStatus = response.headers['x-refresh-status']
+    if (refreshStatus === 'expired' || refreshStatus === 'invalid' || refreshStatus === 'revoked') {
+      console.warn(`Refresh token ${refreshStatus}, clearing session`)
+      tokenStorage.clearTokens()
+      window.location.href = '/login'
+    }
+
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
 
@@ -62,32 +83,10 @@ apiClient.interceptors.response.use(
       authUrl.includes('/auth/forgot-password') ||
       authUrl.includes('/auth/reset-password')
 
-    // Handle 401 Unauthorized - try to refresh token
-    if (error.response?.status === 401 && !originalRequest._retry && !skipRefresh) {
-      originalRequest._retry = true
-      try {
-        const refreshToken = tokenStorage.getRefreshToken()
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH}`, {
-            refreshToken: refreshToken,
-          })
-          const { accessToken, access_token: accessTokenSnake } = response.data
-          const nextAccessToken = accessToken || accessTokenSnake
-          if (!nextAccessToken) {
-            throw new Error('Token refresh failed.')
-          }
-          tokenStorage.setAccessToken(nextAccessToken)
-          
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`
-          }
-          return apiClient(originalRequest)
-        }
-      } catch (refreshError) {
-        tokenStorage.clearTokens()
-        window.location.href = '/login'
-        return Promise.reject(refreshError)
-      }
+    // Handle 401 Unauthorized - redirect to login
+    if (error.response?.status === 401 && !skipRefresh) {
+      tokenStorage.clearTokens()
+      window.location.href = '/login'
     }
 
     // Handle other errors

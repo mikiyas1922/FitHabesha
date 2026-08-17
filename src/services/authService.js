@@ -56,23 +56,29 @@ export const authService = {
   login: async (credentials) => {
     const response = await api.post(API_ENDPOINTS.AUTH.LOGIN, credentials)
 
-    const accessToken = response.accessToken || response.access_token
-    const refreshToken = response.refreshToken || response.refresh_token
+    console.log('Login response:', response)
+
+    // Backend returns tokens in response.data
+    const data = response.data || response
+    const accessToken = data.accessToken || data.access_token
+    const refreshToken = data.refreshToken || data.refresh_token
+    const user = data.user || response.user
 
     if (!accessToken) {
       throw new Error('Login succeeded but no access token was returned.')
     }
 
+    // Store tokens from response body
     tokenStorage.setAccessToken(accessToken)
     if (refreshToken) {
       tokenStorage.setRefreshToken(refreshToken)
     }
 
-    if (response.user?.role === 'trainer') {
-      profileStorage.clearTrainerApprovalStatus(getUserId(response.user))
+    if (user?.role === 'trainer') {
+      profileStorage.clearTrainerApprovalStatus(getUserId(user))
     }
 
-    const mergedUser = normalizeSessionUser(profileStorage.mergeWithUser(response.user))
+    const mergedUser = normalizeSessionUser(profileStorage.mergeWithUser(user))
     userStorage.setUser(mergedUser)
 
     return { ...response, user: mergedUser }
@@ -96,8 +102,11 @@ export const authService = {
         await requestLogout()
       }
     } catch (error) {
-      console.warn('Logout API call failed:', error.message)
+      // Silently handle logout failures (expired tokens, network issues, etc.)
+      // The goal is to clear the local session regardless of backend response
+      console.debug('Logout API call failed (this is expected with expired tokens):', error.message)
     } finally {
+      // Always clear local session
       tokenStorage.clearTokens()
       userStorage.clearUser()
     }
