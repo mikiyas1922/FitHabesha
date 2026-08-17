@@ -1,105 +1,147 @@
-import { Calendar, Clock, Users, Plus, Filter, Search, CheckCircle, XCircle, Star } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Calendar, Clock, Users, Plus, Filter, Search, CheckCircle, XCircle, Star, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-
-const classStats = [
-  { label: 'Classes This Week', value: '3', icon: Calendar },
-  { label: 'Upcoming Bookings', value: '2', icon: Clock },
-  { label: 'Favorite Class', value: 'HIIT', icon: Star },
-]
-
-const upcomingClasses = [
-  {
-    id: 1,
-    name: 'Power Yoga',
-    instructor: 'Elena Rostova',
-    time: 'Tomorrow 10:00 AM',
-    duration: '60 min',
-    capacity: '17/20',
-    location: 'Studio A',
-    booked: true,
-  },
-  {
-    id: 2,
-    name: 'HIIT Explosion',
-    instructor: 'Marcus Vance',
-    time: 'Friday 5:00 PM',
-    duration: '45 min',
-    capacity: '15/15',
-    location: 'Studio B',
-    booked: true,
-  },
-  {
-    id: 3,
-    name: 'Spin & Sweat',
-    instructor: 'Coach Daniel',
-    time: 'Saturday 9:00 AM',
-    duration: '50 min',
-    capacity: '12/20',
-    location: 'Studio C',
-    booked: false,
-  },
-  {
-    id: 4,
-    name: 'Core Strength',
-    instructor: 'Sarah Jenkins',
-    time: 'Saturday 11:00 AM',
-    duration: '40 min',
-    capacity: '8/15',
-    location: 'Studio A',
-    booked: false,
-  },
-]
-
-const availableClasses = [
-  {
-    id: 5,
-    name: 'Pilates Flow',
-    instructor: 'Emma Watson',
-    time: 'Today 6:00 PM',
-    duration: '55 min',
-    capacity: '10/15',
-    location: 'Studio A',
-    difficulty: 'Beginner',
-  },
-  {
-    id: 6,
-    name: 'Boxing Basics',
-    instructor: 'John Carter',
-    time: 'Tomorrow 7:00 AM',
-    duration: '45 min',
-    capacity: '8/12',
-    location: 'Studio B',
-    difficulty: 'Intermediate',
-  },
-  {
-    id: 7,
-    name: 'Dance Fitness',
-    instructor: 'Clara Oswald',
-    time: 'Wednesday 6:30 PM',
-    duration: '60 min',
-    capacity: '18/25',
-    location: 'Studio C',
-    difficulty: 'Beginner',
-  },
-  {
-    id: 8,
-    name: 'CrossFit',
-    instructor: 'Thomas Anderson',
-    time: 'Thursday 5:30 PM',
-    duration: '60 min',
-    capacity: '6/10',
-    location: 'Studio B',
-    difficulty: 'Advanced',
-  },
-]
-
-const myBookings = [
-  { name: 'Power Yoga', date: 'Oct 16, 2026', time: '10:00 AM', instructor: 'Elena Rostova', status: 'confirmed' },
-  { name: 'HIIT Explosion', date: 'Oct 17, 2026', time: '5:00 PM', instructor: 'Marcus Vance', status: 'confirmed' },
-  { name: 'Spin Class', date: 'Oct 10, 2026', time: '9:00 AM', instructor: 'Coach Daniel', status: 'completed' },
-]
+import { classesService } from '../../services/classesService'
 
 export function MemberClasses() {
+  const [classes, setClasses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedDiscipline, setSelectedDiscipline] = useState('')
+
+  useEffect(() => {
+    fetchClasses()
+  }, [])
+
+  const fetchClasses = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await classesService.getClasses({
+        discipline: selectedDiscipline || undefined,
+      })
+      setClasses(response.data || [])
+    } catch (err) {
+      setError(err.message || 'Failed to load classes')
+      console.error('Error fetching classes:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSearch = async () => {
+    try {
+      setLoading(true)
+      const response = await classesService.getClasses({
+        discipline: selectedDiscipline || undefined,
+      })
+      const filtered = response.data?.filter(cls =>
+        cls.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cls.trainer_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      ) || []
+      setClasses(filtered)
+    } catch (err) {
+      setError(err.message || 'Failed to search classes')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return 'TBD'
+    const date = new Date(dateTimeString)
+    return date.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+  }
+
+  const formatDuration = (startTime, endTime) => {
+    if (!startTime || !endTime) return ''
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    const diffMs = end - start
+    const diffMins = Math.round(diffMs / 60000)
+    return `${diffMins} min`
+  }
+
+  const classStats = [
+    { label: 'Total Classes', value: classes.length.toString(), icon: Calendar },
+    { label: 'Available Spots', value: classes.reduce((acc, cls) => acc + (cls.available_spots || 0), 0).toString(), icon: Users },
+    { label: 'Categories', value: [...new Set(classes.map(cls => cls.category))].length.toString(), icon: Star },
+  ]
+
+  const upcomingClasses = classes
+    .filter(cls => new Date(cls.start_time) > new Date())
+    .slice(0, 4)
+    .map(cls => ({
+      id: cls.id,
+      name: cls.name,
+      instructor: cls.trainer_name || 'TBD',
+      time: formatDateTime(cls.start_time),
+      duration: formatDuration(cls.start_time, cls.end_time),
+      capacity: `${cls.current_bookings || 0}/${cls.capacity}`,
+      location: cls.location || 'TBD',
+      booked: false,
+    }))
+
+  const availableClasses = classes
+    .filter(cls => cls.available_spots > 0 && new Date(cls.start_time) > new Date())
+    .map(cls => ({
+      id: cls.id,
+      name: cls.name,
+      instructor: cls.trainer_name || 'TBD',
+      time: formatDateTime(cls.start_time),
+      duration: formatDuration(cls.start_time, cls.end_time),
+      capacity: `${cls.current_bookings || 0}/${cls.capacity}`,
+      location: cls.location || 'TBD',
+      difficulty: cls.difficulty || 'Intermediate',
+    }))
+
+  const myBookings = [] // TODO: Implement booking functionality
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+        <p className="text-red-600 font-medium">Error loading classes</p>
+        <p className="text-red-500 text-sm mt-1">{error}</p>
+        <Button onClick={fetchClasses} className="mt-3">Retry</Button>
+      </div>
+    )
+  }
+
+  if (classes.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Group Classes</h1>
+            <p className="text-sm text-muted">Browse and book group fitness classes</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-12 text-center">
+          <Calendar className="size-12 text-muted mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No Classes Available</h3>
+          <p className="text-muted mb-4">There are currently no classes scheduled. Check back later!</p>
+          <Button onClick={fetchClasses}>Refresh</Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -214,15 +256,26 @@ export function MemberClasses() {
               <input
                 type="text"
                 placeholder="Search classes..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
               />
             </div>
-            <select className="px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20">
-              <option>All Levels</option>
-              <option>Beginner</option>
-              <option>Intermediate</option>
-              <option>Advanced</option>
+            <select 
+              value={selectedDiscipline}
+              onChange={(e) => setSelectedDiscipline(e.target.value)}
+              className="px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">All Disciplines</option>
+              <option value="yoga">Yoga</option>
+              <option value="pilates">Pilates</option>
+              <option value="hiit">HIIT</option>
+              <option value="spin">Spin</option>
+              <option value="strength">Strength</option>
+              <option value="dance">Dance</option>
+              <option value="other">Other</option>
             </select>
+            <Button onClick={handleSearch} size="sm">Search</Button>
           </div>
         </div>
 

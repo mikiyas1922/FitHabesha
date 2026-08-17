@@ -10,6 +10,7 @@ import { StaffManagement } from './pages/admin/StaffManagement.jsx'
 import { AdminReports } from './pages/admin/AdminReports.jsx'
 import { AdminSubscriptions } from './pages/admin/AdminSubscriptions.jsx'
 import { AdminFeedback } from './pages/admin/AdminFeedback.jsx'
+import { AdminClasses } from './pages/admin/AdminClasses.jsx'
 import { TrainerDashboard } from './pages/trainer/TrainerDashboard.jsx'
 import { MyClients } from './pages/trainer/MyClients.jsx'
 import { TrainerSchedule } from './pages/trainer/TrainerSchedule.jsx'
@@ -49,6 +50,7 @@ export default function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="staff" element={<StaffManagement />} />
           <Route path="members" element={<MembersManagement />} />
+          <Route path="classes" element={<AdminClasses />} />
           <Route path="trainers" element={<Navigate to="/admin/staff?role=trainer" replace />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="subscriptions" element={<AdminSubscriptions />} />

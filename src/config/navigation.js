@@ -3,6 +3,7 @@ export const navByRole = {
     { label: 'Dashboard', path: '/admin', icon: 'LayoutDashboard' },
     { label: 'Staff', path: '/admin/staff', icon: 'UserPlus' },
     { label: 'Members', path: '/admin/members', icon: 'Users' },
+    { label: 'Classes', path: '/admin/classes', icon: 'Calendar' },
     { label: 'Subscriptions', path: '/admin/subscriptions', icon: 'CreditCard' },
     { label: 'Feedback & Ratings', path: '/admin/feedback', icon: 'MessageSquare', badge: 1 },
     { label: 'Reports', path: '/admin/reports', icon: 'BarChart3' },

@@ -1,51 +1,159 @@
-import { ChevronLeft, ChevronRight, Calendar, Clock, User, Plus, MoreVertical } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ChevronLeft, ChevronRight, Calendar, Clock, User, Plus, MoreVertical, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { ClassFormModal } from '../../components/ClassFormModal'
+import { classesService } from '../../services/classesService'
+import { useAuth } from '../../contexts/AuthContext'
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const dates = [12, 13, 14, 15, 16, 17, 18]
-
-const sessions = {
-  12: [
-    { time: '08:00', client: 'Jonathan Vance', type: 'Focus: Chest & Shoulder Strength', duration: '60m', status: 'completed' },
-    { time: '12:00', client: 'Sarah Connor', type: 'Power Pilates', duration: '60m', status: 'completed' },
-    { time: '10:00', client: 'Emma Watson', type: 'Group Class', duration: '90m', status: 'completed' },
-  ],
-  13: [
-    { time: '09:00', client: 'Sarah Connor', type: 'Power Pilates', duration: '60m', status: 'completed' },
-    { time: '10:00', client: 'Emma Watson', type: 'Group Class', duration: '90m', status: 'completed' },
-    { time: '11:00', client: 'David Hassel', type: 'HIIT / Cardio', duration: '45m', status: 'completed' },
-  ],
-  14: [
-    { time: '08:00', client: 'Jonathan Vance', type: 'Focus: Chest & Shoulder Strength', duration: '60m', status: 'completed' },
-    { time: '12:00', client: 'Marcus Vance', type: 'Strength Build', duration: '50m', status: 'completed' },
-    { time: '01:00', client: 'Spin Cycle', type: 'Aero Yoga Class', duration: '45m', status: 'completed' },
-  ],
-  15: [
-    { time: '09:00', client: 'Sarah Connor', type: 'Power Pilates', duration: '60m', status: 'completed' },
-    { time: '10:00', client: 'Emma Watson', type: 'Group Class', duration: '90m', status: 'completed' },
-    { time: '11:00', client: 'David Hassel', type: 'HIIT / Cardio', duration: '45m', status: 'completed' },
-    { time: '12:00', client: 'Marcus Vance', type: 'Strength Build', duration: '50m', status: 'completed' },
-  ],
-  16: [
-    { time: '08:00', client: 'Jonathan Vance', type: 'Focus: Chest & Shoulder Strength', duration: '60m', status: 'upcoming' },
-    { time: '12:00', client: 'Marcus Vance', type: 'Strength Build', duration: '50m', status: 'upcoming' },
-    { time: '02:00', client: 'David Hassel', type: 'Cardio Focus', duration: '45m', status: 'upcoming' },
-    { time: '03:00', client: 'Sarah Connor', type: 'PT Flexibility', duration: '45m', status: 'upcoming' },
-  ],
-  17: [
-    { time: '10:00', client: 'Emma Watson', type: 'Group Class', duration: '90m', status: 'upcoming' },
-    { time: '04:00', client: 'Power Yoga', type: 'HIIT Explosion', duration: '45m', status: 'upcoming' },
-  ],
-  18: [],
-}
-
-const scheduleStats = {
-  totalSessions: '6 Sessions',
-  completed: '3/6 Done',
-  totalBookings: 'Total Bookings',
-}
 
 export function TrainerSchedule() {
+  const { user } = useAuth()
+  const [classes, setClasses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [currentWeekStart, setCurrentWeekStart] = useState(new Date())
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingClass, setEditingClass] = useState(null)
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchTrainerClasses()
+    }
+  }, [user, currentWeekStart])
+
+  const fetchTrainerClasses = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await classesService.getClasses({
+        trainer_id: user.id,
+      })
+      setClasses(response.data || [])
+    } catch (err) {
+      setError(err.message || 'Failed to load schedule')
+      console.error('Error fetching trainer classes:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getWeekDates = (startDate) => {
+    const dates = []
+    const date = new Date(startDate)
+    const day = date.getDay()
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1)
+    const monday = new Date(date.setDate(diff))
+    
+    for (let i = 0; i < 7; i++) {
+      const nextDate = new Date(monday)
+      nextDate.setDate(monday.getDate() + i)
+      dates.push(nextDate)
+    }
+    return dates
+  }
+
+  const formatTime = (dateTimeString) => {
+    if (!dateTimeString) return ''
+    const date = new Date(dateTimeString)
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    })
+  }
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
+  const getClassesForDate = (date) => {
+    const dateStr = date.toISOString().split('T')[0]
+    return classes.filter(cls => {
+      const classDate = new Date(cls.start_time).toISOString().split('T')[0]
+      return classDate === dateStr
+    })
+  }
+
+  const getTodayClasses = () => {
+    const today = new Date()
+    const todayStr = today.toISOString().split('T')[0]
+    return classes.filter(cls => {
+      const classDate = new Date(cls.start_time).toISOString().split('T')[0]
+      return classDate === todayStr
+    })
+  }
+
+  const formatDuration = (startTime, endTime) => {
+    if (!startTime || !endTime) return ''
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    const diffMs = end - start
+    const diffMins = Math.round(diffMs / 60000)
+    return `${diffMins}m`
+  }
+
+  const getClassStatus = (startTime, endTime) => {
+    const now = new Date()
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    
+    if (now > end) return 'completed'
+    if (now >= start) return 'in-progress'
+    return 'upcoming'
+  }
+
+  const weekDates = getWeekDates(currentWeekStart)
+  const todayClasses = getTodayClasses()
+  const scheduleStats = {
+    totalSessions: `${classes.length} Sessions`,
+    completed: `${classes.filter(c => getClassStatus(c.start_time, c.end_time) === 'completed').length}/${classes.length} Done`,
+    totalBookings: `${classes.reduce((acc, cls) => acc + (cls.current_bookings || 0), 0)} Bookings`,
+  }
+
+  const navigateWeek = (direction) => {
+    const newDate = new Date(currentWeekStart)
+    newDate.setDate(newDate.getDate() + (direction * 7))
+    setCurrentWeekStart(newDate)
+  }
+
+  const handleCreateSuccess = (response) => {
+    if (response.data) {
+      setClasses([...classes, response.data])
+    } else {
+      fetchTrainerClasses()
+    }
+  }
+
+  const handleUpdateSuccess = (response) => {
+    if (response.data) {
+      setClasses(classes.map(cls => cls.id === response.data.id ? response.data : cls))
+    } else {
+      fetchTrainerClasses()
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+        <p className="text-red-600 font-medium">Error loading schedule</p>
+        <p className="text-red-500 text-sm mt-1">{error}</p>
+        <Button onClick={fetchTrainerClasses} className="mt-3">Retry</Button>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -54,11 +162,11 @@ export function TrainerSchedule() {
           <p className="text-sm text-muted">Manage and organize your weekly client bookings</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" className="gap-2">
+          <Button variant="secondary" className="gap-2" onClick={() => navigateWeek(-1)}>
             <ChevronLeft className="size-4" />
             Previous Week
           </Button>
-          <Button variant="secondary" className="gap-2">
+          <Button variant="secondary" className="gap-2" onClick={() => navigateWeek(1)}>
             Next Week
             <ChevronRight className="size-4" />
           </Button>
@@ -68,7 +176,9 @@ export function TrainerSchedule() {
       {/* Week Header */}
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-foreground">Oct 12 - Oct 18, 2026</h3>
+          <h3 className="font-semibold text-foreground">
+            {formatDate(weekDates[0])} - {formatDate(weekDates[6])}, {weekDates[0].getFullYear()}
+          </h3>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm">Week</Button>
             <Button variant="ghost" size="sm">Day</Button>
@@ -77,23 +187,26 @@ export function TrainerSchedule() {
 
         {/* Days Grid */}
         <div className="grid grid-cols-7 gap-2">
-          {weekDays.map((day, i) => (
-            <div key={day} className="text-center">
-              <p className="text-xs text-muted mb-1">{day}</p>
-              <div className={`size-8 flex items-center justify-center rounded-full mx-auto ${
-                i === 4 ? 'bg-primary text-dark' : 'bg-surface'
-              }`}>
-                <span className="text-sm font-medium">{dates[i]}</span>
+          {weekDays.map((day, i) => {
+            const isToday = weekDates[i].toDateString() === new Date().toDateString()
+            return (
+              <div key={day} className="text-center">
+                <p className="text-xs text-muted mb-1">{day}</p>
+                <div className={`size-8 flex items-center justify-center rounded-full mx-auto ${
+                  isToday ? 'bg-primary text-dark' : 'bg-surface'
+                }`}>
+                  <span className="text-sm font-medium">{weekDates[i].getDate()}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
       {/* Today's Overview */}
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-semibold text-foreground">Today's Overview (Wed)</h3>
+          <h3 className="font-semibold text-foreground">Today's Overview ({new Date().toLocaleDateString('en-US', { weekday: 'short' })})</h3>
           <div className="flex gap-4 text-sm">
             <span className="text-muted">{scheduleStats.totalSessions}</span>
             <span className="text-muted">{scheduleStats.completed}</span>
@@ -101,30 +214,39 @@ export function TrainerSchedule() {
         </div>
 
         <div className="space-y-3">
-          {sessions[14]?.map((session, i) => (
-            <div key={i} className="flex items-center gap-4 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-colors">
-              <div className="text-center min-w-20">
-                <p className="text-sm font-medium text-foreground">{session.time}</p>
-                <p className="text-xs text-muted">{session.duration}</p>
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-foreground">{session.client}</p>
-                <p className="text-sm text-muted">{session.type}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  session.status === 'completed' 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-blue-100 text-blue-700'
-                }`}>
-                  {session.status}
-                </span>
-                <Button variant="ghost" size="sm">
-                  <MoreVertical className="size-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+          {todayClasses.length > 0 ? (
+            todayClasses.map((cls) => {
+              const status = getClassStatus(cls.start_time, cls.end_time)
+              return (
+                <div key={cls.id} className="flex items-center gap-4 p-4 rounded-lg bg-surface hover:bg-surface/80 transition-colors">
+                  <div className="text-center min-w-20">
+                    <p className="text-sm font-medium text-foreground">{formatTime(cls.start_time)}</p>
+                    <p className="text-xs text-muted">{formatDuration(cls.start_time, cls.end_time)}</p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">{cls.name}</p>
+                    <p className="text-sm text-muted">{cls.category} • {cls.current_bookings || 0}/{cls.capacity} booked</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      status === 'completed' 
+                        ? 'bg-green-100 text-green-700' 
+                        : status === 'in-progress'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {status === 'in-progress' ? 'In Progress' : status}
+                    </span>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <p className="text-muted text-center py-8">No classes scheduled for today</p>
+          )}
         </div>
       </div>
 
@@ -133,36 +255,44 @@ export function TrainerSchedule() {
         <h3 className="font-semibold text-foreground mb-6">Weekly Schedule</h3>
         
         <div className="grid grid-cols-7 gap-4">
-          {weekDays.map((day, dayIndex) => (
-            <div key={day} className="space-y-2">
-              <div className="text-center pb-2 border-b border-border">
-                <p className="text-xs text-muted">{day}</p>
-                <p className="text-sm font-medium text-foreground">{dates[dayIndex]}</p>
+          {weekDays.map((day, dayIndex) => {
+            const dayClasses = getClassesForDate(weekDates[dayIndex])
+            return (
+              <div key={day} className="space-y-2">
+                <div className="text-center pb-2 border-b border-border">
+                  <p className="text-xs text-muted">{day}</p>
+                  <p className="text-sm font-medium text-foreground">{weekDates[dayIndex].getDate()}</p>
+                </div>
+                
+                <div className="space-y-2 min-h-32">
+                  {dayClasses.map((cls) => {
+                    const status = getClassStatus(cls.start_time, cls.end_time)
+                    return (
+                      <div 
+                        key={cls.id} 
+                        className={`p-2 rounded-lg text-xs ${
+                          status === 'completed' 
+                            ? 'bg-green-50 border border-green-200' 
+                            : status === 'in-progress'
+                            ? 'bg-blue-50 border border-blue-200'
+                            : 'bg-yellow-50 border border-yellow-200'
+                        }`}
+                      >
+                        <p className="font-medium text-foreground">{formatTime(cls.start_time)}</p>
+                        <p className="text-muted truncate">{cls.name}</p>
+                        <p className="text-muted truncate">{cls.category}</p>
+                      </div>
+                    )
+                  })}
+                  {dayClasses.length === 0 && (
+                    <div className="p-2 rounded-lg bg-surface text-xs text-muted text-center">
+                      No sessions
+                    </div>
+                  )}
+                </div>
               </div>
-              
-              <div className="space-y-2 min-h-32">
-                {sessions[dates[dayIndex]]?.map((session, i) => (
-                  <div 
-                    key={i} 
-                    className={`p-2 rounded-lg text-xs ${
-                      session.status === 'completed' 
-                        ? 'bg-green-50 border border-green-200' 
-                        : 'bg-blue-50 border border-blue-200'
-                    }`}
-                  >
-                    <p className="font-medium text-foreground">{session.time}</p>
-                    <p className="text-muted truncate">{session.client}</p>
-                    <p className="text-muted truncate">{session.type}</p>
-                  </div>
-                ))}
-                {sessions[dates[dayIndex]]?.length === 0 && (
-                  <div className="p-2 rounded-lg bg-surface text-xs text-muted text-center">
-                    No sessions
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
@@ -170,7 +300,7 @@ export function TrainerSchedule() {
       <div className="rounded-xl border border-border bg-card p-6">
         <h3 className="font-semibold text-foreground mb-4">Quick Actions</h3>
         <div className="grid md:grid-cols-3 gap-4">
-          <Button variant="secondary" className="gap-2 justify-start">
+          <Button variant="secondary" className="gap-2 justify-start" onClick={() => setShowCreateModal(true)}>
             <Plus className="size-4" />
             Add Session
           </Button>
@@ -184,6 +314,19 @@ export function TrainerSchedule() {
           </Button>
         </div>
       </div>
+
+      <ClassFormModal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateSuccess}
+      />
+
+      <ClassFormModal
+        open={!!editingClass}
+        onClose={() => setEditingClass(null)}
+        classData={editingClass}
+        onSuccess={handleUpdateSuccess}
+      />
     </div>
   )
 }

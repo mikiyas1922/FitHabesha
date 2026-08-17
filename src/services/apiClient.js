@@ -27,6 +27,9 @@ const apiClient = axios.create({
   timeout: 60000,
 })
 
+// Log API base URL for debugging
+console.log('API Base URL:', API_BASE_URL)
+
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
@@ -34,9 +37,11 @@ apiClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    console.log('API Request:', config.method?.toUpperCase(), config.baseURL + config.url)
     return config
   },
   (error) => {
+    console.error('API Request Error:', error)
     return Promise.reject(error)
   }
 )
