@@ -22,6 +22,8 @@ export const memberService = {
 
   updateMemberProfile: (id, data) => api.patch(API_ENDPOINTS.MEMBERS.UPDATE(id), data),
 
+  getCheckinMemberByUniqueId: (uniqueId) => api.get(API_ENDPOINTS.CHECKIN.MEMBER_BY_UNIQUE_ID(uniqueId)),
+
   getMemberSubscriptions: (memberId) =>
     api.get(`${API_ENDPOINTS.MEMBERS.DETAIL(memberId)}/subscriptions`),
 }

@@ -116,16 +116,14 @@ export function ProfileSettings() {
         throw new Error('Unauthorized. Please log in again.')
       }
 
-      // Send only valid values to avoid backend validation errors on empty strings.
+      // Match the backend contract for PATCH /members/{id}. Keep the payload minimal
+      // and avoid sending unsupported or empty fields that can trigger validation errors.
       const payload = Object.fromEntries(
         Object.entries({
-          fitness_goal: formData.fitnessGoal,
-          emergency_contact_name: formData.emergencyContactName,
-          emergency_contact_phone: formData.emergencyContactPhone,
-          dietary_restrictions: formData.dietaryRestrictions,
-          date_of_birth: formData.dateOfBirth || undefined,
-          gender: formData.gender || undefined,
-          blood_type: formData.bloodType || undefined,
+          fitness_goal: formData.fitnessGoal || undefined,
+          emergency_contact_name: formData.emergencyContactName || undefined,
+          emergency_contact_phone: formData.emergencyContactPhone || undefined,
+          dietary_restrictions: formData.dietaryRestrictions || undefined,
         }).filter(([, value]) => value !== undefined && value !== null && value !== '')
       )
 

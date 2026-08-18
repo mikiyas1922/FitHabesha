@@ -76,6 +76,12 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config
+    const statusCode = error.response?.status
+
+    // Log the error for debugging
+    if (statusCode >= 500) {
+      console.error(`Server error ${statusCode} on ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}: ${JSON.stringify(error.response?.data)}`)
+    }
 
     // Do not refresh tokens for auth lifecycle endpoints (especially logout).
     const authUrl = originalRequest?.url || ''
@@ -88,7 +94,7 @@ apiClient.interceptors.response.use(
       authUrl.includes('/auth/reset-password')
 
     // Handle 401 Unauthorized - redirect to login
-    if (error.response?.status === 401 && !skipRefresh) {
+    if (statusCode === 401 && !skipRefresh) {
       // Don't redirect for trainer list calls in modal context
       const isTrainerListCall = originalRequest?.url?.includes('/trainers')
       if (!isTrainerListCall) {
@@ -104,7 +110,7 @@ apiClient.interceptors.response.use(
         error.response?.data?.message ||
         error.message ||
         'An error occurred',
-      status: error.response?.status,
+      status: statusCode,
       details: error.response?.data,
     }
 

@@ -8,6 +8,7 @@ import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage.jsx'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage.jsx'
 import { AdminDashboard } from './pages/admin/AdminDashboard.jsx'
 import { MembersManagement } from './pages/admin/MembersManagement.jsx'
+import { TrainersManagement } from './pages/admin/TrainersManagement.jsx'
 import { StaffManagement } from './pages/admin/StaffManagement.jsx'
 import { AdminReports } from './pages/admin/AdminReports.jsx'
 import { AdminSubscriptions } from './pages/admin/AdminSubscriptions.jsx'
@@ -55,8 +56,8 @@ export default function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="staff" element={<StaffManagement />} />
           <Route path="members" element={<MembersManagement />} />
+          <Route path="trainers" element={<TrainersManagement />} />
           <Route path="classes" element={<AdminClasses />} />
-          <Route path="trainers" element={<Navigate to="/admin/staff?role=trainer" replace />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="subscriptions" element={<AdminSubscriptions />} />
           <Route path="feedback" element={<AdminFeedback />} />
@@ -89,6 +90,7 @@ export default function App() {
           }
         >
           <Route index element={<ReceptionistDashboard />} />
+          <Route path="staff" element={<StaffManagement />} />
           <Route path="equipment" element={<EquipmentTracking />} />
           <Route path="lockers" element={<LockerManagement />} />
           <Route path="walk-in" element={<WalkInRegistration />} />

@@ -6,7 +6,7 @@ import { Table } from '../../components/ui/Table'
 import { Badge, statusBadge } from '../../components/ui/Badge'
 import { AsyncState, EmptyState, ErrorState, LoadingState } from '../../components/ui/AsyncState'
 import { StaffRegistrationModal } from '../../components/admin/StaffRegistrationModal'
-import { useAdminMembersList } from '../../hooks/useAdminMembersList'
+import { useAdminTrainersList } from '../../hooks/useAdminTrainersList'
 import { adminService } from '../../services/adminService'
 
 function getAdminListError(error) {
@@ -21,21 +21,21 @@ function getAdminListError(error) {
   return error
 }
 
-export function MembersManagement() {
+export function TrainersManagement() {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [actionTarget, setActionTarget] = useState(null)
   const [actionType, setActionType] = useState(null) // 'deactivate' or 'reactivate'
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState(null)
-  const { items, loading, error, source, reload, addLocalMember } = useAdminMembersList()
+  const { items, loading, error, source, reload, addLocalTrainer } = useAdminTrainersList()
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase()
     if (!query) return items
 
-    return items.filter((member) =>
-      [member.id, member.name, member.email, member.phone, member.uniqueMemberId]
+    return items.filter((trainer) =>
+      [trainer.id, trainer.name, trainer.email, trainer.phone, trainer.specialty]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query))
     )
@@ -45,20 +45,20 @@ export function MembersManagement() {
 
   const handleSuccess = (response) => {
     if (response?.user) {
-      addLocalMember(response.user)
+      addLocalTrainer(response.user)
     } else {
       reload()
     }
   }
 
-  const handleDeactivate = async (member) => {
-    setActionTarget(member)
+  const handleDeactivate = async (trainer) => {
+    setActionTarget(trainer)
     setActionType('deactivate')
     setActionError(null)
   }
 
-  const handleReactivate = async (member) => {
-    setActionTarget(member)
+  const handleReactivate = async (trainer) => {
+    setActionTarget(trainer)
     setActionType('reactivate')
     setActionError(null)
   }
@@ -71,15 +71,15 @@ export function MembersManagement() {
 
     try {
       if (actionType === 'deactivate') {
-        await adminService.deactivateMember(actionTarget.id)
+        await adminService.deactivateTrainer(actionTarget.id)
       } else if (actionType === 'reactivate') {
-        await adminService.reactivateMember(actionTarget.id)
+        await adminService.reactivateTrainer(actionTarget.id)
       }
       setActionTarget(null)
       setActionType(null)
       reload()
     } catch (err) {
-      setActionError(err?.message || `Failed to ${actionType} member`)
+      setActionError(err?.message || `Failed to ${actionType} trainer`)
     } finally {
       setActionLoading(false)
     }
@@ -89,9 +89,9 @@ export function MembersManagement() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-foreground">Members</h2>
+          <h2 className="text-xl font-semibold text-foreground">Trainers</h2>
           <p className="text-sm text-muted">
-            View registered members from GET /admin/members. {filteredItems.length} member
+            View registered trainers from GET /admin/trainers. {filteredItems.length} trainer
             {filteredItems.length === 1 ? '' : 's'} found.
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -112,7 +112,7 @@ export function MembersManagement() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
             <input
               type="search"
-              placeholder="Search by ID, name, or email..."
+              placeholder="Search by name, email, or specialty..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -120,7 +120,7 @@ export function MembersManagement() {
           </div>
           <Button className="gap-2 shrink-0" onClick={() => setModalOpen(true)}>
             <Plus className="size-4" />
-            Add Member
+            Add Trainer
           </Button>
         </div>
       </div>
@@ -137,32 +137,28 @@ export function MembersManagement() {
           error={source === 'local' && filteredItems.length > 0 ? null : displayError}
           empty={!loading && !displayError && filteredItems.length === 0}
           onRetry={reload}
-          loadingComponent={<LoadingState label="Loading registered members..." />}
+          loadingComponent={<LoadingState label="Loading registered trainers..." />}
           errorComponent={<ErrorState message={displayError} onRetry={reload} />}
           emptyComponent={
             <EmptyState
-              title="No registered members"
-              description="Members registered publicly or via admin will appear here when GET /admin/members responds."
+              title="No registered trainers"
+              description="Trainers registered publicly or via admin will appear here when GET /admin/trainers responds."
             />
           }
         >
           <Table
             data={filteredItems}
             columns={[
-              {
-                key: 'uniqueMemberId',
-                header: 'Member ID',
-                className: 'font-mono text-primary font-medium',
-              },
               { key: 'name', header: 'Name' },
               { key: 'email', header: 'Email' },
               { key: 'phone', header: 'Phone' },
+              { key: 'specialty', header: 'Specialty' },
+              { key: 'certification', header: 'Certification' },
               {
                 key: 'status',
                 header: 'Status',
                 render: (row) => <Badge variant={statusBadge(row.status)}>{row.status}</Badge>,
               },
-              { key: 'joinDate', header: 'Joined' },
               {
                 key: 'actions',
                 header: 'Actions',
@@ -176,7 +172,7 @@ export function MembersManagement() {
                           ? 'border-red-300 text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10'
                           : 'border-green-300 text-green-700 hover:bg-green-50 dark:border-green-500/30 dark:text-green-400 dark:hover:bg-green-500/10'
                       }`}
-                      title={isActive ? 'Deactivate member account' : 'Reactivate member account'}
+                      title={isActive ? 'Deactivate trainer account' : 'Reactivate trainer account'}
                     >
                       <Trash2 className="size-3" />
                       {isActive ? 'Deactivate' : 'Reactivate'}
@@ -194,7 +190,7 @@ export function MembersManagement() {
           <Card className="w-full max-w-md space-y-4">
             <div>
               <h3 className="text-lg font-semibold text-foreground">
-                {actionType === 'deactivate' ? 'Deactivate' : 'Reactivate'} Member
+                {actionType === 'deactivate' ? 'Deactivate' : 'Reactivate'} Trainer
               </h3>
               <p className="text-sm text-muted mt-1">
                 Are you sure you want to {actionType === 'deactivate' ? 'deactivate' : 'reactivate'}{' '}
@@ -252,9 +248,9 @@ export function MembersManagement() {
       <StaffRegistrationModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        fixedRole="member"
-        title="Register Member"
-        description="Creates a member account via POST /admin/register. Admin login required."
+        fixedRole="trainer"
+        title="Register Trainer"
+        description="Creates a trainer account via POST /admin/register. Admin login required."
         onSuccess={handleSuccess}
       />
     </div>

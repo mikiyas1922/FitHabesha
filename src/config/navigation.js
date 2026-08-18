@@ -3,6 +3,7 @@ export const navByRole = {
     { label: 'Dashboard', path: '/admin', icon: 'LayoutDashboard' },
     { label: 'Staff', path: '/admin/staff', icon: 'UserPlus' },
     { label: 'Members', path: '/admin/members', icon: 'Users' },
+    { label: 'Trainers', path: '/admin/trainers', icon: 'Dumbbell' },
     { label: 'Classes', path: '/admin/classes', icon: 'Calendar' },
     { label: 'Subscriptions', path: '/admin/subscriptions', icon: 'CreditCard' },
     { label: 'Feedback & Ratings', path: '/admin/feedback', icon: 'MessageSquare', badge: 1 },
@@ -20,6 +21,7 @@ export const navByRole = {
   ],
   receptionist: [
     { label: 'Quick Check-in', path: '/receptionist', icon: 'UserCheck' },
+    { label: 'Staff', path: '/receptionist/staff', icon: 'UserPlus' },
     { label: 'Members', path: '/receptionist/members', icon: 'Users' },
     { label: 'Walk-ins', path: '/receptionist/walk-in', icon: 'UserPlus' },
     { label: 'Lockers', path: '/receptionist/lockers', icon: 'Lock', badge: 22 },

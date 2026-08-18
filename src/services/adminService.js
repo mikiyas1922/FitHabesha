@@ -35,20 +35,25 @@ function wrapAdminError(error) {
   return error
 }
 
-async function fetchAdminRecords(url, defaultRole) {
-  const response = await api.get(url)
-  const records = normalizeListResponse(response)
+async function fetchAdminRecords(url, defaultRole, params = {}) {
+  try {
+    const response = await api.get(url, params)
+    const records = normalizeListResponse(response)
 
-  if (defaultRole) {
-    return records.map((record) => ({ ...record, role: record.role || defaultRole }))
+    if (defaultRole) {
+      return records.map((record) => ({ ...record, role: record.role || defaultRole }))
+    }
+
+    return records
+  } catch (error) {
+    console.error(`fetchAdminRecords error for ${url}: status=${error?.status}, message=${error?.message}, details=${JSON.stringify(error?.details)}`)
+    throw error
   }
-
-  return records
 }
 
-async function tryFetchAdminRecords(url, defaultRole) {
+async function tryFetchAdminRecords(url, defaultRole, params = {}) {
   try {
-    return await fetchAdminRecords(url, defaultRole)
+    return await fetchAdminRecords(url, defaultRole, params)
   } catch (error) {
     throw wrapAdminError(error)
   }
@@ -63,16 +68,16 @@ export const adminService = {
     return normalizeAdminRegisterResponse(response)
   },
 
-  getMembers: () => tryFetchAdminRecords(API_ENDPOINTS.ADMIN.MEMBERS, 'member'),
+  getMembers: (params = {}) => tryFetchAdminRecords(API_ENDPOINTS.ADMIN.MEMBERS, 'member', params),
 
-  getTrainers: () => tryFetchAdminRecords(API_ENDPOINTS.ADMIN.TRAINERS, 'trainer'),
+  getTrainers: (params = {}) => tryFetchAdminRecords(API_ENDPOINTS.ADMIN.TRAINERS, 'trainer', params),
 
-  async getMembersList() {
-    return dedupeUsers(await this.getMembers())
+  async getMembersList(params = {}) {
+    return dedupeUsers(await this.getMembers(params))
   },
 
-  async getTrainersList() {
-    return dedupeUsers(await this.getTrainers())
+  async getTrainersList(params = {}) {
+    return dedupeUsers(await this.getTrainers(params))
   },
 
   /**
@@ -120,5 +125,32 @@ export const adminService = {
     }
 
     return combined
+  },
+
+  async deactivateMember(memberId) {
+    try {
+      const response = await api.patch(API_ENDPOINTS.ADMIN.MEMBERS_DEACTIVATE(memberId), {})
+      return response?.data || response
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
+
+  async deactivateTrainer(trainerId) {
+    try {
+      const response = await api.delete(API_ENDPOINTS.ADMIN.TRAINERS_DELETE(trainerId))
+      return response?.data || response
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
+
+  async reactivateTrainer(trainerId) {
+    try {
+      const response = await api.patch(API_ENDPOINTS.ADMIN.TRAINERS_REACTIVATE(trainerId), {})
+      return response?.data || response
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
   },
 }

@@ -22,7 +22,11 @@ export const API_ENDPOINTS = {
     REGISTER: '/admin/register',
     STAFF: '/admin/staff',
     MEMBERS: '/admin/members',
+    MEMBERS_DEACTIVATE: (id) => `/admin/members/${id}/deactivate`,
+    MEMBERS_REACTIVATE: (id) => `/admin/members/${id}/reactivate`,
     TRAINERS: '/admin/trainers',
+    TRAINERS_DELETE: (id) => `/admin/trainers/${id}`,
+    TRAINERS_REACTIVATE: (id) => `/admin/trainers/${id}/reactivate`,
     USERS: '/admin/users',
   },
   // Users
@@ -106,5 +110,9 @@ export const API_ENDPOINTS = {
     DASHBOARD: '/reports/dashboard',
     REVENUE: '/reports/revenue',
     ATTENDANCE: '/reports/attendance',
+  },
+  CHECKIN: {
+    MEMBER_BY_UNIQUE_ID: (uniqueId) => `/checkin/member/${encodeURIComponent(uniqueId)}`,
+    TODAY: '/checkin/today',
   },
 }

@@ -23,12 +23,12 @@ export function useAdminMembersList() {
   const [error, setError] = useState(null)
   const [source, setSource] = useState('idle')
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (params = {}) => {
     setLoading(true)
     setError(null)
 
     try {
-      const apiRecords = await adminService.getMembersList()
+      const apiRecords = await adminService.getMembersList(params)
       const normalized = normalizeMemberList(apiRecords)
       const merged = normalizeMemberList(staffStorage.mergeWithRemote(normalized))
 
@@ -37,6 +37,7 @@ export function useAdminMembersList() {
       return merged
     } catch (err) {
       const message = getApiErrorMessage(err)
+      console.error(`useAdminMembersList error: message=${message}, status=${err?.status}, details=${JSON.stringify(err?.details)}`)
       const localItems = getLocalMembers()
 
       if (localItems.length > 0) {

@@ -9,6 +9,9 @@ const LIST_KEYS = [
   'records',
   'rows',
   'list',
+  'content',
+  'entities',
+  'entries',
 ]
 
 function extractArray(value) {
@@ -16,13 +19,18 @@ function extractArray(value) {
   if (!value || typeof value !== 'object') return null
 
   for (const key of LIST_KEYS) {
-    if (Array.isArray(value[key])) return value[key]
+    const candidate = value[key]
+    if (Array.isArray(candidate)) return candidate
   }
 
   if (value.data && typeof value.data === 'object') {
-    for (const key of LIST_KEYS) {
-      if (Array.isArray(value.data[key])) return value.data[key]
-    }
+    const nested = extractArray(value.data)
+    if (nested) return nested
+  }
+
+  if (value.items && typeof value.items === 'object') {
+    const nested = extractArray(value.items)
+    if (nested) return nested
   }
 
   return null
