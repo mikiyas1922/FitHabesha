@@ -36,6 +36,8 @@ export const API_ENDPOINTS = {
   MEMBERS: {
     LIST: '/members',
     DETAIL: (id) => `/members/${id}`,
+    BY_USER_ID: (userId) => `/members/user/${userId}`,
+    BY_UNIQUE_ID: (uniqueMemberId) => `/members/unique/${encodeURIComponent(uniqueMemberId)}`,
     CREATE: '/members',
     UPDATE: (id) => `/members/${id}`,
     DELETE: (id) => `/members/${id}`,

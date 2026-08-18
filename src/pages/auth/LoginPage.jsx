@@ -96,11 +96,15 @@ export function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <label className="flex items-center gap-2 text-sm text-muted">
                 <input type="checkbox" className="rounded border-border text-primary focus:ring-primary" />
                 Remember me
               </label>
+
+              <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+                Forgot password?
+              </Link>
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={loading}>

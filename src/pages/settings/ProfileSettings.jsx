@@ -1,8 +1,14 @@
 import { User, Mail, Phone, MapPin, Lock, Bell, Shield, CreditCard, Camera, Save, Plus, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useState, useEffect } from 'react'
+import { useAuth } from '../../contexts/AuthContext'
+import { tokenStorage } from '../../services/apiClient'
+import { memberService } from '../../services/memberService'
+
+const ACCESS_DENIED_MESSAGE = 'Access denied. You can only access your own resources.'
 
 export function ProfileSettings() {
+  const { user } = useAuth()
   const [memberId, setMemberId] = useState(null)
   const [formData, setFormData] = useState({
     firstName: '',
@@ -31,26 +37,23 @@ export function ProfileSettings() {
 
   // 1. Fetch Current Member Profile (GET /members/me)
   useEffect(() => {
+    if (user && user.role !== 'member') {
+      setLoading(false)
+      setError(ACCESS_DENIED_MESSAGE)
+      return
+    }
+
     const fetchMemberProfile = async () => {
       try {
         setLoading(true)
         setError(null)
-        const token = localStorage.getItem('token')
+        const token = tokenStorage.getAccessToken()
 
-        const response = await fetch(`${API_BASE_URL}/members/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        })
-
-        if (!response.ok) {
-          if (response.status === 401) throw new Error('Unauthorized. Please log in again.')
-          if (response.status === 404) throw new Error('Member profile not found.')
-          throw new Error(`Failed to load profile (Status: ${response.status})`)
+        if (!token) {
+          throw new Error('Unauthorized. Please log in again.')
         }
 
-        const result = await response.json()
+        const result = await memberService.getCurrentMemberProfile()
 
         if (result.success && result.data) {
           const m = result.data
@@ -73,14 +76,17 @@ export function ProfileSettings() {
           })
         }
       } catch (err) {
-        setError(err.message)
+        const message = err?.status === 403 || /Access denied/i.test(err?.message || '')
+          ? ACCESS_DENIED_MESSAGE
+          : err?.message || 'Unable to load member profile.'
+        setError(message)
       } finally {
         setLoading(false)
       }
     }
 
     fetchMemberProfile()
-  }, [])
+  }, [user])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -90,6 +96,13 @@ export function ProfileSettings() {
   // 2. Update Member Profile (PATCH /members/{id})
   const handleSave = async (e) => {
     if (e) e.preventDefault()
+
+    const currentRole = String(user?.role || '').toLowerCase()
+    if (currentRole !== 'member') {
+      setError(ACCESS_DENIED_MESSAGE)
+      return
+    }
+
     if (!memberId) return
 
     setSaving(true)
@@ -97,37 +110,37 @@ export function ProfileSettings() {
     setSuccessMsg('')
 
     try {
-      const token = localStorage.getItem('token')
+      const token = tokenStorage.getAccessToken()
 
-      // Prepare payload adhering to API schema
-      const payload = {
-        fitness_goal: formData.fitnessGoal,
-        emergency_contact_name: formData.emergencyContactName,
-        emergency_contact_phone: formData.emergencyContactPhone,
-        dietary_restrictions: formData.dietaryRestrictions,
-        date_of_birth: formData.dateOfBirth || undefined,
-        gender: formData.gender || undefined,
-        blood_type: formData.bloodType || undefined,
+      if (!token) {
+        throw new Error('Unauthorized. Please log in again.')
       }
 
-      const response = await fetch(`${API_BASE_URL}/members/${memberId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
+      // Send only valid values to avoid backend validation errors on empty strings.
+      const payload = Object.fromEntries(
+        Object.entries({
+          fitness_goal: formData.fitnessGoal,
+          emergency_contact_name: formData.emergencyContactName,
+          emergency_contact_phone: formData.emergencyContactPhone,
+          dietary_restrictions: formData.dietaryRestrictions,
+          date_of_birth: formData.dateOfBirth || undefined,
+          gender: formData.gender || undefined,
+          blood_type: formData.bloodType || undefined,
+        }).filter(([, value]) => value !== undefined && value !== null && value !== '')
+      )
 
-      const result = await response.json()
+      const result = await memberService.updateMemberProfile(memberId, payload)
 
-      if (!response.ok) {
-        throw new Error(result.message || 'Failed to update member profile.')
+      if (!result?.success) {
+        throw new Error(result?.message || 'Failed to update member profile.')
       }
 
       setSuccessMsg(result.message || 'Profile updated successfully!')
     } catch (err) {
-      setError(err.message)
+      const message = err?.status === 403 || /Access denied/i.test(err?.message || '')
+        ? ACCESS_DENIED_MESSAGE
+        : err?.message || 'Failed to update member profile.'
+      setError(message)
     } finally {
       setSaving(false)
     }

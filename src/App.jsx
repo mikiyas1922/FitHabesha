@@ -4,6 +4,8 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute.jsx'
 import { LandingPage } from './pages/landing/LandingPage.jsx'
 import { LoginPage } from './pages/auth/LoginPage.jsx'
 import { RegisterPage } from './pages/auth/RegisterPage.jsx'
+import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage.jsx'
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage.jsx'
 import { AdminDashboard } from './pages/admin/AdminDashboard.jsx'
 import { MembersManagement } from './pages/admin/MembersManagement.jsx'
 import { StaffManagement } from './pages/admin/StaffManagement.jsx'
@@ -38,6 +40,9 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
         <Route
           path="/admin"
