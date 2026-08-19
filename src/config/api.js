@@ -1,9 +1,7 @@
 // API Configuration
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  'https://gym-management-system-backend-xb5m.onrender.com/api/v1' // 👈 Ensure /v1 is included
-
-export const API_BASE_URL_V1 = API_BASE_URL
+  'https://gym-management-system-backend-xb5m.onrender.com/api'
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -35,12 +33,13 @@ export const API_ENDPOINTS = {
   MEMBERS: {
     LIST: '/members',
     DETAIL: (id) => `/members/${id}`,
-    BY_USER_ID: (userId) => `/members/user/${userId}`,
-    BY_UNIQUE_ID: (uniqueMemberId) => `/members/unique/${encodeURIComponent(uniqueMemberId)}`,
     CREATE: '/members',
     UPDATE: (id) => `/members/${id}`,
     DELETE: (id) => `/members/${id}`,
     PROFILE: (id) => `/members/${id}/profile`,
+    ME: '/members/me',
+    BY_USER_ID: (userId) => `/members/user/${userId}`,
+    BY_UNIQUE_ID: (uniqueMemberId) => `/members/unique/${uniqueMemberId}`,
   },
   // Trainers (Used by both admin & general users)
   TRAINERS: {

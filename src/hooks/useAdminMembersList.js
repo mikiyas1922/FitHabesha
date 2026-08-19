@@ -4,7 +4,23 @@ import { staffStorage } from '../services/staffStorage'
 import { getApiErrorMessage, normalizePaginatedListResponse, normalizeStaff } from '../utils/apiHelpers'
 
 function normalizeMemberList(records) {
-  return records.map((record) => normalizeStaff({ ...record, role: record.role || 'member' }))
+  return records.map((record) => {
+    const normalized = normalizeStaff({ ...record, role: record.role || 'member' })
+    // Map API response fields to frontend expected fields
+    return {
+      ...normalized,
+      uniqueMemberId: record.unique_member_id || normalized.uniqueMemberId,
+      status: record.is_active ? 'active' : 'inactive',
+      subscriptionStatus: record.subscription_status || normalized.subscriptionStatus,
+      tierName: record.tier_name || normalized.tierName,
+      dateOfBirth: record.date_of_birth || normalized.dateOfBirth,
+      fitnessGoal: record.fitness_goal || normalized.fitnessGoal,
+      emergencyContactName: record.emergency_contact_name || normalized.emergencyContactName,
+      emergencyContactPhone: record.emergency_contact_phone || normalized.emergencyContactPhone,
+      dietaryRestrictions: record.dietary_restrictions || normalized.dietaryRestrictions,
+      bloodType: record.blood_type || normalized.bloodType,
+    }
+  })
 }
 
 function getLocalMembers() {
@@ -30,21 +46,34 @@ export function useAdminMembersList() {
 
     try {
       const response = await memberService.getAllMembers({ page: 1, limit: 100, ...params })
-      const normalizedResponse = normalizePaginatedListResponse(response)
-      const apiRecords = normalizedResponse.items || []
+      console.log('Members API response:', response)
+      
+      // Handle different response structures
+      let apiRecords = []
+      let paginationData = { page: params.page || 1, limit: params.limit || 100, total: 0, totalPages: 1 }
+      
+      if (response?.data?.data) {
+        // Paginated response structure: { success: true, data: { data: [...], pagination: {...} } }
+        apiRecords = response.data.data
+        paginationData = response.data.pagination || paginationData
+      } else if (response?.data) {
+        // Simple array response: { success: true, data: [...] }
+        apiRecords = Array.isArray(response.data) ? response.data : [response.data]
+      } else if (Array.isArray(response)) {
+        // Direct array response
+        apiRecords = response
+      }
+      
       const normalized = normalizeMemberList(apiRecords)
       const merged = normalizeMemberList(staffStorage.mergeWithRemote(normalized))
 
       setItems(merged)
       setSource('api')
-      setPagination(
-        normalizedResponse.pagination || {
-          page: params.page || 1,
-          limit: params.limit || 100,
-          total: merged.length,
-          totalPages: 1,
-        }
-      )
+      setPagination({
+        ...paginationData,
+        total: merged.length,
+        totalPages: Math.ceil(merged.length / paginationData.limit)
+      })
       return merged
     } catch (err) {
       const message = getApiErrorMessage(err)

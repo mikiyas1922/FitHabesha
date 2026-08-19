@@ -7,16 +7,13 @@ import { useAuth } from '../contexts/AuthContext'
 
 export function ClassFormModal({ open, onClose, classData, onSuccess }) {
   const { user } = useAuth()
-  const isAdmin = user?.role === 'admin'
-  const isTrainer = user?.role === 'trainer'
-  
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [trainers, setTrainers] = useState([])
   const [loadingTrainers, setLoadingTrainers] = useState(false)
   
   const [formData, setFormData] = useState({
-    trainer_id: classData?.trainer_id || (isTrainer ? user?.id : '') || '',
+    trainer_id: classData?.trainer_id || user?.id || '',
     name: classData?.name || '',
     description: classData?.description || '',
     category: classData?.category || 'hiit',
@@ -27,12 +24,15 @@ export function ClassFormModal({ open, onClose, classData, onSuccess }) {
     location: classData?.location || '',
   })
 
-  // Fetch trainers when modal opens (for admins)
+  const isEditing = !!classData?.id
+  const isAdmin = user?.role === 'admin'
+  const isTrainer = user?.role === 'trainer'
+
   useEffect(() => {
-    if (open && isAdmin) {
+    if (isAdmin && open) {
       fetchTrainers()
     }
-  }, [open, isAdmin])
+  }, [isAdmin, open])
 
   const fetchTrainers = async () => {
     try {
@@ -51,8 +51,6 @@ export function ClassFormModal({ open, onClose, classData, onSuccess }) {
       setLoadingTrainers(false)
     }
   }
-
-  const isEditing = !!classData?.id
 
   const handleSubmit = async (e) => {
     e.preventDefault()
