@@ -1,21 +1,30 @@
 import { api } from './apiClient'
 import { API_ENDPOINTS } from '../config/api'
+import { unwrapResource } from '../utils/apiHelpers'
 
 export const trainerService = {
-  // Pass query parameters (page, limit, search, is_available)
-  getAllTrainers: (params = {}) => api.get(API_ENDPOINTS.TRAINERS.LIST, { params }),
+  getAllTrainers: (params = {}) => api.get(API_ENDPOINTS.TRAINERS.LIST, params),
+
+  getCurrentTrainerProfile: () => api.get(API_ENDPOINTS.TRAINERS.ME),
 
   getTrainerById: (id) => api.get(API_ENDPOINTS.TRAINERS.DETAIL(id)),
 
-  createTrainer: (data) => api.post(API_ENDPOINTS.TRAINERS.CREATE, data),
+  /** PATCH /trainers/{id} */
+  updateTrainer: (id, data) => api.patch(API_ENDPOINTS.TRAINERS.UPDATE(id), data),
 
-  updateTrainer: (id, data) => api.put(API_ENDPOINTS.TRAINERS.UPDATE(id), data),
+  getTrainerSchedule: (id, params = {}) => api.get(API_ENDPOINTS.TRAINERS.SCHEDULE(id), params),
 
-  deleteTrainer: (id) => api.delete(API_ENDPOINTS.TRAINERS.DELETE(id)),
+  getTrainerRoster: (id) => api.get(API_ENDPOINTS.TRAINERS.ROSTER(id)),
 
-  getTrainerClients: (id) => api.get(API_ENDPOINTS.TRAINERS.CLIENTS(id)),
+  getClassRoster: (trainerId, classId) =>
+    api.get(API_ENDPOINTS.TRAINERS.CLASS_ROSTER(trainerId, classId)),
 
-  getTrainerWorkouts: (id) => api.get(`${API_ENDPOINTS.TRAINERS.DETAIL(id)}/workouts`),
+  getTrainerFeedback: (id) => api.get(API_ENDPOINTS.TRAINERS.FEEDBACK(id)),
 
-  getTrainerMealPlans: (id) => api.get(`${API_ENDPOINTS.TRAINERS.DETAIL(id)}/meal-plans`),
+  recordAttendance: (memberProfileId, data = {}) =>
+    api.post(API_ENDPOINTS.TRAINERS.ATTENDANCE(memberProfileId), data),
+
+  unwrapProfile(response) {
+    return unwrapResource(response)
+  },
 }

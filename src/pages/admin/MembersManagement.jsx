@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Search, Trash2, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Table } from '../../components/ui/Table'
@@ -21,24 +21,50 @@ function getAdminListError(error) {
   return error
 }
 
+// Robust helper to determine active status across varying API responses
+const isMemberActive = (member) => {
+  if (!member) return false
+
+  // 1. Check direct booleans / numbers
+  if (typeof member.is_active === 'boolean') return member.is_active
+  if (typeof member.isActive === 'boolean') return member.isActive
+  if (typeof member.is_active === 'number') return member.is_active === 1
+  if (typeof member.isActive === 'number') return member.isActive === 1
+
+  // 2. Check string values
+  if (String(member.is_active).toLowerCase() === 'false') return false
+  if (String(member.is_active).toLowerCase() === 'true') return true
+
+  // 3. Fallback to status strings
+  const statusStr = String(
+    member.status || member.subscription_status || member.account_status || ''
+  ).toLowerCase()
+
+  if (['inactive', 'deactivated', 'disabled', 'suspended'].includes(statusStr)) {
+    return false
+  }
+
+  return true
+}
+
 export function MembersManagement() {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [statusFilter, setStatusFilter] = useState('')
   const [actionTarget, setActionTarget] = useState(null)
-  const [actionType, setActionType] = useState(null) // 'deactivate' or 'reactivate'
+  const [actionType, setActionType] = useState(null) // 'deactivate' | 'reactivate'
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState(null)
-  
-  const { 
-    items = [], 
-    loading, 
-    error, 
-    source, 
-    reload, 
-    addLocalMember, 
-    pagination = { page: 1, limit: 10, total: 0, totalPages: 1 } 
+
+  const {
+    items = [],
+    loading,
+    error,
+    source,
+    reload,
+    addLocalMember,
+    pagination = { page: 1, limit: 10, total: 0, totalPages: 1 },
   } = useAdminMembersList() || {}
 
   const safePagination = {
@@ -64,7 +90,7 @@ export function MembersManagement() {
     if (!query) return items
 
     return items.filter((member) =>
-      [member.id, member.name, member.email, member.phone, member.uniqueMemberId]
+      [member.id, member.user_id, member.name, member.email, member.phone, member.uniqueMemberId, member.unique_member_id]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query))
     )
@@ -80,13 +106,13 @@ export function MembersManagement() {
     }
   }
 
-  const handleDeactivate = async (member) => {
+  const handleDeactivate = (member) => {
     setActionTarget(member)
     setActionType('deactivate')
     setActionError(null)
   }
 
-  const handleReactivate = async (member) => {
+  const handleReactivate = (member) => {
     setActionTarget(member)
     setActionType('reactivate')
     setActionError(null)
@@ -95,20 +121,30 @@ export function MembersManagement() {
   const confirmAction = async () => {
     if (!actionTarget || !actionType) return
 
+    // Ensure target ID resolution (support member ID or user account ID)
+    const targetId =
+      actionTarget.memberProfileId || actionTarget.id || actionTarget.user_id || actionTarget._id
+
+    if (!targetId) {
+      setActionError('Invalid member identifier. Cannot update account status.')
+      return
+    }
+
     setActionLoading(true)
     setActionError(null)
 
     try {
       if (actionType === 'deactivate') {
-        await adminService.deactivateMember(actionTarget.id)
+        await adminService.deactivateMember(targetId)
       } else if (actionType === 'reactivate') {
-        await adminService.reactivateMember(actionTarget.id)
+        await adminService.reactivateMember(targetId)
       }
       setActionTarget(null)
       setActionType(null)
       reload()
     } catch (err) {
-      setActionError(err?.message || `Failed to ${actionType} member`)
+      // Guard against automatic redirect on error response
+      setActionError(err?.response?.data?.message || err?.message || `Failed to ${actionType} member.`)
     } finally {
       setActionLoading(false)
     }
@@ -120,8 +156,7 @@ export function MembersManagement() {
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-foreground">Members</h2>
           <p className="text-sm text-muted">
-            {filteredItems.length} member
-            {filteredItems.length === 1 ? '' : 's'} found.
+            {filteredItems.length} member{filteredItems.length === 1 ? '' : 's'} found.
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {source === 'api' && (
@@ -136,6 +171,7 @@ export function MembersManagement() {
             )}
           </div>
         </div>
+
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
@@ -180,7 +216,7 @@ export function MembersManagement() {
           emptyComponent={
             <EmptyState
               title="No registered members"
-              description="Members registered publicly or via admin will appear here when GET /admin/members responds."
+              description="Members registered publicly or via admin will appear here from GET /members."
             />
           }
         >
@@ -191,33 +227,43 @@ export function MembersManagement() {
                 key: 'uniqueMemberId',
                 header: 'Member ID',
                 className: 'font-mono text-primary font-medium',
+                render: (row) => row.uniqueMemberId || row.unique_member_id || 'N/A',
               },
-              { key: 'name', header: 'Name' },
+              {
+                key: 'name',
+                header: 'Name',
+                render: (row) => row.name || `${row.first_name || ''} ${row.last_name || ''}`.trim() || 'N/A',
+              },
               { key: 'email', header: 'Email' },
               { key: 'phone', header: 'Phone' },
               {
                 key: 'status',
                 header: 'Status',
-                render: (row) => <Badge variant={statusBadge(row.status)}>{row.status}</Badge>,
+                render: (row) => {
+                  const active = isMemberActive(row)
+                  const displayStatus = active ? 'active' : 'inactive'
+                  return <Badge variant={statusBadge(displayStatus)}>{displayStatus}</Badge>
+                },
               },
               { key: 'joinDate', header: 'Joined' },
               {
                 key: 'actions',
                 header: 'Actions',
                 render: (row) => {
-                  const isActive = row.status === 'active'
+                  const active = isMemberActive(row)
                   return (
                     <button
-                      onClick={() => isActive ? handleDeactivate(row) : handleReactivate(row)}
-                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors ${
-                        isActive
+                      type="button"
+                      onClick={() => (active ? handleDeactivate(row) : handleReactivate(row))}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border transition-colors ${
+                        active
                           ? 'border-red-300 text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10'
                           : 'border-green-300 text-green-700 hover:bg-green-50 dark:border-green-500/30 dark:text-green-400 dark:hover:bg-green-500/10'
                       }`}
-                      title={isActive ? 'Deactivate member account' : 'Reactivate member account'}
+                      title={active ? 'Deactivate member account' : 'Reactivate member account'}
                     >
-                      <Trash2 className="size-3" />
-                      {isActive ? 'Deactivate' : 'Reactivate'}
+                      {active ? <Trash2 className="size-3.5" /> : <RotateCcw className="size-3.5" />}
+                      {active ? 'Deactivate' : 'Reactivate'}
                     </button>
                   )
                 },
@@ -231,7 +277,9 @@ export function MembersManagement() {
       {safePagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted">
-            Showing {((safePagination.page - 1) * safePagination.limit) + 1} to {Math.min(safePagination.page * safePagination.limit, safePagination.total)} of {safePagination.total} members
+            Showing {(safePagination.page - 1) * safePagination.limit + 1} to{' '}
+            {Math.min(safePagination.page * safePagination.limit, safePagination.total)} of {safePagination.total}{' '}
+            members
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -257,8 +305,9 @@ export function MembersManagement() {
         </div>
       )}
 
+      {/* Confirmation Modal */}
       {actionTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-md space-y-4">
             <div>
               <h3 className="text-lg font-semibold text-foreground">
@@ -266,7 +315,10 @@ export function MembersManagement() {
               </h3>
               <p className="text-sm text-muted mt-1">
                 Are you sure you want to {actionType === 'deactivate' ? 'deactivate' : 'reactivate'}{' '}
-                <strong>{actionTarget.name}</strong>?
+                <strong>
+                  {actionTarget.name || `${actionTarget.first_name || ''} ${actionTarget.last_name || ''}`}
+                </strong>
+                ?
               </p>
               <p className="text-xs text-muted mt-2">
                 {actionType === 'deactivate'
@@ -283,6 +335,7 @@ export function MembersManagement() {
 
             <div className="flex gap-3 justify-end">
               <button
+                type="button"
                 onClick={() => {
                   setActionTarget(null)
                   setActionType(null)
@@ -293,12 +346,11 @@ export function MembersManagement() {
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={confirmAction}
                 disabled={actionLoading}
                 className={`px-4 py-2 rounded text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center gap-2 ${
-                  actionType === 'deactivate'
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-green-600 hover:bg-green-700'
+                  actionType === 'deactivate' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
                 }`}
               >
                 {actionLoading ? (

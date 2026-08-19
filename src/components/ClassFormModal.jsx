@@ -4,6 +4,7 @@ import { Button } from './ui/Button'
 import { classesService } from '../services/classesService'
 import { trainerService } from '../services/trainerService'
 import { useAuth } from '../contexts/AuthContext'
+import { normalizePaginatedListResponse, unwrapResource } from '../utils/apiHelpers'
 
 export function ClassFormModal({ open, onClose, classData, onSuccess }) {
   const { user } = useAuth()
@@ -13,7 +14,7 @@ export function ClassFormModal({ open, onClose, classData, onSuccess }) {
   const [loadingTrainers, setLoadingTrainers] = useState(false)
   
   const [formData, setFormData] = useState({
-    trainer_id: classData?.trainer_id || user?.id || '',
+    trainer_id: classData?.trainer_id || '',
     name: classData?.name || '',
     description: classData?.description || '',
     category: classData?.category || 'hiit',
@@ -37,15 +38,11 @@ export function ClassFormModal({ open, onClose, classData, onSuccess }) {
   const fetchTrainers = async () => {
     try {
       setLoadingTrainers(true)
-      const response = await trainerService.getAllTrainers()
-      console.log('Trainers response:', response)
-      setTrainers(Array.isArray(response.data) ? response.data : [])
+      const response = await trainerService.getAllTrainers({ page: 1, limit: 100 })
+      const { items } = normalizePaginatedListResponse(response)
+      setTrainers(items)
     } catch (err) {
       console.error('Failed to fetch trainers:', err)
-      // Don't redirect on 401, just show empty trainers list
-      if (err.status === 401) {
-        console.warn('Authentication error fetching trainers, using empty list')
-      }
       setTrainers([])
     } finally {
       setLoadingTrainers(false)
@@ -145,12 +142,23 @@ export function ClassFormModal({ open, onClose, classData, onSuccess }) {
     }
   }
 
-  // Set trainer_id when user changes or modal opens for trainers (only for new classes)
   useEffect(() => {
-    if (open && isTrainer && user?.id && !classData?.trainer_id) {
-      setFormData(prev => ({ ...prev, trainer_id: user.id }))
+    if (!open || !isTrainer || classData?.trainer_id) return
+
+    const loadTrainerProfile = async () => {
+      try {
+        const response = await trainerService.getCurrentTrainerProfile()
+        const profile = unwrapResource(response)
+        if (profile?.id) {
+          setFormData((prev) => ({ ...prev, trainer_id: profile.id }))
+        }
+      } catch (err) {
+        console.error('Failed to load trainer profile for class create:', err)
+      }
     }
-  }, [open, isTrainer, user?.id, classData?.trainer_id])
+
+    loadTrainerProfile()
+  }, [open, isTrainer, classData?.trainer_id])
 
   if (!open) return null
 
@@ -210,11 +218,17 @@ export function ClassFormModal({ open, onClose, classData, onSuccess }) {
                   className="w-full px-4 py-3 border border-border rounded-xl bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all appearance-none cursor-pointer"
                 >
                   <option value="">Select a trainer</option>
-                  {trainers.map((trainer) => (
-                    <option key={trainer.id} value={trainer.id}>
-                      {trainer.name} {trainer.email ? `(${trainer.email})` : ''}
-                    </option>
-                  ))}
+                  {trainers.map((trainer) => {
+                    const label =
+                      `${trainer.first_name || ''} ${trainer.last_name || ''}`.trim() ||
+                      trainer.name ||
+                      trainer.email
+                    return (
+                      <option key={trainer.id} value={trainer.id}>
+                        {label} {trainer.email ? `(${trainer.email})` : ''}
+                      </option>
+                    )
+                  })}
                 </select>
               )}
               {trainers.length === 0 && !loadingTrainers && (

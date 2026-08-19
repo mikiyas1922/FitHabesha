@@ -1,6 +1,6 @@
 import { api } from './apiClient'
 import { API_ENDPOINTS } from '../config/api'
-import { normalizeAdminRegisterResponse, normalizeListResponse } from '../utils/apiHelpers'
+import { normalizeAdminRegisterResponse, normalizeListResponse, unwrapResource } from '../utils/apiHelpers'
 
 function getRecordId(record) {
   return record?.id || record?.user_id || record?.email
@@ -35,30 +35,6 @@ function wrapAdminError(error) {
   return error
 }
 
-async function fetchAdminRecords(url, defaultRole, params = {}) {
-  try {
-    const response = await api.get(url, params)
-    const records = normalizeListResponse(response)
-
-    if (defaultRole) {
-      return records.map((record) => ({ ...record, role: record.role || defaultRole }))
-    }
-
-    return records
-  } catch (error) {
-    console.error(`fetchAdminRecords error for ${url}: status=${error?.status}, message=${error?.message}, details=${JSON.stringify(error?.details)}`)
-    throw error
-  }
-}
-
-async function tryFetchAdminRecords(url, defaultRole, params = {}) {
-  try {
-    return await fetchAdminRecords(url, defaultRole, params)
-  } catch (error) {
-    throw wrapAdminError(error)
-  }
-}
-
 export const adminService = {
   async registerStaff(data) {
     const response = await api.post(API_ENDPOINTS.ADMIN.REGISTER, {
@@ -68,96 +44,86 @@ export const adminService = {
     return normalizeAdminRegisterResponse(response)
   },
 
-  getMembers: (params = {}) => tryFetchAdminRecords(API_ENDPOINTS.ADMIN.MEMBERS, 'member', params),
-
-  getTrainers: (params = {}) => tryFetchAdminRecords(API_ENDPOINTS.ADMIN.TRAINERS, 'trainer', params),
-
-  async getMembersList(params = {}) {
-    return dedupeUsers(await this.getMembers(params))
-  },
-
-  async getTrainersList(params = {}) {
-    return dedupeUsers(await this.getTrainers(params))
+  /**
+   * GET /members — Admin/Reception only.
+   * Returns the raw API body so callers can read pagination.
+   */
+  async getMembers(params = {}) {
+    try {
+      return await api.get(API_ENDPOINTS.MEMBERS.LIST, params)
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
   },
 
   /**
-   * Trainers and receptionists for the Staff page.
+   * GET /trainers — Admin/Reception only.
+   */
+  async getTrainers(params = {}) {
+    try {
+      return await api.get(API_ENDPOINTS.TRAINERS.LIST, params)
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
+
+  async getMembersList(params = {}) {
+    try {
+      const response = await this.getMembers(params)
+      return dedupeUsers(normalizeListResponse(response))
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
+
+  async getTrainersList(params = {}) {
+    try {
+      const response = await this.getTrainers(params)
+      return dedupeUsers(normalizeListResponse(response))
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
+
+  /**
+   * Staff page: trainers from GET /trainers.
+   * There is no reception list endpoint; reception accounts still appear from local register cache.
    */
   async getStaffList() {
-    const errors = []
-    let trainers = []
-    let staffRecords = []
-
-    try {
-      trainers = await this.getTrainersList()
-    } catch (error) {
-      errors.push(error)
-    }
-
-    for (const url of [API_ENDPOINTS.ADMIN.STAFF, API_ENDPOINTS.ADMIN.USERS]) {
-      try {
-        const records = await fetchAdminRecords(url)
-        if (records.length > 0) {
-          staffRecords = records
-          break
-        }
-      } catch (error) {
-        // Ignore 404 errors for fallback endpoints - they may not exist on the backend
-        if (error?.status !== 404) {
-          errors.push(wrapAdminError(error))
-        }
-      }
-    }
-
-    const reception = staffRecords.filter(
-      (record) => record.role === 'reception' || record.role === 'receptionist'
-    )
-
-    const combined = dedupeUsers([...trainers, ...reception])
-    if (combined.length > 0) {
-      return combined
-    }
-
-    // Only throw error if we have non-404 errors
-    const non404Errors = errors.filter(err => err?.status !== 404)
-    if (non404Errors.length > 0) {
-      throw non404Errors[0]
-    }
-
-    return combined
+    return this.getTrainersList()
   },
 
-  async deactivateMember(memberId) {
+  async deactivateMember(memberProfileId) {
     try {
-      const response = await api.patch(API_ENDPOINTS.ADMIN.MEMBERS_DEACTIVATE(memberId), {})
-      return response?.data || response
+      const response = await api.delete(API_ENDPOINTS.ADMIN.MEMBERS_DEACTIVATE(memberProfileId))
+      return unwrapResource(response) || response
     } catch (error) {
       throw wrapAdminError(error)
     }
   },
 
-  async reactivateMember(memberId) {
+  async reactivateMember(memberProfileId) {
     try {
-      const response = await api.patch(API_ENDPOINTS.ADMIN.MEMBERS_REACTIVATE(memberId), {})
-      return response?.data || response
+      const response = await api.patch(API_ENDPOINTS.ADMIN.MEMBERS_REACTIVATE(memberProfileId), {})
+      return unwrapResource(response) || response
     } catch (error) {
       throw wrapAdminError(error)
     }
   },
 
-  async deactivateTrainer(trainerId) {
+  async deactivateTrainer(trainerProfileId) {
     try {
-      const response = await api.delete(API_ENDPOINTS.ADMIN.TRAINERS_DELETE(trainerId))
-      return response?.data || response
+      const response = await api.delete(API_ENDPOINTS.ADMIN.TRAINERS_DEACTIVATE(trainerProfileId))
+      return unwrapResource(response) || response
     } catch (error) {
       throw wrapAdminError(error)
     }
   },
 
-  async reactivateTrainer(trainerId) {
+  async reactivateTrainer(trainerProfileId) {
     try {
-      const response = await api.patch(API_ENDPOINTS.ADMIN.TRAINERS_REACTIVATE(trainerId), {})
-      return response?.data || response
+      const response = await api.patch(API_ENDPOINTS.ADMIN.TRAINERS_REACTIVATE(trainerProfileId), {})
+      return unwrapResource(response) || response
     } catch (error) {
       throw wrapAdminError(error)
     }

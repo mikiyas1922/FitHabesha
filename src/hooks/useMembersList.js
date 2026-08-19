@@ -59,7 +59,7 @@ export function useMembersList(initialFilters = {}) {
       const message = getApiErrorMessage(wrapped)
       setItems([])
       setError(message)
-      throw wrapped
+      return []
     } finally {
       setLoading(false)
     }

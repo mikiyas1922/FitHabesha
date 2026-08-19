@@ -1,51 +1,86 @@
-import { useState, useEffect } from 'react'
-import { Calendar, Clock, Users, Plus, Filter, Search, CheckCircle, XCircle, Star, Loader2 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Calendar, Clock, Users, Filter, Search, CheckCircle, Star, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { classesService } from '../../services/classesService'
+import { bookingService } from '../../services/bookingService'
+import { memberService } from '../../services/memberService'
+import { normalizeListResponse, unwrapResource } from '../../utils/apiHelpers'
 
 export function MemberClasses() {
   const [classes, setClasses] = useState([])
+  const [bookings, setBookings] = useState([])
+  const [memberProfileId, setMemberProfileId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [actionError, setActionError] = useState(null)
+  const [bookingClassId, setBookingClassId] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDiscipline, setSelectedDiscipline] = useState('')
 
-  useEffect(() => {
-    fetchClasses()
-  }, [])
+  const loadData = useCallback(async (discipline) => {
+    setLoading(true)
+    setError(null)
 
-  const fetchClasses = async () => {
     try {
-      setLoading(true)
-      setError(null)
-      const response = await classesService.getClasses({
-        discipline: selectedDiscipline || undefined,
-      })
-      setClasses(Array.isArray(response.data) ? response.data : [])
+      const profileResponse = await memberService.getCurrentMemberProfile()
+      const profile = unwrapResource(profileResponse)
+      const profileId = profile?.id
+      setMemberProfileId(profileId)
+
+      const [classResponse, bookingResponse] = await Promise.all([
+        classesService.getClasses({ discipline: discipline || undefined, limit: 50 }),
+        profileId
+          ? bookingService.getMemberBookings(profileId, { page: 1, limit: 50 })
+          : Promise.resolve({ data: [] }),
+      ])
+
+      setClasses(normalizeListResponse(classResponse))
+      setBookings(normalizeListResponse(bookingResponse))
     } catch (err) {
       setError(err.message || 'Failed to load classes')
-      console.error('Error fetching classes:', err)
       setClasses([])
+      setBookings([])
     } finally {
       setLoading(false)
     }
+  }, [])
+
+  useEffect(() => {
+    loadData(selectedDiscipline)
+  }, [loadData, selectedDiscipline])
+
+  const bookedClassIds = new Set(
+    bookings
+      .filter((booking) => booking.status && booking.status !== 'cancelled')
+      .map((booking) => booking.class_id)
+  )
+
+  const handleBook = async (classId) => {
+    if (!memberProfileId) {
+      setActionError('Member profile is not available. Please complete your profile first.')
+      return
+    }
+
+    setBookingClassId(classId)
+    setActionError(null)
+
+    try {
+      await bookingService.bookClass(memberProfileId, classId)
+      await loadData(selectedDiscipline)
+    } catch (err) {
+      setActionError(err.message || 'Unable to book this class.')
+    } finally {
+      setBookingClassId(null)
+    }
   }
 
-  const handleSearch = async () => {
+  const handleCancel = async (bookingId) => {
+    setActionError(null)
     try {
-      setLoading(true)
-      const response = await classesService.getClasses({
-        discipline: selectedDiscipline || undefined,
-      })
-      const filtered = response.data?.filter(cls =>
-        cls.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cls.trainer_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      ) || []
-      setClasses(filtered)
+      await bookingService.cancelBooking(bookingId)
+      await loadData(selectedDiscipline)
     } catch (err) {
-      setError(err.message || 'Failed to search classes')
-    } finally {
-      setLoading(false)
+      setActionError(err.message || 'Unable to cancel this booking.')
     }
   }
 
@@ -66,45 +101,34 @@ export function MemberClasses() {
     if (!startTime || !endTime) return ''
     const start = new Date(startTime)
     const end = new Date(endTime)
-    const diffMs = end - start
-    const diffMins = Math.round(diffMs / 60000)
+    const diffMins = Math.round((end - start) / 60000)
     return `${diffMins} min`
   }
+
+  const filteredClasses = classes.filter((cls) => {
+    const query = searchTerm.trim().toLowerCase()
+    if (!query) return true
+    return (
+      cls.name?.toLowerCase().includes(query) ||
+      cls.trainer_name?.toLowerCase().includes(query)
+    )
+  })
 
   const classStats = [
     { label: 'Total Classes', value: classes.length.toString(), icon: Calendar },
     { label: 'Available Spots', value: classes.reduce((acc, cls) => acc + (cls.available_spots || 0), 0).toString(), icon: Users },
-    { label: 'Categories', value: [...new Set(classes.map(cls => cls.category))].length.toString(), icon: Star },
+    { label: 'My Bookings', value: bookings.filter((b) => b.status !== 'cancelled').length.toString(), icon: Star },
   ]
 
-  const upcomingClasses = classes
-    .filter(cls => new Date(cls.start_time) > new Date())
+  const upcomingClasses = filteredClasses
+    .filter((cls) => new Date(cls.start_time) > new Date())
     .slice(0, 4)
-    .map(cls => ({
-      id: cls.id,
-      name: cls.name,
-      instructor: cls.trainer_name || 'TBD',
-      time: formatDateTime(cls.start_time),
-      duration: formatDuration(cls.start_time, cls.end_time),
-      capacity: `${cls.current_bookings || 0}/${cls.capacity}`,
-      location: cls.location || 'TBD',
-      booked: false,
-    }))
 
-  const availableClasses = classes
-    .filter(cls => cls.available_spots > 0 && new Date(cls.start_time) > new Date())
-    .map(cls => ({
-      id: cls.id,
-      name: cls.name,
-      instructor: cls.trainer_name || 'TBD',
-      time: formatDateTime(cls.start_time),
-      duration: formatDuration(cls.start_time, cls.end_time),
-      capacity: `${cls.current_bookings || 0}/${cls.capacity}`,
-      location: cls.location || 'TBD',
-      difficulty: cls.difficulty || 'Intermediate',
-    }))
+  const availableClasses = filteredClasses.filter(
+    (cls) => cls.available_spots > 0 && new Date(cls.start_time) > new Date()
+  )
 
-  const myBookings = [] // TODO: Implement booking functionality
+  const myBookings = bookings.filter((booking) => booking.status !== 'cancelled')
 
   if (loading) {
     return (
@@ -119,26 +143,7 @@ export function MemberClasses() {
       <div className="rounded-xl border border-red-200 bg-red-50 p-6">
         <p className="text-red-600 font-medium">Error loading classes</p>
         <p className="text-red-500 text-sm mt-1">{error}</p>
-        <Button onClick={fetchClasses} className="mt-3">Retry</Button>
-      </div>
-    )
-  }
-
-  if (classes.length === 0) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Group Classes</h1>
-            <p className="text-sm text-muted">Browse and book group fitness classes</p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <Calendar className="size-12 text-muted mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No Classes Available</h3>
-          <p className="text-muted mb-4">There are currently no classes scheduled. Check back later!</p>
-          <Button onClick={fetchClasses}>Refresh</Button>
-        </div>
+        <Button onClick={() => loadData(selectedDiscipline)} className="mt-3">Retry</Button>
       </div>
     )
   }
@@ -150,15 +155,18 @@ export function MemberClasses() {
           <h1 className="text-2xl font-bold text-foreground">Group Classes</h1>
           <p className="text-sm text-muted">Browse and book group fitness classes</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="secondary" className="gap-2">
-            <Filter className="size-4" />
-            Filter Classes
-          </Button>
-        </div>
+        <Button variant="secondary" className="gap-2">
+          <Filter className="size-4" />
+          Filter Classes
+        </Button>
       </div>
 
-      {/* Stats Grid */}
+      {actionError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {actionError}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {classStats.map((stat) => {
           const Icon = stat.icon
@@ -175,16 +183,16 @@ export function MemberClasses() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* My Bookings */}
         <div className="rounded-xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-foreground">My Bookings</h3>
-            <Button variant="ghost" size="sm">View All</Button>
           </div>
-
           <div className="space-y-3">
-            {myBookings.map((booking, i) => (
-              <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-surface">
+            {myBookings.length === 0 && (
+              <p className="text-sm text-muted">You have no upcoming bookings.</p>
+            )}
+            {myBookings.map((booking) => (
+              <div key={booking.id} className="flex items-center gap-4 p-3 rounded-lg bg-surface">
                 <div className={`flex size-10 items-center justify-center rounded-full ${
                   booking.status === 'confirmed' ? 'bg-green-100' : 'bg-blue-100'
                 }`}>
@@ -195,34 +203,41 @@ export function MemberClasses() {
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-foreground text-sm">{booking.name}</p>
-                  <p className="text-xs text-muted">{booking.instructor}</p>
+                  <p className="font-medium text-foreground text-sm">{booking.class_name || booking.name}</p>
+                  <p className="text-xs text-muted">{booking.trainer_name || booking.instructor || 'Trainer TBD'}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-foreground">{booking.date}</p>
-                  <p className="text-xs text-muted">{booking.time}</p>
+                  <p className="text-sm text-foreground">{formatDateTime(booking.start_time)}</p>
+                  <p className="text-xs text-muted">{booking.location || booking.status}</p>
+                  <button
+                    type="button"
+                    onClick={() => handleCancel(booking.id)}
+                    className="text-xs text-red-600 mt-1 hover:underline"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Upcoming Classes */}
         <div className="rounded-xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-foreground">Upcoming Classes</h3>
-            <Button variant="ghost" size="sm">View All</Button>
           </div>
-
           <div className="space-y-3">
+            {upcomingClasses.length === 0 && (
+              <p className="text-sm text-muted">No upcoming classes.</p>
+            )}
             {upcomingClasses.map((classItem) => (
               <div key={classItem.id} className="p-3 rounded-lg border border-border bg-surface">
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <p className="font-medium text-foreground text-sm">{classItem.name}</p>
-                    <p className="text-xs text-muted">{classItem.instructor}</p>
+                    <p className="text-xs text-muted">{classItem.trainer_name || 'TBD'}</p>
                   </div>
-                  {classItem.booked && (
+                  {bookedClassIds.has(classItem.id) && (
                     <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                       Booked
                     </span>
@@ -231,14 +246,11 @@ export function MemberClasses() {
                 <div className="flex items-center gap-3 text-xs text-muted">
                   <div className="flex items-center gap-1">
                     <Clock className="size-3" />
-                    <span>{classItem.time}</span>
+                    <span>{formatDateTime(classItem.start_time)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="size-3" />
-                    <span>{classItem.capacity}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span>📍 {classItem.location}</span>
+                    <span>{classItem.current_bookings || 0}/{classItem.capacity}</span>
                   </div>
                 </div>
               </div>
@@ -247,7 +259,6 @@ export function MemberClasses() {
         </div>
       </div>
 
-      {/* Available Classes */}
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-foreground">Available Classes</h3>
@@ -262,7 +273,7 @@ export function MemberClasses() {
                 className="pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
               />
             </div>
-            <select 
+            <select
               value={selectedDiscipline}
               onChange={(e) => setSelectedDiscipline(e.target.value)}
               className="px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -276,70 +287,53 @@ export function MemberClasses() {
               <option value="dance">Dance</option>
               <option value="other">Other</option>
             </select>
-            <Button onClick={handleSearch} size="sm">Search</Button>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {availableClasses.map((classItem) => (
-            <div key={classItem.id} className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="font-medium text-foreground">{classItem.name}</p>
-                  <p className="text-xs text-muted">{classItem.instructor}</p>
+        {availableClasses.length === 0 ? (
+          <p className="text-sm text-muted">No classes with open spots right now.</p>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {availableClasses.map((classItem) => (
+              <div key={classItem.id} className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="font-medium text-foreground">{classItem.name}</p>
+                    <p className="text-xs text-muted">{classItem.trainer_name || 'TBD'}</p>
+                  </div>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                    {classItem.difficulty || 'Intermediate'}
+                  </span>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  classItem.difficulty === 'Beginner' ? 'bg-green-100 text-green-700' :
-                  classItem.difficulty === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-red-100 text-red-700'
-                }`}>
-                  {classItem.difficulty}
-                </span>
+                <div className="space-y-2 mb-4 text-xs text-muted">
+                  <div className="flex items-center gap-2">
+                    <Clock className="size-3" />
+                    <span>{formatDateTime(classItem.start_time)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="size-3" />
+                    <span>{classItem.current_bookings || 0}/{classItem.capacity} · {formatDuration(classItem.start_time, classItem.end_time)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>📍 {classItem.location || 'TBD'}</span>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="w-full"
+                  disabled={bookedClassIds.has(classItem.id) || bookingClassId === classItem.id}
+                  onClick={() => handleBook(classItem.id)}
+                >
+                  {bookedClassIds.has(classItem.id)
+                    ? 'Booked'
+                    : bookingClassId === classItem.id
+                      ? 'Booking...'
+                      : 'Book Now'}
+                </Button>
               </div>
-
-              <div className="space-y-2 mb-4 text-xs text-muted">
-                <div className="flex items-center gap-2">
-                  <Clock className="size-3" />
-                  <span>{classItem.time}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="size-3" />
-                  <span>{classItem.capacity}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>📍 {classItem.location}</span>
-                </div>
-              </div>
-
-              <Button size="sm" className="w-full">
-                Book Now
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="font-semibold text-foreground mb-4">Quick Actions</h3>
-        <div className="grid md:grid-cols-4 gap-4">
-          <Button variant="secondary" className="gap-2 justify-start">
-            <Calendar className="size-4" />
-            View Schedule
-          </Button>
-          <Button variant="secondary" className="gap-2 justify-start">
-            <Filter className="size-4" />
-            Filter by Instructor
-          </Button>
-          <Button variant="secondary" className="gap-2 justify-start">
-            <Star className="size-4" />
-            Favorite Classes
-          </Button>
-          <Button variant="secondary" className="gap-2 justify-start">
-            <Users className="size-4" />
-            Invite Friends
-          </Button>
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

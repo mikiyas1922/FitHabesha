@@ -1,11 +1,25 @@
-import { User, Mail, Phone, MapPin, Lock, Bell, Shield, CreditCard, Camera, Save, Plus, Loader2, AlertCircle } from 'lucide-react'
-import { Button } from '../../components/ui/Button'
 import { useState, useEffect } from 'react'
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Shield,
+  Camera,
+  Save,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react'
+import { Button } from '../../components/ui/Button'
 import { useAuth } from '../../contexts/AuthContext'
 import { tokenStorage } from '../../services/apiClient'
 import { memberService } from '../../services/memberService'
+import { trainerService } from '../../services/trainerService'
+import { unwrapResource } from '../../utils/apiHelpers'
+import { mapBackendRole } from '../../utils/auth'
 
-const ACCESS_DENIED_MESSAGE = 'Access denied. You can only access your own resources.'
+const ACCESS_DENIED_MESSAGE =
+  'Access denied. You can only access your own resources.'
 
 export function ProfileSettings() {
   const { user } = useAuth()
@@ -25,6 +39,12 @@ export function ProfileSettings() {
     uniqueMemberId: '',
     subscriptionStatus: '',
     tierName: '',
+    specialty: '',
+    yearsOfExperience: '',
+    certification: '',
+    hourlyRate: '',
+    bio: '',
+    isAvailable: true,
   })
 
   const [loading, setLoading] = useState(true)
@@ -32,38 +52,32 @@ export function ProfileSettings() {
   const [error, setError] = useState(null)
   const [successMsg, setSuccessMsg] = useState('')
 
-  // Base API configuration - ensure Vite proxy or full URL is set
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+  const role = mapBackendRole(user?.role)
 
-  // 1. Fetch Current Member Profile (GET /members/me)
   useEffect(() => {
-    if (user && user.role !== 'member') {
-      setLoading(false)
-      setError(ACCESS_DENIED_MESSAGE)
-      return
-    }
-
-    const fetchMemberProfile = async () => {
+    const fetchProfile = async () => {
       try {
         setLoading(true)
         setError(null)
         const token = tokenStorage.getAccessToken()
-
         if (!token) {
           throw new Error('Unauthorized. Please log in again.')
         }
 
-        const result = await memberService.getCurrentMemberProfile()
-
-        if (result.success && result.data) {
-          const m = result.data
+        if (role === 'member') {
+          const result = await memberService.getCurrentMemberProfile()
+          const m = unwrapResource(result)
+          if (!m) throw new Error('Unable to load member profile.')
           setMemberId(m.id)
-          setFormData({
+          setFormData((prev) => ({
+            ...prev,
             firstName: m.first_name || '',
             lastName: m.last_name || '',
             email: m.email || '',
             phone: m.phone || '',
-            dateOfBirth: m.date_of_birth ? m.date_of_birth.split('T')[0] : '',
+            dateOfBirth: m.date_of_birth
+              ? String(m.date_of_birth).split('T')[0]
+              : '',
             gender: m.gender || '',
             bloodType: m.blood_type || '',
             fitnessGoal: m.fitness_goal || 'weight_loss',
@@ -73,33 +87,62 @@ export function ProfileSettings() {
             uniqueMemberId: m.unique_member_id || '',
             subscriptionStatus: m.subscription_status || '',
             tierName: m.tier_name || '',
-          })
+          }))
+          return
         }
+
+        if (role === 'trainer') {
+          const result = await trainerService.getCurrentTrainerProfile()
+          const t = unwrapResource(result)
+          if (!t) throw new Error('Unable to load trainer profile.')
+          setMemberId(t.id)
+          setFormData((prev) => ({
+            ...prev,
+            firstName: t.first_name || '',
+            lastName: t.last_name || '',
+            email: t.email || '',
+            phone: t.phone || '',
+            specialty: t.specialty || '',
+            yearsOfExperience: t.years_of_experience ?? '',
+            certification: t.certification || '',
+            hourlyRate: t.hourly_rate ?? '',
+            bio: t.bio || '',
+            isAvailable: t.is_available !== false,
+          }))
+          return
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          firstName: user?.first_name || user?.firstName || '',
+          lastName: user?.last_name || user?.lastName || '',
+          email: user?.email || '',
+          phone: user?.phone || '',
+        }))
       } catch (err) {
-        const message = err?.status === 403 || /Access denied/i.test(err?.message || '')
-          ? ACCESS_DENIED_MESSAGE
-          : err?.message || 'Unable to load member profile.'
+        const message =
+          err?.status === 403 || /Access denied/i.test(err?.message || '')
+            ? ACCESS_DENIED_MESSAGE
+            : err?.message || 'Unable to load profile.'
         setError(message)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchMemberProfile()
-  }, [user])
+    fetchProfile()
+  }, [user, role])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  // 2. Update Member Profile (PATCH /members/{id})
   const handleSave = async (e) => {
     if (e) e.preventDefault()
 
-    const currentRole = String(user?.role || '').toLowerCase()
-    if (currentRole !== 'member') {
-      setError(ACCESS_DENIED_MESSAGE)
+    if (role !== 'member' && role !== 'trainer') {
+      setError('Profile updates for this role are not available on the API.')
       return
     }
 
@@ -111,40 +154,69 @@ export function ProfileSettings() {
 
     try {
       const token = tokenStorage.getAccessToken()
-
       if (!token) {
         throw new Error('Unauthorized. Please log in again.')
       }
 
-      // Match the backend contract for PATCH /members/{id}. Keep the payload minimal
-      // and avoid sending unsupported or empty fields that can trigger validation errors.
-      const payload = Object.fromEntries(
-        Object.entries({
-          fitness_goal: formData.fitnessGoal || undefined,
-          emergency_contact_name: formData.emergencyContactName || undefined,
-          emergency_contact_phone: formData.emergencyContactPhone || undefined,
-          dietary_restrictions: formData.dietaryRestrictions || undefined,
-        }).filter(([, value]) => value !== undefined && value !== null && value !== '')
-      )
-
-      const result = await memberService.updateMemberProfile(memberId, payload)
-
-      if (!result?.success) {
-        throw new Error(result?.message || 'Failed to update member profile.')
+      if (role === 'member') {
+        const payload = Object.fromEntries(
+          Object.entries({
+            fitness_goal: formData.fitnessGoal || undefined,
+            emergency_contact_name: formData.emergencyContactName || undefined,
+            emergency_contact_phone: formData.emergencyContactPhone || undefined,
+            dietary_restrictions: formData.dietaryRestrictions || undefined,
+            date_of_birth: formData.dateOfBirth || undefined,
+            gender: formData.gender || undefined,
+            blood_type: formData.bloodType || undefined,
+          }).filter(
+            ([, value]) => value !== undefined && value !== null && value !== ''
+          )
+        )
+        const result = await memberService.updateMember(memberId, payload)
+        if (result?.success === false) {
+          throw new Error(result?.message || 'Failed to update member profile.')
+        }
+        setSuccessMsg(result.message || 'Profile updated successfully!')
+        return
       }
 
+      const payload = Object.fromEntries(
+        Object.entries({
+          specialty: formData.specialty || undefined,
+          years_of_experience:
+            formData.yearsOfExperience === ''
+              ? undefined
+              : Number(formData.yearsOfExperience),
+          certification: formData.certification || undefined,
+          hourly_rate:
+            formData.hourlyRate === ''
+              ? undefined
+              : Number(formData.hourlyRate),
+          bio: formData.bio || undefined,
+          is_available: formData.isAvailable,
+        }).filter(
+          ([, value]) => value !== undefined && value !== null && value !== ''
+        )
+      )
+      const result = await trainerService.updateTrainer(memberId, payload)
+      if (result?.success === false) {
+        throw new Error(result?.message || 'Failed to update trainer profile.')
+      }
       setSuccessMsg(result.message || 'Profile updated successfully!')
     } catch (err) {
-      const message = err?.status === 403 || /Access denied/i.test(err?.message || '')
-        ? ACCESS_DENIED_MESSAGE
-        : err?.message || 'Failed to update member profile.'
+      const message =
+        err?.status === 403 || /Access denied/i.test(err?.message || '')
+          ? ACCESS_DENIED_MESSAGE
+          : err?.message || 'Failed to update profile.'
       setError(message)
     } finally {
       setSaving(false)
     }
   }
 
-  const initials = `${formData.firstName?.[0] || ''}${formData.lastName?.[0] || ''}`.toUpperCase() || 'M'
+  const initials =
+    `${formData.firstName?.[0] || ''}${formData.lastName?.[0] || ''}`.toUpperCase() ||
+    'M'
 
   if (loading) {
     return (
@@ -160,13 +232,22 @@ export function ProfileSettings() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Profile Settings</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            Profile Settings
+          </h1>
           <p className="text-sm text-muted">
-            Member ID: <span className="font-mono text-foreground font-medium">{formData.uniqueMemberId || 'N/A'}</span>
+            Member ID:{' '}
+            <span className="font-mono text-foreground font-medium">
+              {formData.uniqueMemberId || 'N/A'}
+            </span>
           </p>
         </div>
         <Button onClick={handleSave} disabled={saving} className="gap-2">
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          {saving ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
@@ -189,31 +270,45 @@ export function ProfileSettings() {
         {/* Left Column: Picture & Subscription Tier */}
         <div className="space-y-6">
           <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold text-foreground mb-4">Profile Picture</h3>
+            <h3 className="font-semibold text-foreground mb-4">
+              Profile Picture
+            </h3>
             <div className="text-center">
               <div className="relative inline-block">
                 <div className="size-32 rounded-full bg-primary/10 flex items-center justify-center text-primary text-4xl font-semibold mb-4">
                   {initials}
                 </div>
-                <Button variant="secondary" size="sm" className="absolute bottom-0 right-0 rounded-full gap-1">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute bottom-0 right-0 rounded-full gap-1"
+                >
                   <Camera className="size-3" />
                   Change
                 </Button>
               </div>
-              <p className="text-xs text-muted mt-2">JPG, PNG or GIF. Max 2MB</p>
+              <p className="text-xs text-muted mt-2">
+                JPG, PNG or GIF. Max 2MB
+              </p>
             </div>
           </div>
 
           <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold text-foreground mb-3">Membership Status</h3>
+            <h3 className="font-semibold text-foreground mb-3">
+              Membership Status
+            </h3>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Status:</span>
-                <span className="font-medium text-capitalize text-green-600">{formData.subscriptionStatus || 'Active'}</span>
+                <span className="font-medium text-capitalize text-green-600">
+                  {formData.subscriptionStatus || 'Active'}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted">Tier:</span>
-                <span className="font-medium text-foreground">{formData.tierName || 'Standard'}</span>
+                <span className="font-medium text-foreground">
+                  {formData.tierName || 'Standard'}
+                </span>
               </div>
             </div>
           </div>
@@ -221,12 +316,16 @@ export function ProfileSettings() {
 
         {/* Right Column: Form Inputs */}
         <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6">
-          <h3 className="font-semibold text-foreground mb-4">Personal & Health Details</h3>
+          <h3 className="font-semibold text-foreground mb-4">
+            Personal & Health Details
+          </h3>
           <form onSubmit={handleSave} className="space-y-4">
-            {/* Name Fields (Read-Only or Editable) */}
+            {/* Name Fields */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-muted mb-2">First Name</label>
+                <label className="block text-sm text-muted mb-2">
+                  First Name
+                </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
                   <input
@@ -239,7 +338,9 @@ export function ProfileSettings() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-muted mb-2">Last Name</label>
+                <label className="block text-sm text-muted mb-2">
+                  Last Name
+                </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
                   <input
@@ -256,7 +357,9 @@ export function ProfileSettings() {
             {/* Email & Phone */}
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-muted mb-2">Email Address</label>
+                <label className="block text-sm text-muted mb-2">
+                  Email Address
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
                   <input
@@ -269,7 +372,9 @@ export function ProfileSettings() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-muted mb-2">Phone Number</label>
+                <label className="block text-sm text-muted mb-2">
+                  Phone Number
+                </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
                   <input
@@ -286,7 +391,9 @@ export function ProfileSettings() {
             {/* Date of Birth & Gender */}
             <div className="grid md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm text-muted mb-2">Date of Birth</label>
+                <label className="block text-sm text-muted mb-2">
+                  Date of Birth
+                </label>
                 <input
                   type="date"
                   name="dateOfBirth"
@@ -309,7 +416,9 @@ export function ProfileSettings() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm text-muted mb-2">Blood Type</label>
+                <label className="block text-sm text-muted mb-2">
+                  Blood Type
+                </label>
                 <input
                   type="text"
                   name="bloodType"
@@ -321,67 +430,163 @@ export function ProfileSettings() {
               </div>
             </div>
 
-            {/* Emergency Contacts */}
-            <div className="pt-2 border-t border-border">
-              <h4 className="text-sm font-semibold text-foreground my-3">Emergency Contact</h4>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-muted mb-2">Contact Name</label>
-                  <input
-                    type="text"
-                    name="emergencyContactName"
-                    value={formData.emergencyContactName}
-                    onChange={handleInputChange}
-                    placeholder="Jane Doe"
-                    className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
+            {role === 'member' && (
+              <>
+                <div className="pt-2 border-t border-border">
+                  <h4 className="text-sm font-semibold text-foreground my-3">
+                    Emergency Contact
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-muted mb-2">
+                        Contact Name
+                      </label>
+                      <input
+                        type="text"
+                        name="emergencyContactName"
+                        value={formData.emergencyContactName}
+                        onChange={handleInputChange}
+                        placeholder="Jane Doe"
+                        className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-muted mb-2">
+                        Contact Phone
+                      </label>
+                      <input
+                        type="tel"
+                        name="emergencyContactPhone"
+                        value={formData.emergencyContactPhone}
+                        onChange={handleInputChange}
+                        placeholder="+251 9 88 77-66-55"
+                        className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm text-muted mb-2">Contact Phone</label>
-                  <input
-                    type="tel"
-                    name="emergencyContactPhone"
-                    value={formData.emergencyContactPhone}
-                    onChange={handleInputChange}
-                    placeholder="+251 9 88 77-66-55"
-                    className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-            </div>
 
-            {/* Fitness Goals & Diet */}
-            <div className="pt-2 border-t border-border">
-              <h4 className="text-sm font-semibold text-foreground my-3">Fitness & Health Goals</h4>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-muted mb-2">Fitness Goal</label>
-                  <select
-                    name="fitnessGoal"
-                    value={formData.fitnessGoal}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    <option value="weight_loss">Weight Loss</option>
-                    <option value="muscle_gain">Muscle Gain</option>
-                    <option value="endurance">Endurance</option>
-                    <option value="flexibility">Flexibility</option>
-                    <option value="general_fitness">General Fitness</option>
-                  </select>
+                <div className="pt-2 border-t border-border">
+                  <h4 className="text-sm font-semibold text-foreground my-3">
+                    Fitness & Health Goals
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-muted mb-2">
+                        Fitness Goal
+                      </label>
+                      <select
+                        name="fitnessGoal"
+                        value={formData.fitnessGoal}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      >
+                        <option value="weight_loss">Weight Loss</option>
+                        <option value="muscle_gain">Muscle Gain</option>
+                        <option value="endurance">Endurance</option>
+                        <option value="flexibility">Flexibility</option>
+                        <option value="general_fitness">General Fitness</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-muted mb-2">
+                        Dietary Restrictions
+                      </label>
+                      <input
+                        type="text"
+                        name="dietaryRestrictions"
+                        value={formData.dietaryRestrictions}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Vegan, Lactose Intolerant"
+                        className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {role === 'trainer' && (
+              <div className="pt-2 border-t border-border space-y-4">
+                <h4 className="text-sm font-semibold text-foreground my-3">
+                  Trainer Profile
+                </h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-muted mb-2">
+                      Specialty
+                    </label>
+                    <input
+                      type="text"
+                      name="specialty"
+                      value={formData.specialty}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-muted mb-2">
+                      Years of Experience
+                    </label>
+                    <input
+                      type="number"
+                      name="yearsOfExperience"
+                      value={formData.yearsOfExperience}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-muted mb-2">
+                      Certification
+                    </label>
+                    <input
+                      type="text"
+                      name="certification"
+                      value={formData.certification}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-muted mb-2">
+                      Hourly Rate
+                    </label>
+                    <input
+                      type="number"
+                      name="hourlyRate"
+                      value={formData.hourlyRate}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-muted mb-2">Dietary Restrictions</label>
-                  <input
-                    type="text"
-                    name="dietaryRestrictions"
-                    value={formData.dietaryRestrictions}
+                  <label className="block text-sm text-muted mb-2">Bio</label>
+                  <textarea
+                    name="bio"
+                    value={formData.bio}
                     onChange={handleInputChange}
-                    placeholder="e.g. Vegan, Lactose Intolerant"
+                    rows={3}
                     className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="isAvailable"
+                    checked={formData.isAvailable}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        isAvailable: e.target.checked,
+                      }))
+                    }
+                  />
+                  Available for sessions
+                </label>
               </div>
-            </div>
+            )}
           </form>
         </div>
       </div>

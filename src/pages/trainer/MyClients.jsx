@@ -1,97 +1,109 @@
-import { Search, Filter, MoreVertical, Dumbbell, Target, Calendar, TrendingUp, MessageSquare, Plus, Users } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Search, Dumbbell, Target, Calendar, TrendingUp, Users, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-import { Link } from 'react-router-dom'
-
-const trainerStats = [
-  { label: 'Total Active Clients', value: '12', icon: Users },
-  { label: 'Sessions This Week', value: '18', icon: Calendar },
-  { label: 'Avg Client Progress', value: '67%', icon: TrendingUp },
-]
-
-const clients = [
-  {
-    id: 'FC-8942',
-    name: 'Sarah Connor',
-    goal: 'Weight Loss',
-    progress: 78,
-    status: 'Active',
-    lastSession: '2 days ago',
-    assignedPlan: 'Push / Pull / Legs Hypertrophy',
-    avatar: 'SC',
-  },
-  {
-    id: 'FC-7711',
-    name: 'David Hassel',
-    goal: 'Muscle Building',
-    progress: 91,
-    status: 'Active',
-    lastSession: 'Today',
-    assignedPlan: 'Intermediate Strength',
-    avatar: 'DH',
-  },
-  {
-    id: 'FC-2204',
-    name: 'Marcus Vance',
-    goal: 'Weight Loss',
-    progress: 42,
-    status: 'Active',
-    lastSession: 'Yesterday',
-    assignedPlan: 'HIIT Cardio Focus',
-    avatar: 'MV',
-  },
-  {
-    id: 'FC-4012',
-    name: 'Emily Watson',
-    goal: 'Weight Loss',
-    progress: 65,
-    status: 'Active',
-    lastSession: '3 days ago',
-    assignedPlan: 'Full Body Strength',
-    avatar: 'EW',
-  },
-  {
-    id: 'FC-3398',
-    name: 'John Carter',
-    goal: 'Muscle Building',
-    progress: 55,
-    status: 'Active',
-    lastSession: '1 week ago',
-    assignedPlan: 'Power Building',
-    avatar: 'JC',
-  },
-  {
-    id: 'FC-5114',
-    name: 'Clara Oswald',
-    goal: 'Muscle Building',
-    progress: 72,
-    status: 'Active',
-    lastSession: '4 days ago',
-    assignedPlan: 'Hypertrophy Focus',
-    avatar: 'CO',
-  },
-]
-
-const weeklyActivity = [4, 5, 3, 6, 4, 5, 2]
+import { trainerService } from '../../services/trainerService'
+import { unwrapResource } from '../../utils/apiHelpers'
 
 export function MyClients() {
+  const [roster, setRoster] = useState([])
+  const [trainer, setTrainer] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [search, setSearch] = useState('')
+  const [attendanceTarget, setAttendanceTarget] = useState(null)
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [actionMessage, setActionMessage] = useState('')
+
+  const loadRoster = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const profileResponse = await trainerService.getCurrentTrainerProfile()
+      const profile = unwrapResource(profileResponse)
+      if (!profile?.id) throw new Error('Trainer profile not found.')
+
+      const rosterResponse = await trainerService.getTrainerRoster(profile.id)
+      const payload = unwrapResource(rosterResponse)
+      setTrainer(payload?.trainer || { id: profile.id, full_name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() })
+      setRoster(Array.isArray(payload?.roster) ? payload.roster : [])
+    } catch (err) {
+      setError(err.message || 'Failed to load roster')
+      setRoster([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadRoster()
+  }, [loadRoster])
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return roster
+    return roster.filter((client) =>
+      [client.first_name, client.last_name, client.email, client.unique_member_id, client.phone]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query))
+    )
+  }, [roster, search])
+
+  const handleRecordAttendance = async () => {
+    if (!attendanceTarget?.member_profile_id) return
+    setSaving(true)
+    setActionMessage('')
+    try {
+      await trainerService.recordAttendance(attendanceTarget.member_profile_id, {
+        notes: notes || undefined,
+      })
+      setActionMessage('Personal training attendance recorded.')
+      setAttendanceTarget(null)
+      setNotes('')
+    } catch (err) {
+      setActionMessage(err.message || 'Unable to record attendance.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+        <p className="text-red-600 font-medium">Error loading clients</p>
+        <p className="text-red-500 text-sm mt-1">{error}</p>
+        <Button onClick={loadRoster} className="mt-3">Retry</Button>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
-          <p className="text-sm text-muted">Monitor and assign personal workout and nutrition plans</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="secondary" className="gap-2">
-            <MessageSquare className="size-4" />
-            Messages
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
+        <p className="text-sm text-muted">
+          Assigned members for {trainer?.full_name || 'your roster'} from GET /trainers/{'{id}'}/roster
+        </p>
       </div>
 
-      {/* Stats Grid */}
+      {actionMessage && (
+        <div className="rounded-xl border border-border bg-card p-4 text-sm text-foreground">{actionMessage}</div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {trainerStats.map((stat) => {
+        {[
+          { label: 'Assigned Members', value: String(roster.length), icon: Users },
+          { label: 'Active', value: String(roster.filter((c) => c.is_active !== false).length), icon: TrendingUp },
+          { label: 'With Workout Plan', value: String(roster.filter((c) => c.active_workout_plan).length), icon: Calendar },
+        ].map((stat) => {
           const Icon = stat.icon
           return (
             <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
@@ -105,110 +117,95 @@ export function MyClients() {
         })}
       </div>
 
-      {/* Weekly Activity */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="font-semibold text-foreground mb-4">Weekly Activity</h3>
-        <div className="flex items-end gap-2 h-32">
-          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-            <div key={day} className="flex-1 flex flex-col items-center gap-2">
-              <div 
-                className="w-full rounded-t bg-primary transition-all hover:bg-primary/80"
-                style={{ height: `${(weeklyActivity[i] / 6) * 100}%` }}
-              />
-              <span className="text-xs text-muted">{day}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Clients List */}
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="font-semibold text-foreground">Active Clients</h3>
-          <div className="flex gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-              <input
-                type="text"
-                placeholder="Search by name or ID..."
-                className="pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
-              />
-            </div>
-            <Button variant="ghost" size="sm" className="gap-2">
-              <Filter className="size-4" />
-              Filter
-            </Button>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or ID..."
+              className="pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
+            />
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {clients.map((client) => (
-            <div key={client.id} className="p-4 rounded-xl border border-border bg-surface hover:border-primary/30 transition-colors">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                    {client.avatar}
+        {filtered.length === 0 ? (
+          <p className="text-sm text-muted">No assigned members yet.</p>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((client) => {
+              const name = `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email
+              const initials = name
+                .split(' ')
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()
+
+              return (
+                <div key={client.member_profile_id} className="p-4 rounded-xl border border-border bg-surface">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                      {initials}
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{name}</p>
+                      <p className="text-xs text-muted">{client.unique_member_id}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">{client.name}</p>
-                    <p className="text-xs text-muted">{client.id}</p>
+                  <div className="space-y-2 mb-4 text-xs text-muted">
+                    <div className="flex items-center gap-2">
+                      <Target className="size-3" />
+                      <span>{client.fitness_goal || 'No goal set'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Dumbbell className="size-3" />
+                      <span className="truncate">{client.active_workout_plan || 'No workout plan'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="size-3" />
+                      <span>Assigned {client.assigned_at ? new Date(client.assigned_at).toLocaleDateString() : '—'}</span>
+                    </div>
+                    <p>Subscription: {client.subscription_status || '—'}</p>
                   </div>
-                </div>
-                <Button variant="ghost" size="sm">
-                  <MoreVertical className="size-4" />
-                </Button>
-              </div>
-
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted">Goal Progress</span>
-                  <span className="text-xs font-medium text-foreground">{client.progress}%</span>
-                </div>
-                <div className="h-1.5 bg-border rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${client.progress}%` }}
-                  />
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  <Target className="size-3" />
-                  <span>{client.goal}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  <Dumbbell className="size-3" />
-                  <span className="truncate">{client.assignedPlan}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  <Calendar className="size-3" />
-                  <span>Last session: {client.lastSession}</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Link to={`/trainer/workouts?client=${client.id}`} className="flex-1">
-                  <Button variant="secondary" size="sm" className="w-full">
-                    Assign Plan
+                  <Button size="sm" className="w-full" onClick={() => setAttendanceTarget(client)}>
+                    Record PT attendance
                   </Button>
-                </Link>
-                <Button variant="ghost" size="sm" className="gap-1">
-                  <MessageSquare className="size-3" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-          <p className="text-sm text-muted">Showing 6 of 12 clients</p>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" disabled>Previous</Button>
-            <Button variant="ghost" size="sm">Next</Button>
+      {attendanceTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 space-y-4">
+            <h3 className="text-lg font-semibold">Record attendance</h3>
+            <p className="text-sm text-muted">
+              {attendanceTarget.first_name} {attendanceTarget.last_name} · {attendanceTarget.unique_member_id}
+            </p>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="PT session notes"
+              className="w-full rounded-lg border border-border bg-surface p-3 text-sm"
+              rows={3}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setAttendanceTarget(null)} disabled={saving}>
+                Cancel
+              </Button>
+              <Button onClick={handleRecordAttendance} disabled={saving}>
+                {saving ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

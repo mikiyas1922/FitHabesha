@@ -40,6 +40,18 @@ export function normalizeListResponse(response) {
   return extractArray(response) || []
 }
 
+/** Unwrap `{ success, data: entity }` bodies returned by most GET/PATCH endpoints. */
+export function unwrapResource(response) {
+  if (!response || typeof response !== 'object') return null
+  if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+    if (Array.isArray(response.data.data) || response.data.pagination) {
+      return response.data
+    }
+    return response.data
+  }
+  return response
+}
+
 export function normalizePaginatedListResponse(response) {
   const items = normalizeListResponse(response)
   const rawPagination =
@@ -99,7 +111,8 @@ export function formatPersonName(record) {
 export function normalizeMember(record) {
   if (!record || typeof record !== 'object') return { id: null, name: 'Unknown', status: 'active', raw: {} }
   return {
-    id: record.user_id || record.id,
+    id: record.id || record.user_id,
+    userId: record.user_id,
     memberProfileId: record.id,
     uniqueMemberId: record.unique_member_id || '—',
     name: formatPersonName(record) || record.email || 'Unknown',
@@ -121,7 +134,8 @@ export function normalizeStaff(record) {
   const role = record.role || 'member'
 
   return {
-    id: record.user_id || record.id || record.email,
+    id: record.id || record.user_id || record.email,
+    userId: record.user_id,
     memberProfileId: record.id,
     name: formatPersonName(record) || record.email || 'Unknown',
     email: record.email || '—',
@@ -145,6 +159,7 @@ export function normalizeTrainer(record) {
 
   return {
     id: record.id || record.user_id,
+    userId: record.user_id,
     name: formatPersonName(record) || record.email || 'Unknown',
     email: record.email || '—',
     specialty: record.specialty || specialties[0] || '—',
@@ -153,7 +168,7 @@ export function normalizeTrainer(record) {
     rating: record.rating ?? record.average_rating ?? '—',
     clients: record.clients ?? record.active_clients ?? '—',
     sessions: record.sessions ?? record.total_sessions ?? '—',
-    status: record.status || 'active',
+    status: record.status || (record.is_active === false ? 'inactive' : 'active'),
     raw: record,
   }
 }
@@ -213,17 +228,19 @@ export function normalizeAdminRegisterResponse(response) {
     return { user: null, message: '' }
   }
 
-  if (response.user && typeof response.user === 'object') {
+  const body = response.user ? response : response.data || response
+
+  if (body?.user && typeof body.user === 'object') {
     return {
-      message: response.message || 'User registered successfully.',
-      user: normalizeRegisteredUser(response.user),
+      message: body.message || response.message || 'User registered successfully.',
+      user: normalizeRegisteredUser(body.user),
     }
   }
 
-  if (response.id || response.email || response.user_id) {
+  if (body?.id || body?.email || body?.user_id) {
     return {
-      message: response.message || 'User registered successfully.',
-      user: normalizeRegisteredUser(response),
+      message: body.message || response.message || 'User registered successfully.',
+      user: normalizeRegisteredUser(body),
     }
   }
 

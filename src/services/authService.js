@@ -143,6 +143,7 @@ export const authService = {
 
     const response = await api.post(API_ENDPOINTS.AUTH.REFRESH, {
       refreshToken,
+      refresh_token: refreshToken,
     })
 
     const accessToken = response.accessToken || response.access_token

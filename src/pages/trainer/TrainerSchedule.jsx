@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Calendar, Clock, User, Plus, MoreVertical, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { ClassFormModal } from '../../components/ClassFormModal'
-import { classesService } from '../../services/classesService'
-import { useAuth } from '../../contexts/AuthContext'
+import { trainerService } from '../../services/trainerService'
+import { normalizeListResponse, unwrapResource } from '../../utils/apiHelpers'
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export function TrainerSchedule() {
-  const { user } = useAuth()
   const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -17,19 +16,23 @@ export function TrainerSchedule() {
   const [editingClass, setEditingClass] = useState(null)
 
   useEffect(() => {
-    if (user?.id) {
-      fetchTrainerClasses()
-    }
-  }, [user, currentWeekStart])
+    fetchTrainerClasses()
+  }, [currentWeekStart])
 
   const fetchTrainerClasses = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await classesService.getClasses({
-        trainer_id: user.id,
-      })
-      setClasses(response.data || [])
+      const profileResponse = await trainerService.getCurrentTrainerProfile()
+      const profile = unwrapResource(profileResponse)
+      if (!profile?.id) {
+        throw new Error('Trainer profile not found.')
+      }
+
+      const response = await trainerService.getTrainerSchedule(profile.id)
+      const payload = unwrapResource(response)
+      const schedule = Array.isArray(payload?.schedule) ? payload.schedule : normalizeListResponse(response)
+      setClasses(schedule)
     } catch (err) {
       setError(err.message || 'Failed to load schedule')
       console.error('Error fetching trainer classes:', err)

@@ -3,6 +3,7 @@ import { Plus, Search, Edit, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { ClassFormModal } from '../../components/ClassFormModal'
 import { classesService } from '../../services/classesService'
+import { normalizeListResponse } from '../../utils/apiHelpers'
 
 export function AdminClasses() {
   const [classes, setClasses] = useState([])
@@ -24,7 +25,7 @@ export function AdminClasses() {
       const response = await classesService.getClasses({
         discipline: selectedDiscipline || undefined,
       })
-      setClasses(Array.isArray(response.data) ? response.data : [])
+      setClasses(normalizeListResponse(response))
     } catch (err) {
       setError(err.message || 'Failed to load classes')
       console.error('Error fetching classes:', err)
@@ -40,10 +41,10 @@ export function AdminClasses() {
       const response = await classesService.getClasses({
         discipline: selectedDiscipline || undefined,
       })
-      const filtered = response.data?.filter(cls =>
+      const filtered = normalizeListResponse(response).filter((cls) =>
         cls.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         cls.trainer_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      ) || []
+      )
       setClasses(filtered)
     } catch (err) {
       setError(err.message || 'Failed to search classes')
@@ -53,13 +54,14 @@ export function AdminClasses() {
   }
 
   const handleDelete = async (classId) => {
-    if (!confirm('Are you sure you want to delete this class?')) return
-    
+    if (!confirm('Cancel this class? There is no delete endpoint; this sets status to cancelled.')) return
+
     try {
-      await classesService.deleteClass(classId)
-      setClasses(classes.filter(cls => cls.id !== classId))
+      const response = await classesService.cancelClass(classId)
+      const updated = response?.data || { ...classes.find((cls) => cls.id === classId), status: 'cancelled' }
+      setClasses(classes.map((cls) => (cls.id === classId ? { ...cls, ...updated } : cls)))
     } catch (err) {
-      setError(err.message || 'Failed to delete class')
+      setError(err.message || 'Failed to cancel class')
     }
   }
 
@@ -224,7 +226,7 @@ export function AdminClasses() {
                         <Button variant="ghost" size="sm" onClick={() => setEditingClass(cls)}>
                           <Edit className="size-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(cls.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(cls.id)} title="Cancel class">
                           <Trash2 className="size-4 text-red-500" />
                         </Button>
                       </div>
