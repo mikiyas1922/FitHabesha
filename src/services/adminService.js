@@ -136,6 +136,15 @@ export const adminService = {
     }
   },
 
+  async reactivateMember(memberId) {
+    try {
+      const response = await api.patch(API_ENDPOINTS.ADMIN.MEMBERS_REACTIVATE(memberId), {})
+      return response?.data || response
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
+
   async deactivateTrainer(trainerId) {
     try {
       const response = await api.delete(API_ENDPOINTS.ADMIN.TRAINERS_DELETE(trainerId))

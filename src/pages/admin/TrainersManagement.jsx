@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, Trash2 } from 'lucide-react'
+import { Plus, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Table } from '../../components/ui/Table'
@@ -24,11 +24,26 @@ function getAdminListError(error) {
 export function TrainersManagement() {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [availabilityFilter, setAvailabilityFilter] = useState('')
   const [actionTarget, setActionTarget] = useState(null)
   const [actionType, setActionType] = useState(null) // 'deactivate' or 'reactivate'
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState(null)
-  const { items, loading, error, source, reload, addLocalTrainer } = useAdminTrainersList()
+  const { items, loading, error, source, reload, addLocalTrainer, pagination } = useAdminTrainersList()
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage)
+    const booleanValue = availabilityFilter === '' ? undefined : availabilityFilter === 'available'
+    reload({ page: newPage, limit: pagination.limit, is_available: booleanValue })
+  }
+
+  const handleAvailabilityFilterChange = (availability) => {
+    setAvailabilityFilter(availability)
+    setCurrentPage(1)
+    const booleanValue = availability === '' ? undefined : availability === 'available'
+    reload({ page: 1, limit: pagination.limit, is_available: booleanValue })
+  }
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -118,6 +133,15 @@ export function TrainersManagement() {
               className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
+          <select
+            value={availabilityFilter}
+            onChange={(e) => handleAvailabilityFilterChange(e.target.value)}
+            className="rounded-lg border border-border bg-surface py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            <option value="">All Availability</option>
+            <option value="available">Available</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
           <Button className="gap-2 shrink-0" onClick={() => setModalOpen(true)}>
             <Plus className="size-4" />
             Add Trainer
@@ -184,6 +208,36 @@ export function TrainersManagement() {
           />
         </AsyncState>
       </Card>
+
+      {/* Pagination Controls */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted">
+            Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} trainers
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="size-4" />
+              Previous
+            </button>
+            <span className="text-sm text-muted">
+              Page {pagination.page} of {pagination.totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.totalPages}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {actionTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

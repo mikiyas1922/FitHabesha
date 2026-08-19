@@ -14,6 +14,7 @@ import { AdminReports } from './pages/admin/AdminReports.jsx'
 import { AdminSubscriptions } from './pages/admin/AdminSubscriptions.jsx'
 import { AdminFeedback } from './pages/admin/AdminFeedback.jsx'
 import { AdminClasses } from './pages/admin/AdminClasses.jsx'
+import { TodayCheckins } from './pages/admin/TodayCheckins.jsx'
 import { TrainerDashboard } from './pages/trainer/TrainerDashboard.jsx'
 import { MyClients } from './pages/trainer/MyClients.jsx'
 import { TrainerSchedule } from './pages/trainer/TrainerSchedule.jsx'
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="members" element={<MembersManagement />} />
           <Route path="trainers" element={<TrainersManagement />} />
           <Route path="classes" element={<AdminClasses />} />
+          <Route path="checkins" element={<TodayCheckins />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="subscriptions" element={<AdminSubscriptions />} />
           <Route path="feedback" element={<AdminFeedback />} />
@@ -95,6 +97,7 @@ export default function App() {
           <Route path="lockers" element={<LockerManagement />} />
           <Route path="walk-in" element={<WalkInRegistration />} />
           <Route path="members" element={<MembersDirectory />} />
+          <Route path="checkins" element={<TodayCheckins />} />
           <Route path="settings" element={<ProfileSettings />} />
         </Route>
 

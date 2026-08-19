@@ -17,6 +17,7 @@ import {
   Settings,
   UserCheck,
   Home,
+  Clock,
 } from 'lucide-react'
 import { navByRole } from '../../config/navigation'
 import { useAuth } from '../../contexts/AuthContext'
@@ -40,6 +41,7 @@ const iconMap = {
   Settings,
   UserCheck,
   Home,
+  Clock,
 }
 
 export function Sidebar({ role }) {
