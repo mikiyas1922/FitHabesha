@@ -22,19 +22,40 @@ export function useAdminMembersList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [source, setSource] = useState('idle')
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0
+  })
 
   const reload = useCallback(async (params = {}) => {
     setLoading(true)
     setError(null)
 
     try {
+<<<<<<< HEAD
       const response = await memberService.getAllMembers({ page: 1, limit: 100, ...params })
       const { items: apiRecords } = normalizePaginatedListResponse(response)
       const normalized = normalizeMemberList(apiRecords)
+=======
+      const response = await adminService.getMembers(params)
+      const apiRecords = response.data || response
+      const records = Array.isArray(apiRecords) ? apiRecords : (apiRecords.data || [])
+      const normalized = normalizeMemberList(records)
+>>>>>>> 42f24e5809423f4333f963b33140d8578a4559ba
       const merged = normalizeMemberList(staffStorage.mergeWithRemote(normalized))
 
       setItems(merged)
       setSource('api')
+      
+      // Update pagination if available in response
+      if (apiRecords.pagination) {
+        setPagination(apiRecords.pagination)
+      } else if (response.pagination) {
+        setPagination(response.pagination)
+      }
+      
       return merged
     } catch (err) {
       const message = getApiErrorMessage(err)
@@ -69,5 +90,5 @@ export function useAdminMembersList() {
     [reload]
   )
 
-  return { items, loading, error, source, reload, addLocalMember }
+  return { items, loading, error, source, reload, addLocalMember, pagination }
 }

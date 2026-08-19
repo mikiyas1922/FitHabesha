@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, Trash2 } from 'lucide-react'
+import { Plus, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Table } from '../../components/ui/Table'
@@ -24,11 +24,24 @@ function getAdminListError(error) {
 export function MembersManagement() {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [statusFilter, setStatusFilter] = useState('')
   const [actionTarget, setActionTarget] = useState(null)
   const [actionType, setActionType] = useState(null) // 'deactivate' or 'reactivate'
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState(null)
-  const { items, loading, error, source, reload, addLocalMember } = useAdminMembersList()
+  const { items, loading, error, source, reload, addLocalMember, pagination } = useAdminMembersList()
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage)
+    reload({ page: newPage, limit: pagination.limit, status: statusFilter || undefined })
+  }
+
+  const handleStatusFilterChange = (status) => {
+    setStatusFilter(status)
+    setCurrentPage(1)
+    reload({ page: 1, limit: pagination.limit, status: status || undefined })
+  }
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -118,6 +131,15 @@ export function MembersManagement() {
               className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => handleStatusFilterChange(e.target.value)}
+            className="rounded-lg border border-border bg-surface py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
           <Button className="gap-2 shrink-0" onClick={() => setModalOpen(true)}>
             <Plus className="size-4" />
             Add Member
@@ -188,6 +210,36 @@ export function MembersManagement() {
           />
         </AsyncState>
       </Card>
+
+      {/* Pagination Controls */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted">
+            Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} members
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="size-4" />
+              Previous
+            </button>
+            <span className="text-sm text-muted">
+              Page {pagination.page} of {pagination.totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.totalPages}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {actionTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
