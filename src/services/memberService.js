@@ -2,7 +2,23 @@ import { api } from './apiClient'
 import { API_ENDPOINTS } from '../config/api'
 
 export const memberService = {
-  getAllMembers: () => api.get(API_ENDPOINTS.MEMBERS.LIST),
+  /**
+   * List all members (Admin/Reception only).
+   * @param {Object} filters
+   * @param {number} [filters.page=1]
+   * @param {number} [filters.limit=20]
+   * @param {string} [filters.search] - name, email, or unique member ID
+   * @param {'active'|'inactive'} [filters.status]
+   */
+  getAllMembers: async (filters = {}) => {
+    const params = {
+      page: filters.page || 1,
+      limit: filters.limit || 20,
+      ...(filters.search && { search: filters.search }),
+      ...(filters.status && { status: filters.status }),
+    }
+    return api.get(API_ENDPOINTS.MEMBERS.LIST, params)
+  },
 
   getCurrentMemberProfile: () => api.get('/members/me'),
 

@@ -40,6 +40,32 @@ export function normalizeListResponse(response) {
   return extractArray(response) || []
 }
 
+export function normalizePaginatedListResponse(response) {
+  const items = normalizeListResponse(response)
+  const pagination =
+    response?.data?.pagination ||
+    response?.pagination ||
+    null
+
+  return {
+    items,
+    pagination: pagination || {
+      page: 1,
+      limit: items.length,
+      total: items.length,
+      totalPages: items.length > 0 ? 1 : 0,
+    },
+  }
+}
+
+function resolveMemberStatus(record) {
+  if (record?.status) return record.status
+  if (record?.is_active === false) return 'inactive'
+  if (record?.is_active === true) return 'active'
+  if (record?.subscription_status) return record.subscription_status
+  return 'active'
+}
+
 export function formatPersonName(record) {
   if (record?.name) return record.name
   return `${record?.first_name || record?.firstName || ''} ${record?.last_name || record?.lastName || ''}`.trim()
@@ -47,13 +73,16 @@ export function formatPersonName(record) {
 
 export function normalizeMember(record) {
   return {
-    id: record.unique_member_id || record.id || record.user_id,
+    id: record.user_id || record.id,
+    memberProfileId: record.id,
+    uniqueMemberId: record.unique_member_id || '—',
     name: formatPersonName(record) || record.email || 'Unknown',
     email: record.email || '—',
     phone: record.phone || '—',
-    membershipType: record.membership_type || record.membershipType || record.plan || '—',
+    membershipType:
+      record.tier_name || record.membership_type || record.membershipType || record.plan || '—',
     trainer: record.trainer || record.assigned_trainer || '—',
-    status: record.status || 'active',
+    status: resolveMemberStatus(record),
     joinDate: record.join_date || record.joinDate || record.created_at?.slice?.(0, 10) || '—',
     lastCheckIn: record.last_check_in || record.lastCheckIn,
     visitsPerMonth: record.visits_per_month ?? record.visitsPerMonth,
@@ -65,7 +94,8 @@ export function normalizeStaff(record) {
   const role = record.role || 'member'
 
   return {
-    id: record.unique_member_id || record.id || record.user_id || record.email,
+    id: record.user_id || record.id || record.email,
+    memberProfileId: record.id,
     name: formatPersonName(record) || record.email || 'Unknown',
     email: record.email || '—',
     phone: record.phone || '—',
@@ -74,8 +104,10 @@ export function normalizeStaff(record) {
     specialty: record.specialty || '—',
     certification: record.certification || '—',
     uniqueMemberId: record.unique_member_id || '—',
+    membershipType:
+      record.tier_name || record.membership_type || record.membershipType || record.plan || '—',
     joinDate: record.join_date || record.joinDate || record.created_at?.slice?.(0, 10) || '—',
-    status: record.status || 'active',
+    status: resolveMemberStatus(record),
     raw: record,
   }
 }

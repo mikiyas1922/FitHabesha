@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { adminService } from '../services/adminService'
+import { memberService } from '../services/memberService'
 import { staffStorage } from '../services/staffStorage'
-import { getApiErrorMessage, normalizeStaff } from '../utils/apiHelpers'
+import { getApiErrorMessage, normalizePaginatedListResponse, normalizeStaff } from '../utils/apiHelpers'
 
 function normalizeMemberList(records) {
   return records.map((record) => normalizeStaff({ ...record, role: record.role || 'member' }))
@@ -14,7 +14,7 @@ function getLocalMembers() {
 }
 
 /**
- * Loads registered members from GET /admin/members.
+ * Loads registered members from GET /members.
  * Falls back to members saved locally via POST /admin/register.
  */
 export function useAdminMembersList() {
@@ -28,7 +28,8 @@ export function useAdminMembersList() {
     setError(null)
 
     try {
-      const apiRecords = await adminService.getMembersList(params)
+      const response = await memberService.getAllMembers({ page: 1, limit: 100, ...params })
+      const { items: apiRecords } = normalizePaginatedListResponse(response)
       const normalized = normalizeMemberList(apiRecords)
       const merged = normalizeMemberList(staffStorage.mergeWithRemote(normalized))
 
