@@ -30,17 +30,33 @@ export function MembersManagement() {
   const [actionType, setActionType] = useState(null) // 'deactivate' or 'reactivate'
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState(null)
-  const { items, loading, error, source, reload, addLocalMember, pagination } = useAdminMembersList()
+  
+  const { 
+    items = [], 
+    loading, 
+    error, 
+    source, 
+    reload, 
+    addLocalMember, 
+    pagination = { page: 1, limit: 10, total: 0, totalPages: 1 } 
+  } = useAdminMembersList() || {}
+
+  const safePagination = {
+    page: pagination?.page ?? 1,
+    limit: pagination?.limit ?? 10,
+    total: pagination?.total ?? items.length,
+    totalPages: pagination?.totalPages ?? 1,
+  }
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage)
-    reload({ page: newPage, limit: pagination.limit, status: statusFilter || undefined })
+    reload({ page: newPage, limit: safePagination.limit, status: statusFilter || undefined })
   }
 
   const handleStatusFilterChange = (status) => {
     setStatusFilter(status)
     setCurrentPage(1)
-    reload({ page: 1, limit: pagination.limit, status: status || undefined })
+    reload({ page: 1, limit: safePagination.limit, status: status || undefined })
   }
 
   const filteredItems = useMemo(() => {
@@ -104,7 +120,7 @@ export function MembersManagement() {
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-foreground">Members</h2>
           <p className="text-sm text-muted">
-            View registered members from GET /admin/members. {filteredItems.length} member
+            {filteredItems.length} member
             {filteredItems.length === 1 ? '' : 's'} found.
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -212,26 +228,26 @@ export function MembersManagement() {
       </Card>
 
       {/* Pagination Controls */}
-      {pagination.totalPages > 1 && (
+      {safePagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted">
-            Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} members
+            Showing {((safePagination.page - 1) * safePagination.limit) + 1} to {Math.min(safePagination.page * safePagination.limit, safePagination.total)} of {safePagination.total} members
           </p>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => handlePageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
+              onClick={() => handlePageChange(safePagination.page - 1)}
+              disabled={safePagination.page === 1}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="size-4" />
               Previous
             </button>
             <span className="text-sm text-muted">
-              Page {pagination.page} of {pagination.totalPages}
+              Page {safePagination.page} of {safePagination.totalPages}
             </span>
             <button
-              onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.totalPages}
+              onClick={() => handlePageChange(safePagination.page + 1)}
+              disabled={safePagination.page === safePagination.totalPages}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next

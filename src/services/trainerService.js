@@ -2,7 +2,8 @@ import { api } from './apiClient'
 import { API_ENDPOINTS } from '../config/api'
 
 export const trainerService = {
-  getAllTrainers: () => api.get(API_ENDPOINTS.TRAINERS.LIST),
+  // Pass query parameters (page, limit, search, is_available)
+  getAllTrainers: (params = {}) => api.get(API_ENDPOINTS.TRAINERS.LIST, { params }),
 
   getTrainerById: (id) => api.get(API_ENDPOINTS.TRAINERS.DETAIL(id)),
 

@@ -42,23 +42,47 @@ export function normalizeListResponse(response) {
 
 export function normalizePaginatedListResponse(response) {
   const items = normalizeListResponse(response)
-  const pagination =
+  const rawPagination =
     response?.data?.pagination ||
     response?.pagination ||
-    null
+    response?.data?.meta ||
+    response?.meta ||
+    {}
+
+  const page = rawPagination.page ?? rawPagination.currentPage ?? response?.page ?? 1
+  const limit = rawPagination.limit ?? rawPagination.perPage ?? response?.limit ?? (items.length || 10)
+  const total = rawPagination.total ?? rawPagination.totalItems ?? response?.total ?? items.length
+  const totalPages =
+    rawPagination.totalPages ??
+    rawPagination.pageCount ??
+    response?.totalPages ??
+    (limit > 0 ? Math.ceil(total / limit) : 1)
+
+  const paginationObj = {
+    page,
+    currentPage: page,
+    limit,
+    total,
+    totalItems: total,
+    totalPages,
+  }
 
   return {
     items,
-    pagination: pagination || {
-      page: 1,
-      limit: items.length,
-      total: items.length,
-      totalPages: items.length > 0 ? 1 : 0,
-    },
+    // Nested object for code using res.pagination.totalPages
+    pagination: paginationObj,
+    // Direct top-level properties for code using res.totalPages
+    page,
+    currentPage: page,
+    limit,
+    total,
+    totalItems: total,
+    totalPages,
   }
 }
 
 function resolveMemberStatus(record) {
+  if (!record || typeof record !== 'object') return 'active'
   if (record?.status) return record.status
   if (record?.is_active === false) return 'inactive'
   if (record?.is_active === true) return 'active'
@@ -67,11 +91,13 @@ function resolveMemberStatus(record) {
 }
 
 export function formatPersonName(record) {
+  if (!record || typeof record !== 'object') return ''
   if (record?.name) return record.name
   return `${record?.first_name || record?.firstName || ''} ${record?.last_name || record?.lastName || ''}`.trim()
 }
 
 export function normalizeMember(record) {
+  if (!record || typeof record !== 'object') return { id: null, name: 'Unknown', status: 'active', raw: {} }
   return {
     id: record.user_id || record.id,
     memberProfileId: record.id,
@@ -91,6 +117,7 @@ export function normalizeMember(record) {
 }
 
 export function normalizeStaff(record) {
+  if (!record || typeof record !== 'object') return { id: null, name: 'Unknown', role: 'member', raw: {} }
   const role = record.role || 'member'
 
   return {
@@ -113,6 +140,7 @@ export function normalizeStaff(record) {
 }
 
 export function normalizeTrainer(record) {
+  if (!record || typeof record !== 'object') return { id: null, name: 'Unknown', status: 'active', raw: {} }
   const specialties = record.specialties || (record.specialty ? [record.specialty] : [])
 
   return {
@@ -131,6 +159,7 @@ export function normalizeTrainer(record) {
 }
 
 export function normalizeEquipment(record) {
+  if (!record || typeof record !== 'object') return { id: null, name: '—', status: 'available', raw: {} }
   return {
     id: record.id || record.equipment_id,
     name: record.name || record.equipment_name || '—',
@@ -143,6 +172,7 @@ export function normalizeEquipment(record) {
 }
 
 export function normalizeLocker(record) {
+  if (!record || typeof record !== 'object') return { id: null, number: '—', status: 'available', raw: {} }
   return {
     id: record.id || record.locker_number || record.number,
     number: record.number || record.locker_number || record.id,

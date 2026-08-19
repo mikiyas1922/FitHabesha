@@ -106,7 +106,7 @@ export function TrainersManagement() {
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-foreground">Trainers</h2>
           <p className="text-sm text-muted">
-            View registered trainers from GET /admin/trainers. {filteredItems.length} trainer
+             {filteredItems.length} trainer
             {filteredItems.length === 1 ? '' : 's'} found.
           </p>
           <div className="flex flex-wrap items-center gap-2">

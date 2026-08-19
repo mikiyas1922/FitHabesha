@@ -1,6 +1,5 @@
 import axios from 'axios'
-import { API_BASE_URL, API_ENDPOINTS } from '../config/api'
-
+import { API_BASE_URL } from '../config/api'
 import { STORAGE_KEYS } from '../constants/storage'
 
 // Token management
@@ -27,7 +26,6 @@ const apiClient = axios.create({
   timeout: 60000,
 })
 
-// Log API base URL for debugging
 console.log('API Base URL:', API_BASE_URL)
 
 // Request interceptor to add auth token
@@ -35,17 +33,15 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = tokenStorage.getAccessToken()
     const refreshToken = tokenStorage.getRefreshToken()
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
     if (refreshToken && config.headers) {
       config.headers['x-refresh-token'] = refreshToken
     }
-    // Reduce logging for admin endpoints that may not exist
-    const isAdminEndpoint = config.url?.includes('/admin/')
-    if (!isAdminEndpoint) {
-      console.log('API Request:', config.method?.toUpperCase(), config.baseURL + config.url)
-    }
+
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
     return config
   },
   (error) => {
@@ -57,14 +53,12 @@ apiClient.interceptors.request.use(
 // Response interceptor for error handling and token refresh
 apiClient.interceptors.response.use(
   (response) => {
-    // Check if backend sent a new access token in headers
     const newAccessToken = response.headers['x-access-token']
     if (newAccessToken) {
       tokenStorage.setAccessToken(newAccessToken)
       console.log('Access token refreshed from response header')
     }
 
-    // Check refresh token status from backend middleware
     const refreshStatus = response.headers['x-refresh-status']
     if (refreshStatus === 'expired' || refreshStatus === 'invalid' || refreshStatus === 'revoked') {
       console.warn(`Refresh token ${refreshStatus}, clearing session`)
@@ -78,12 +72,13 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config
     const statusCode = error.response?.status
 
-    // Log the error for debugging
     if (statusCode >= 500) {
-      console.error(`Server error ${statusCode} on ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}: ${JSON.stringify(error.response?.data)}`)
+      console.error(
+        `Server error ${statusCode} on ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}:`,
+        error.response?.data
+      )
     }
 
-    // Do not refresh tokens for auth lifecycle endpoints (especially logout).
     const authUrl = originalRequest?.url || ''
     const skipRefresh =
       authUrl.includes('/auth/logout') ||
@@ -93,9 +88,7 @@ apiClient.interceptors.response.use(
       authUrl.includes('/auth/forgot-password') ||
       authUrl.includes('/auth/reset-password')
 
-    // Handle 401 Unauthorized - redirect to login
     if (statusCode === 401 && !skipRefresh) {
-      // Don't redirect for trainer list calls in modal context
       const isTrainerListCall = originalRequest?.url?.includes('/trainers')
       if (!isTrainerListCall) {
         tokenStorage.clearTokens()
@@ -103,7 +96,6 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Handle other errors
     const apiError = {
       message:
         error.response?.data?.error ||
@@ -118,22 +110,25 @@ apiClient.interceptors.response.use(
   }
 )
 
-// API methods
+// Standardized API methods
 export const api = {
-  get: (url, params) =>
-    apiClient.get(url, { params }).then((res) => res.data),
+  get: (url, config = {}) => {
+    // Flexibly handles both api.get('/path', { page: 1 }) and api.get('/path', { params: { page: 1 } })
+    const axiosConfig = config && config.params ? config : { params: config }
+    return apiClient.get(url, axiosConfig).then((res) => res.data)
+  },
 
-  post: (url, data) =>
-    apiClient.post(url, data).then((res) => res.data),
+  post: (url, data, config = {}) =>
+    apiClient.post(url, data, config).then((res) => res.data),
 
-  put: (url, data) =>
-    apiClient.put(url, data).then((res) => res.data),
+  put: (url, data, config = {}) =>
+    apiClient.put(url, data, config).then((res) => res.data),
 
-  patch: (url, data) =>
-    apiClient.patch(url, data).then((res) => res.data),
+  patch: (url, data, config = {}) =>
+    apiClient.patch(url, data, config).then((res) => res.data),
 
-  delete: (url) =>
-    apiClient.delete(url).then((res) => res.data),
+  delete: (url, config = {}) =>
+    apiClient.delete(url, config).then((res) => res.data),
 }
 
 export default apiClient

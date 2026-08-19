@@ -1,11 +1,9 @@
 // API Configuration
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  'https://gym-management-system-backend-xb5m.onrender.com/api'
+  'https://gym-management-system-backend-xb5m.onrender.com/api/v1' // 👈 Ensure /v1 is included
 
-export const API_BASE_URL_V1 =
-  import.meta.env.VITE_API_BASE_URL ||
-  'https://gym-management-system-backend-xb5m.onrender.com/api/v1'
+export const API_BASE_URL_V1 = API_BASE_URL
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -24,9 +22,6 @@ export const API_ENDPOINTS = {
     MEMBERS: '/admin/members',
     MEMBERS_DEACTIVATE: (id) => `/admin/members/${id}/deactivate`,
     MEMBERS_REACTIVATE: (id) => `/admin/members/${id}/reactivate`,
-    TRAINERS: '/admin/trainers',
-    TRAINERS_DELETE: (id) => `/admin/trainers/${id}`,
-    TRAINERS_REACTIVATE: (id) => `/admin/trainers/${id}/reactivate`,
     USERS: '/admin/users',
   },
   // Users
@@ -47,9 +42,9 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `/members/${id}`,
     PROFILE: (id) => `/members/${id}/profile`,
   },
-  // Trainers
+  // Trainers (Used by both admin & general users)
   TRAINERS: {
-    LIST: '/trainers',
+    LIST: '/trainers', // 👈 Targets GET /api/v1/trainers
     DETAIL: (id) => `/trainers/${id}`,
     CREATE: '/trainers',
     UPDATE: (id) => `/trainers/${id}`,
