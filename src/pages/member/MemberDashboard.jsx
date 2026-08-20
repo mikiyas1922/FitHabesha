@@ -45,7 +45,7 @@ export function MemberDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome back, Sarah!</h1>
+          <h1 className="text-2xl font-bold text-foreground">Welcome back !</h1>
           <p className="text-sm text-muted">Track your fitness journey and stay motivated</p>
         </div>
         <div className="flex gap-3">
