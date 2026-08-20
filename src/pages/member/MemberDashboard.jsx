@@ -1,8 +1,6 @@
 import { Dumbbell, Calendar, TrendingUp, Target, Clock, Award, Play, ChevronRight } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Link } from 'react-router-dom'
-import { useMemberProfile } from '../../hooks/useMemberProfile'
-import { formatPersonName } from '../../utils/apiHelpers'
 
 const memberStats = [
   { label: 'Workouts This Week', value: '4', change: 'Goal: 5', icon: Dumbbell },
@@ -43,44 +41,12 @@ const recentActivity = [
 ]
 
 export function MemberDashboard() {
-  const { profile, loading, error } = useMemberProfile()
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted">Loading your profile...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-600">{error}</div>
-      </div>
-    )
-  }
-
-  const memberName = formatPersonName(profile) || 'Member'
-  const fitnessGoal = profile?.fitness_goal || 'Not set'
-  const memberStatus = profile?.subscription_status || 'unknown'
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome back, {memberName}!</h1>
+          <h1 className="text-2xl font-bold text-foreground">Welcome back !</h1>
           <p className="text-sm text-muted">Track your fitness journey and stay motivated</p>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-              {memberStatus}
-            </span>
-            {fitnessGoal && (
-              <span className="inline-flex items-center rounded-full bg-surface px-2.5 py-0.5 text-xs font-medium text-muted">
-                Goal: {fitnessGoal}
-              </span>
-            )}
-          </div>
         </div>
         <div className="flex gap-3">
           <Link to="/member/workouts">

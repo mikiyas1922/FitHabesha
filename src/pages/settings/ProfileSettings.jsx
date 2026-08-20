@@ -66,12 +66,8 @@ export function ProfileSettings() {
 
         if (role === 'member') {
           const result = await memberService.getCurrentMemberProfile()
-          console.log('Member profile result:', result)
           const m = unwrapResource(result)
-          console.log('Unwrapped member profile:', m)
           if (!m) throw new Error('Unable to load member profile.')
-          console.log('Setting member ID:', m.id)
-          console.log('Setting user ID:', m.user_id)
           setMemberId(m.id)
           setFormData((prev) => ({
             ...prev,
@@ -91,7 +87,6 @@ export function ProfileSettings() {
             uniqueMemberId: m.unique_member_id || '',
             subscriptionStatus: m.subscription_status || '',
             tierName: m.tier_name || '',
-            userId: m.user_id, // Store user_id for permission checks
           }))
           return
         }
@@ -146,21 +141,12 @@ export function ProfileSettings() {
   const handleSave = async (e) => {
     if (e) e.preventDefault()
 
-    console.log('=== PROFILE UPDATE DEBUG INFO ===')
-    console.log('User role:', role)
-    console.log('User object:', user)
-    console.log('Member ID:', memberId)
-    console.log('Form data:', formData)
-
     if (role !== 'member' && role !== 'trainer') {
-      setError(`Profile updates for role "${role}" are not available on the API. Only members and trainers can update their profiles.`)
+      setError('Profile updates for this role are not available on the API.')
       return
     }
 
-    if (!memberId) {
-      setError('Member profile ID not found. Please refresh the page.')
-      return
-    }
+    if (!memberId) return
 
     setSaving(true)
     setError(null)
@@ -173,29 +159,6 @@ export function ProfileSettings() {
       }
 
       if (role === 'member') {
-        console.log('=== MEMBER PROFILE UPDATE ===')
-        console.log('Updating member profile with ID:', memberId)
-        console.log('Current user ID:', user?.id, user?.user_id)
-        
-        // Verify we're updating the correct member profile
-        const currentProfile = await memberService.getCurrentMemberProfile()
-        const profileData = unwrapResource(currentProfile)
-        console.log('Current profile data for verification:', profileData)
-        console.log('Profile user_id:', profileData?.user_id)
-        console.log('Profile id:', profileData?.id)
-        console.log('Profile role:', profileData?.role)
-        
-        // The backend checks that the authenticated user's id matches the user_id in the member profile
-        const authenticatedUserId = user?.id || user?.user_id
-        console.log('Authenticated user ID for comparison:', authenticatedUserId)
-        
-        // Check if there's a mismatch
-        if (profileData?.user_id && authenticatedUserId && profileData.user_id !== authenticatedUserId) {
-          console.error('User ID mismatch! Cannot update another user\'s profile.')
-          console.error('Profile user_id:', profileData.user_id, 'vs Authenticated user ID:', authenticatedUserId)
-          throw new Error('Access denied. You can only update your own profile. Please ensure you are logged in with the correct account.')
-        }
-        
         const payload = Object.fromEntries(
           Object.entries({
             fitness_goal: formData.fitnessGoal || undefined,
@@ -209,35 +172,7 @@ export function ProfileSettings() {
             ([, value]) => value !== undefined && value !== null && value !== ''
           )
         )
-        
-        console.log('Update payload:', payload)
-        
-        let result
-        let lastError = null
-        
-        // Try all possible approaches
-        const approaches = [
-          { name: 'PATCH /members/me', fn: () => memberService.updateCurrentMember(payload) },
-          { name: 'PATCH /members/{user_id}', fn: () => memberService.updateMember(profileData?.user_id, payload) },
-          { name: 'PATCH /members/{profile_id}', fn: () => memberService.updateMember(profileData?.id, payload) },
-        ]
-        
-        for (const approach of approaches) {
-          try {
-            console.log(`Trying: ${approach.name}`)
-            result = await approach.fn()
-            console.log(`Success with: ${approach.name}`, result)
-            break
-          } catch (error) {
-            console.warn(`Failed: ${approach.name}`, error)
-            lastError = error
-          }
-        }
-        
-        if (!result) {
-          throw lastError || new Error('All update approaches failed. The backend API may not support member profile updates or has permission restrictions.')
-        }
-        
+        const result = await memberService.updateMember(memberId, payload)
         if (result?.success === false) {
           throw new Error(result?.message || 'Failed to update member profile.')
         }

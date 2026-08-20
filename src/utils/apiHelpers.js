@@ -125,18 +125,6 @@ export function normalizeMember(record) {
     joinDate: record.join_date || record.joinDate || record.created_at?.slice?.(0, 10) || '—',
     lastCheckIn: record.last_check_in || record.lastCheckIn,
     visitsPerMonth: record.visits_per_month ?? record.visitsPerMonth,
-    // Backend API specific fields
-    dateOfBirth: record.date_of_birth || record.dateOfBirth,
-    gender: record.gender,
-    bloodType: record.blood_type || record.bloodType,
-    dietaryRestrictions: record.dietary_restrictions || record.dietaryRestrictions,
-    fitnessGoal: record.fitness_goal || record.fitnessGoal,
-    emergencyContactName: record.emergency_contact_name || record.emergencyContactName,
-    emergencyContactPhone: record.emergency_contact_phone || record.emergencyContactPhone,
-    subscriptionStatus: record.subscription_status || record.subscriptionStatus,
-    tierName: record.tier_name || record.tierName,
-    isActive: record.is_active !== undefined ? record.is_active : record.isActive,
-    role: record.role,
     raw: record,
   }
 }
