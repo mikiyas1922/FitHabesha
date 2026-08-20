@@ -34,6 +34,10 @@ apiClient.interceptors.request.use(
     const token = tokenStorage.getAccessToken()
     const refreshToken = tokenStorage.getRefreshToken()
 
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
+    console.log('Token present:', !!token)
+    console.log('Refresh token present:', !!refreshToken)
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -41,7 +45,6 @@ apiClient.interceptors.request.use(
       config.headers['x-refresh-token'] = refreshToken
     }
 
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
     return config
   },
   (error) => {

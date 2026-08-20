@@ -24,6 +24,9 @@ export const memberService = {
   /** PATCH /members/{id} — member own profile, or admin/reception any member. */
   updateMember: (id, data) => api.patch(API_ENDPOINTS.MEMBERS.UPDATE(id), data),
 
+  /** PATCH /members/me — update current member's own profile (alternative endpoint) */
+  updateCurrentMember: (data) => api.patch(API_ENDPOINTS.MEMBERS.ME, data),
+
   updateMemberProfile: (id, data) => api.patch(API_ENDPOINTS.MEMBERS.UPDATE(id), data),
 
   unwrapProfile(response) {
