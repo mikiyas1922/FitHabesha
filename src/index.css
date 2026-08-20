@@ -1,25 +1,42 @@
 @import 'tailwindcss';
 
-/* Tailwind CSS v4 @custom-variant syntax - supported by Tailwind but may show as unknown in some linters */
+/* Tailwind CSS v4 @custom-variant syntax */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --app-bg: #F8FAFC;
-  --app-surface: #FFFFFF;
-  --app-foreground: #0B1224;
-  --app-muted: #64748B;
-  --app-border: #CBD5E1;
-  --app-input: #F1F5F9;
-  --app-hover: #E2E8F0;
-  --app-subtle: #F8FAFC;
-  --app-sidebar: #0A1128;
+  /* ==========================================================================
+     LIGHT MODE (Unified Architectural Mirror of Dark Mode)
+     Concept: Fresh Slate Base + Crisp White Glass Surface + Glowing Accents
+     ========================================================================== */
+  --app-bg: #F1F5F9;                     /* Soft Slate canvas to allow white cards to POP */
+  --app-surface: #FFFFFF;                /* Crisp white card surface */
+  --app-foreground: #0B1224;             /* High-contrast deep slate text */
+  --app-muted: #64748B;                   /* Muted body and subtitle text */
+  --app-border: #E2E8F0;                 /* Subtle card borders */
+  --app-input: #F8FAFC;                  /* Distinct inset input field background */
+  --app-hover: #E2E8F0;                  /* Soft hover highlight */
+  --app-subtle: #F8FAFC;                 /* Card interior subtle fills */
+  
+  /* Sidebar Light Variant (Matches Dark Mode Depth Structure) */
+  --app-sidebar: #0B1224;                /* Keeps the high-impact dark sidebar for striking contrast */
   --app-sidebar-hover: #162032;
-  --app-sidebar-active: #0B1224;
+  --app-sidebar-active: #1E293B;
   --app-sidebar-text: #FFFFFF;
   --app-sidebar-text-muted: #94A3B8;
+
+  /* Elevation, Shadows & Brand Glows */
+  --app-primary: #00D084;                /* High-visibility vibrant emerald green */
+  --app-primary-dark: #00B370;
+  --app-primary-light: #33FFB8;
+  --app-accent-glow: rgba(0, 208, 132, 0.18);
+  --app-card-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
 }
 
 .dark {
+  /* ==========================================================================
+     DARK MODE
+     Concept: Deep Space Base + Elevated Navy Surface + Glowing Accents
+     ========================================================================== */
   --app-bg: #0B1224;
   --app-surface: #0A1128;
   --app-foreground: #F8FAFC;
@@ -28,23 +45,36 @@
   --app-input: #162032;
   --app-hover: #1E293B;
   --app-subtle: #060A16;
+
+  /* Sidebar Dark Variant */
   --app-sidebar: #0A1128;
   --app-sidebar-hover: #162032;
   --app-sidebar-active: #0B1224;
   --app-sidebar-text: #FFFFFF;
   --app-sidebar-text-muted: #94A3B8;
+
+  /* Elevation, Shadows & Brand Glows */
+  --app-primary: #00F299;
+  --app-primary-dark: #00C87A;
+  --app-primary-light: #33FFB8;
+  --app-accent-glow: rgba(0, 242, 153, 0.25);
+  --app-card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
 }
 
-/* Tailwind CSS v4 @theme syntax - supported by Tailwind but may show as unknown in some linters */
+/* ============================================================================
+   TAILWIND V4 THEME MAPPING
+   ============================================================================ */
 @theme {
-  --color-primary: #00F299;
-  --color-primary-dark: #00C87A;
-  --color-primary-light: #33FFB8;
+  --color-primary: var(--app-primary);
+  --color-primary-dark: var(--app-primary-dark);
+  --color-primary-light: var(--app-primary-light);
+  
   --color-sidebar: var(--app-sidebar);
   --color-sidebar-hover: var(--app-sidebar-hover);
   --color-sidebar-active: var(--app-sidebar-active);
   --color-sidebar-text: var(--app-sidebar-text);
   --color-sidebar-text-muted: var(--app-sidebar-text-muted);
+  
   --color-surface: var(--app-surface);
   --color-bg: var(--app-bg);
   --color-foreground: var(--app-foreground);
@@ -53,18 +83,20 @@
   --color-input: var(--app-input);
   --color-hover: var(--app-hover);
   --color-subtle: var(--app-subtle);
-  --color-dark: #0A1128;
-  --color-dark-card: #0B1224;
-  --color-dark-bg: #060A16;
-  --color-section-bg: #0B1224;
-  --color-border-secondary: #1F2E45;
+
+  /* Shadows mapped directly to theme tokens */
+  --shadow-glow: 0 0 20px var(--app-accent-glow);
+  --shadow-card: var(--app-card-shadow);
+
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Fluid Responsive Spacing System */
   --spacing-sidebar-width: 260px;
-  --spacing-section-padding: 80px;
-  --spacing-section-padding-vertical: 120px;
-  --spacing-card-padding: 40px;
-  --spacing-gap-large: 64px;
-  --spacing-gap-medium: 32px;
+  --spacing-section-padding: clamp(24px, 5vw, 80px);
+  --spacing-section-padding-vertical: clamp(40px, 8vw, 120px);
+  --spacing-card-padding: clamp(20px, 3vw, 40px);
+  --spacing-gap-large: clamp(32px, 5vw, 64px);
+  --spacing-gap-medium: clamp(16px, 3vw, 32px);
   --radius-card: 16px;
 }
 
@@ -75,6 +107,7 @@
 
   html {
     color-scheme: light;
+    scroll-behavior: smooth;
   }
 
   html.dark {
@@ -88,5 +121,6 @@
     color: var(--app-foreground);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
