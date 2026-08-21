@@ -99,4 +99,11 @@ export const API_ENDPOINTS = {
     REVENUE: '/reports/revenue',
     ATTENDANCE: '/reports/attendance',
   },
+  HEALTH_METRICS: {
+    CREATE: '/health-metrics',
+    DELETE: (id) => `/admin/health-metrics/${id}`,
+    LATEST: (memberId) => `/health-metrics/member/${memberId}/latest`,
+    HISTORY: (memberId) => `/health-metrics/member/${memberId}/history`,
+    RANGE: (memberId) => `/health-metrics/member/${memberId}/range`,
+  },
 }

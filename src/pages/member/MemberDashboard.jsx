@@ -1,6 +1,7 @@
 import { Dumbbell, Calendar, TrendingUp, Target, Clock, Award, Play, ChevronRight } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 
 const memberStats = [
   { label: 'Workouts This Week', value: '4', change: 'Goal: 5', icon: Dumbbell },
@@ -41,11 +42,14 @@ const recentActivity = [
 ]
 
 export function MemberDashboard() {
+  const { user } = useAuth()
+  const firstName = user?.first_name || user?.name?.split(' ')[0] || 'Member'
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome back !</h1>
+          <h1 className="text-2xl font-bold text-foreground">Welcome back, {firstName}!</h1>
           <p className="text-sm text-muted">Track your fitness journey and stay motivated</p>
         </div>
         <div className="flex gap-3">

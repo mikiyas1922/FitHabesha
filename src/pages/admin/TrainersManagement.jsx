@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Search, Trash2, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Table } from '../../components/ui/Table'
@@ -198,7 +198,7 @@ export function TrainersManagement() {
                       }`}
                       title={isActive ? 'Deactivate trainer account' : 'Reactivate trainer account'}
                     >
-                      <Trash2 className="size-3" />
+                      {isActive ? <Trash2 className="size-3" /> : <RotateCcw className="size-3" />}
                       {isActive ? 'Deactivate' : 'Reactivate'}
                     </button>
                   )

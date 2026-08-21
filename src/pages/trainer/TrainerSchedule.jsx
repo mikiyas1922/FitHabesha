@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar, Clock, User, Plus, MoreVertical, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, Clock, User, Plus, MoreVertical, Loader2, Users } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { ClassFormModal } from '../../components/ClassFormModal'
+import { ClassRosterModal } from '../../components/trainer/ClassRosterModal'
 import { trainerService } from '../../services/trainerService'
 import { normalizeListResponse, unwrapResource } from '../../utils/apiHelpers'
 
@@ -14,6 +15,9 @@ export function TrainerSchedule() {
   const [currentWeekStart, setCurrentWeekStart] = useState(new Date())
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingClass, setEditingClass] = useState(null)
+  const [showRosterModal, setShowRosterModal] = useState(false)
+  const [selectedClass, setSelectedClass] = useState(null)
+  const [trainerId, setTrainerId] = useState(null)
 
   useEffect(() => {
     fetchTrainerClasses()
@@ -28,6 +32,7 @@ export function TrainerSchedule() {
       if (!profile?.id) {
         throw new Error('Trainer profile not found.')
       }
+      setTrainerId(profile.id)
 
       const response = await trainerService.getTrainerSchedule(profile.id)
       const payload = unwrapResource(response)
@@ -139,6 +144,11 @@ export function TrainerSchedule() {
     }
   }
 
+  const handleViewRoster = (cls) => {
+    setSelectedClass(cls)
+    setShowRosterModal(true)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -232,16 +242,16 @@ export function TrainerSchedule() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      status === 'completed' 
-                        ? 'bg-green-100 text-green-700' 
+                      status === 'completed'
+                        ? 'bg-green-100 text-green-700'
                         : status === 'in-progress'
                         ? 'bg-blue-100 text-blue-700'
                         : 'bg-yellow-100 text-yellow-700'
                     }`}>
                       {status === 'in-progress' ? 'In Progress' : status}
                     </span>
-                    <Button variant="ghost" size="sm">
-                      <MoreVertical className="size-4" />
+                    <Button variant="ghost" size="sm" onClick={() => handleViewRoster(cls)}>
+                      <Users className="size-4" />
                     </Button>
                   </div>
                 </div>
@@ -329,6 +339,13 @@ export function TrainerSchedule() {
         onClose={() => setEditingClass(null)}
         classData={editingClass}
         onSuccess={handleUpdateSuccess}
+      />
+
+      <ClassRosterModal
+        open={showRosterModal}
+        onClose={() => setShowRosterModal(false)}
+        classData={selectedClass}
+        trainerId={trainerId}
       />
     </div>
   )

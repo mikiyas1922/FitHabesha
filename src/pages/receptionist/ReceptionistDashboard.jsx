@@ -100,8 +100,14 @@ export function ReceptionistDashboard() {
             placeholder="GYM-A3F9-7"
             className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm"
           />
-          <Button onClick={handleLookup} disabled={busy}>Look up</Button>
-          <Button onClick={() => handleCheckIn(false)} disabled={busy}>Check in</Button>
+          <Button onClick={handleLookup} disabled={busy} className="gap-2">
+            <Search className="size-4" />
+            Look up
+          </Button>
+          <Button onClick={() => handleCheckIn(false)} disabled={busy} className="gap-2">
+            <LogIn className="size-4" />
+            Check In
+          </Button>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <input
