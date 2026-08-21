@@ -5,59 +5,59 @@
 
 :root {
   /* ==========================================================================
-     LIGHT MODE (Unified Architectural Mirror of Dark Mode)
-     Concept: Fresh Slate Base + Crisp White Glass Surface + Glowing Accents
+     LIGHT MODE (Based on #0A1128, #1E293B, #00DF82 gradient)
+     Concept: Light Navy Base + Slate Surface + Vibrant Green Accents
      ========================================================================== */
-  --app-bg: #F1F5F9;                     /* Soft Slate canvas to allow white cards to POP */
-  --app-surface: #FFFFFF;                /* Crisp white card surface */
-  --app-foreground: #0B1224;             /* High-contrast deep slate text */
+  --app-bg: #F1F5F9;                     /* Clean light slate background */
+  --app-surface: #F8FAFC;                /* Light slate surface (light tint of #1E293B) */
+  --app-foreground: #0A1128;             /* Deep navy text */
   --app-muted: #64748B;                   /* Muted body and subtitle text */
-  --app-border: #E2E8F0;                 /* Subtle card borders */
-  --app-input: #F8FAFC;                  /* Distinct inset input field background */
+  --app-border: #CBD5E1;                 /* Subtle card borders */
+  --app-input: #F1F5F9;                  /* Distinct inset input field background */
   --app-hover: #E2E8F0;                  /* Soft hover highlight */
-  --app-subtle: #F8FAFC;                 /* Card interior subtle fills */
-  
-  /* Sidebar Light Variant (Matches Dark Mode Depth Structure) */
-  --app-sidebar: #0B1224;                /* Keeps the high-impact dark sidebar for striking contrast */
-  --app-sidebar-hover: #162032;
-  --app-sidebar-active: #1E293B;
+  --app-subtle: #F1F5F9;                 /* Card interior subtle fills */
+
+  /* Sidebar Light Variant */
+  --app-sidebar: #0A1128;                /* Deep navy sidebar */
+  --app-sidebar-hover: #1E293B;
+  --app-sidebar-active: #162032;
   --app-sidebar-text: #FFFFFF;
   --app-sidebar-text-muted: #94A3B8;
 
   /* Elevation, Shadows & Brand Glows */
-  --app-primary: #00D084;                /* High-visibility vibrant emerald green */
-  --app-primary-dark: #00B370;
-  --app-primary-light: #33FFB8;
-  --app-accent-glow: rgba(0, 208, 132, 0.18);
-  --app-card-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+  --app-primary: #00DF82;                /* Vibrant green from gradient */
+  --app-primary-dark: #00B86A;
+  --app-primary-light: #33F5A8;
+  --app-accent-glow: rgba(0, 223, 130, 0.15);
+  --app-card-shadow: 0 10px 30px -10px rgba(10, 17, 40, 0.08), 0 4px 6px -2px rgba(10, 17, 40, 0.03);
 }
 
 .dark {
   /* ==========================================================================
-     DARK MODE
-     Concept: Deep Space Base + Elevated Navy Surface + Glowing Accents
+     DARK MODE (Based on #0A1128, #1E293B, #00DF82 gradient)
+     Concept: Deep Navy Base + Elevated Slate Surface + Glowing Green Accents
      ========================================================================== */
-  --app-bg: #0B1224;
-  --app-surface: #0A1128;
+  --app-bg: #0A1128;
+  --app-surface: #1E293B;
   --app-foreground: #F8FAFC;
   --app-muted: #94A3B8;
-  --app-border: #1E293B;
+  --app-border: #334155;
   --app-input: #162032;
-  --app-hover: #1E293B;
-  --app-subtle: #060A16;
+  --app-hover: #334155;
+  --app-subtle: #0D1525;
 
   /* Sidebar Dark Variant */
   --app-sidebar: #0A1128;
-  --app-sidebar-hover: #162032;
-  --app-sidebar-active: #0B1224;
+  --app-sidebar-hover: #1E293B;
+  --app-sidebar-active: #162032;
   --app-sidebar-text: #FFFFFF;
   --app-sidebar-text-muted: #94A3B8;
 
   /* Elevation, Shadows & Brand Glows */
-  --app-primary: #00F299;
-  --app-primary-dark: #00C87A;
-  --app-primary-light: #33FFB8;
-  --app-accent-glow: rgba(0, 242, 153, 0.25);
+  --app-primary: #00DF82;
+  --app-primary-dark: #00B86A;
+  --app-primary-light: #33F5A8;
+  --app-accent-glow: rgba(0, 223, 130, 0.25);
   --app-card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
 }
 

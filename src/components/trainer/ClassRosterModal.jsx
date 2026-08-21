@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Users, Calendar, Clock, X, Loader2 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { trainerService } from '../../services/trainerService'
@@ -27,9 +27,11 @@ export function ClassRosterModal({ open, onClose, classData, trainerId }) {
   }
 
   // Load roster when modal opens
-  if (open && roster.length === 0 && !loading && !error) {
-    loadRoster()
-  }
+  useEffect(() => {
+    if (open && classData?.id && trainerId) {
+      loadRoster()
+    }
+  }, [open, classData?.id, trainerId])
 
   if (!open) return null
 
