@@ -9,12 +9,16 @@ import {
   Save,
   Loader2,
   AlertCircle,
+  TrendingUp,
+  Activity,
+  Plus,
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../../contexts/AuthContext'
 import { tokenStorage } from '../../services/apiClient'
 import { memberService } from '../../services/memberService'
 import { trainerService } from '../../services/trainerService'
+import { healthMetricsService } from '../../services/healthMetricsService'
 import { unwrapResource } from '../../utils/apiHelpers'
 import { mapBackendRole } from '../../utils/auth'
 
@@ -52,6 +56,20 @@ export function ProfileSettings() {
   const [error, setError] = useState(null)
   const [successMsg, setSuccessMsg] = useState('')
 
+  const [healthMetrics, setHealthMetrics] = useState({
+    weight_kg: '',
+    height_cm: '',
+    blood_type: '',
+    dietary_restrictions: '',
+    body_fat_percentage: '',
+    muscle_mass_kg: '',
+    waist_cm: '',
+    notes: '',
+  })
+  const [loadingHealth, setLoadingHealth] = useState(false)
+  const [savingHealth, setSavingHealth] = useState(false)
+  const [showHealthForm, setShowHealthForm] = useState(false)
+
   const role = mapBackendRole(user?.role)
 
   useEffect(() => {
@@ -88,6 +106,13 @@ export function ProfileSettings() {
             subscriptionStatus: m.subscription_status || '',
             tierName: m.tier_name || '',
           }))
+          
+          // Fetch health metrics using user_id (UUID) instead of profile id
+          const memberUserId = m.user_id || m.id
+          console.log('Member profile ID:', m.id)
+          console.log('Member user_id:', m.user_id)
+          console.log('Using ID for health metrics:', memberUserId)
+          fetchHealthMetrics(memberUserId)
           return
         }
 
@@ -133,9 +158,71 @@ export function ProfileSettings() {
     fetchProfile()
   }, [user, role])
 
+  const fetchHealthMetrics = async (memberId) => {
+    try {
+      setLoadingHealth(true)
+      console.log('Fetching health metrics for memberId:', memberId)
+      const metrics = await healthMetricsService.getLatestMetrics(memberId)
+      console.log('Health metrics response:', metrics)
+      if (metrics) {
+        setHealthMetrics({
+          weight_kg: metrics.weight_kg || '',
+          height_cm: metrics.height_cm || '',
+          blood_type: metrics.blood_type || '',
+          dietary_restrictions: metrics.dietary_restrictions || '',
+          body_fat_percentage: metrics.body_fat_percentage || '',
+          muscle_mass_kg: metrics.muscle_mass_kg || '',
+          waist_cm: metrics.waist_cm || '',
+          notes: metrics.notes || '',
+        })
+      }
+    } catch (err) {
+      // No metrics yet is okay
+      console.error('Failed to fetch health metrics:', err)
+      console.error('Error status:', err?.status)
+      console.error('Error message:', err?.message)
+    } finally {
+      setLoadingHealth(false)
+    }
+  }
+
+  const handleSaveHealthMetrics = async (e) => {
+    e.preventDefault()
+    if (!memberId) return
+
+    setSavingHealth(true)
+    setError(null)
+
+    try {
+      const metricsData = {
+        member_id: memberId,
+        weight_kg: parseFloat(healthMetrics.weight_kg) || 0,
+        height_cm: parseFloat(healthMetrics.height_cm) || 0,
+        blood_type: healthMetrics.blood_type || '',
+        dietary_restrictions: healthMetrics.dietary_restrictions || '',
+        body_fat_percentage: parseFloat(healthMetrics.body_fat_percentage) || 0,
+        muscle_mass_kg: parseFloat(healthMetrics.muscle_mass_kg) || 0,
+        waist_cm: parseFloat(healthMetrics.waist_cm) || 0,
+        notes: healthMetrics.notes || '',
+      }
+      await healthMetricsService.saveHealthMetrics(metricsData)
+      setSuccessMsg('Health metrics saved successfully!')
+      setShowHealthForm(false)
+    } catch (err) {
+      setError(err.message || 'Failed to save health metrics')
+    } finally {
+      setSavingHealth(false)
+    }
+  }
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleHealthInputChange = (e) => {
+    const { name, value } = e.target
+    setHealthMetrics((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSave = async (e) => {
@@ -502,6 +589,164 @@ export function ProfileSettings() {
                       />
                     </div>
                   </div>
+                </div>
+
+                <div className="pt-2 border-t border-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-foreground">
+                      Health Metrics
+                    </h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowHealthForm(!showHealthForm)}
+                      className="gap-1"
+                    >
+                      {showHealthForm ? 'Cancel' : <><Plus className="size-3" /> Update</>}
+                    </Button>
+                  </div>
+
+                  {!showHealthForm && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-3 rounded-lg bg-surface">
+                        <p className="text-xs text-muted">Weight</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {healthMetrics.weight_kg ? `${healthMetrics.weight_kg} kg` : '—'}
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-surface">
+                        <p className="text-xs text-muted">Height</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {healthMetrics.height_cm ? `${healthMetrics.height_cm} cm` : '—'}
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-surface">
+                        <p className="text-xs text-muted">BMI</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {healthMetrics.weight_kg && healthMetrics.height_cm
+                            ? (healthMetrics.weight_kg / Math.pow(healthMetrics.height_cm / 100, 2)).toFixed(1)
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-surface">
+                        <p className="text-xs text-muted">Body Fat</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {healthMetrics.body_fat_percentage ? `${healthMetrics.body_fat_percentage}%` : '—'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {showHealthForm && (
+                    <form onSubmit={handleSaveHealthMetrics} className="space-y-4">
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-xs text-muted mb-1">Weight (kg)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            name="weight_kg"
+                            value={healthMetrics.weight_kg}
+                            onChange={handleHealthInputChange}
+                            placeholder="e.g. 75"
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted mb-1">Height (cm)</label>
+                          <input
+                            type="number"
+                            name="height_cm"
+                            value={healthMetrics.height_cm}
+                            onChange={handleHealthInputChange}
+                            placeholder="e.g. 180"
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted mb-1">Blood Type</label>
+                          <input
+                            type="text"
+                            name="blood_type"
+                            value={healthMetrics.blood_type}
+                            onChange={handleHealthInputChange}
+                            placeholder="e.g. A+"
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-xs text-muted mb-1">Body Fat (%)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            name="body_fat_percentage"
+                            value={healthMetrics.body_fat_percentage}
+                            onChange={handleHealthInputChange}
+                            placeholder="e.g. 15"
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted mb-1">Muscle Mass (kg)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            name="muscle_mass_kg"
+                            value={healthMetrics.muscle_mass_kg}
+                            onChange={handleHealthInputChange}
+                            placeholder="e.g. 35"
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted mb-1">Waist (cm)</label>
+                          <input
+                            type="number"
+                            name="waist_cm"
+                            value={healthMetrics.waist_cm}
+                            onChange={handleHealthInputChange}
+                            placeholder="e.g. 82"
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-muted mb-1">Dietary Restrictions</label>
+                          <input
+                            type="text"
+                            name="dietary_restrictions"
+                            value={healthMetrics.dietary_restrictions}
+                            onChange={handleHealthInputChange}
+                            placeholder="e.g. Gluten-Free, Vegan"
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted mb-1">Notes</label>
+                          <input
+                            type="text"
+                            name="notes"
+                            value={healthMetrics.notes}
+                            onChange={handleHealthInputChange}
+                            placeholder="Optional notes..."
+                            className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="submit" size="sm" disabled={savingHealth} className="gap-1">
+                          {savingHealth ? <Loader2 className="size-3 animate-spin" /> : <Save className="size-3" />}
+                          Save Metrics
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setShowHealthForm(false)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               </>
             )}

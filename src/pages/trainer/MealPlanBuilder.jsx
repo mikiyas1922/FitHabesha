@@ -1,6 +1,9 @@
-import { Plus, Trash2, Search, Save, Apple, Beef, Fish, Wheat, Clock, Target } from 'lucide-react'
+import { Plus, Trash2, Search, Save, Apple, Beef, Fish, Wheat, Clock, Target, Loader2, Edit } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { templatesService } from '../../services/templatesService'
+import { trainerService } from '../../services/trainerService'
+import { unwrapResource } from '../../utils/apiHelpers'
 
 const mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Post-Workout']
 
@@ -22,25 +25,68 @@ const foodLibrary = [
   { id: 15, name: 'Olive Oil', category: 'Fats', calories: 119, protein: 0, carbs: 0, fat: 14 },
 ]
 
-const mealTemplates = [
-  { name: 'High Protein Muscle Building', calories: 2500, protein: 180, carbs: 250, fat: 80 },
-  { name: 'Balanced Weight Loss', calories: 1800, protein: 150, carbs: 150, fat: 60 },
-  { name: 'Low Carb Keto', calories: 2000, protein: 140, carbs: 50, fat: 140 },
-  { name: 'Endurance Athlete', calories: 3000, protein: 160, carbs: 400, fat: 80 },
-]
-
 export function MealPlanBuilder() {
   const [selectedFoods, setSelectedFoods] = useState([])
   const [planName, setPlanName] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [targetCalories, setTargetCalories] = useState(2000)
+  const [mealPlans, setMealPlans] = useState([])
+  const [loadingPlans, setLoadingPlans] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+  const [trainerId, setTrainerId] = useState(null)
+  const [editingPlan, setEditingPlan] = useState(null)
 
-  const filteredFoods = selectedCategory === 'All' 
-    ? foodLibrary 
+  const [planDetails, setPlanDetails] = useState({
+    goal_type: 'weight_loss',
+    calories_target: 2000,
+    protein_g: 150,
+    carbs_g: 180,
+    fat_g: 60,
+    description: ''
+  })
+
+  const fetchMealPlans = async () => {
+    try {
+      setLoadingPlans(true)
+      setError(null)
+      const response = await templatesService.listMealPlans({ trainer_id: trainerId })
+      setMealPlans(response)
+    } catch (err) {
+      setError(err.message || 'Failed to load meal plans')
+      setMealPlans([])
+    } finally {
+      setLoadingPlans(false)
+    }
+  }
+
+  useEffect(() => {
+    const loadTrainerProfile = async () => {
+      try {
+        const profileResponse = await trainerService.getCurrentTrainerProfile()
+        const profile = unwrapResource(profileResponse)
+        if (profile?.id) {
+          setTrainerId(profile.id)
+          fetchMealPlans()
+        }
+      } catch (err) {
+        console.error('Failed to load trainer profile:', err)
+      }
+    }
+    loadTrainerProfile()
+  }, [])
+
+  useEffect(() => {
+    if (trainerId) {
+      fetchMealPlans()
+    }
+  }, [trainerId])
+
+  const filteredFoods = selectedCategory === 'All'
+    ? foodLibrary
     : foodLibrary.filter(food => food.category === selectedCategory)
 
   const addFood = (food) => {
-    setSelectedFoods([...selectedFoods, { ...food, meal: 'Snack', portion: 1 }])
+    setSelectedFoods([...selectedFoods, { ...food, meal_name: 'Snack', quantity: '100g', day_number: selectedFoods.length + 1 }])
   }
 
   const removeFood = (index) => {
@@ -53,11 +99,117 @@ export function MealPlanBuilder() {
     setSelectedFoods(updated)
   }
 
+  const loadPlan = async (plan) => {
+    try {
+      setEditingPlan(plan)
+      setPlanName(plan.name)
+      setPlanDetails({
+        goal_type: plan.goal_type,
+        calories_target: plan.calories_target,
+        protein_g: plan.protein_g,
+        carbs_g: plan.carbs_g,
+        fat_g: plan.fat_g,
+        description: plan.description || ''
+      })
+      setSelectedFoods(plan.items || [])
+    } catch (err) {
+      setError(err.message || 'Failed to load meal plan')
+    }
+  }
+
+  const handleSavePlan = async () => {
+    if (!planName.trim()) {
+      setError('Plan name is required')
+      return
+    }
+
+    if (selectedFoods.length === 0) {
+      setError('At least one food item is required')
+      return
+    }
+
+    setSaving(true)
+    setError(null)
+
+    try {
+      const planData = {
+        trainer_id: trainerId,
+        name: planName,
+        description: planDetails.description,
+        goal_type: planDetails.goal_type,
+        calories_target: planDetails.calories_target,
+        protein_g: planDetails.protein_g,
+        carbs_g: planDetails.carbs_g,
+        fat_g: planDetails.fat_g,
+        items: selectedFoods.map((food, index) => ({
+          day_number: food.day_number || index + 1,
+          meal_name: food.meal_name,
+          food_item: food.name,
+          quantity: food.quantity,
+          calories: food.calories,
+          protein_g: food.protein,
+          carbs_g: food.carbs,
+          fat_g: food.fat
+        }))
+      }
+
+      let response
+      if (editingPlan) {
+        response = await templatesService.updateMealPlan(editingPlan._id, planData)
+      } else {
+        response = await templatesService.createMealPlan(planData)
+      }
+
+      setEditingPlan(null)
+      setPlanName('')
+      setPlanDetails({
+        goal_type: 'weight_loss',
+        calories_target: 2000,
+        protein_g: 150,
+        carbs_g: 180,
+        fat_g: 60,
+        description: ''
+      })
+      setSelectedFoods([])
+      fetchMealPlans()
+    } catch (err) {
+      setError(err.message || 'Failed to save meal plan')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeletePlan = async (planId) => {
+    if (!confirm('Are you sure you want to delete this meal plan?')) return
+
+    try {
+      await templatesService.deleteMealPlan(planId)
+      fetchMealPlans()
+    } catch (err) {
+      setError(err.message || 'Failed to delete meal plan')
+    }
+  }
+
+  const handleClearForm = () => {
+    setEditingPlan(null)
+    setPlanName('')
+    setPlanDetails({
+      goal_type: 'weight_loss',
+      calories_target: 2000,
+      protein_g: 150,
+      carbs_g: 180,
+      fat_g: 60,
+      description: ''
+    })
+    setSelectedFoods([])
+    setError(null)
+  }
+
   const totalNutrition = selectedFoods.reduce((acc, food) => ({
-    calories: acc.calories + (food.calories * food.portion),
-    protein: acc.protein + (food.protein * food.portion),
-    carbs: acc.carbs + (food.carbs * food.portion),
-    fat: acc.fat + (food.fat * food.portion),
+    calories: acc.calories + food.calories,
+    protein: acc.protein + food.protein,
+    carbs: acc.carbs + food.carbs,
+    fat: acc.fat + food.fat,
   }), { calories: 0, protein: 0, carbs: 0, fat: 0 })
 
   return (
@@ -68,20 +220,28 @@ export function MealPlanBuilder() {
           <p className="text-sm text-muted">Create and assign custom nutrition plans to clients</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" className="gap-2">
-            <Save className="size-4" />
-            Save as Template
-          </Button>
-          <Button className="gap-2">
-            Assign to Client
+          {editingPlan && (
+            <Button variant="secondary" className="gap-2" onClick={handleClearForm}>
+              Cancel
+            </Button>
+          )}
+          <Button className="gap-2" onClick={handleSavePlan} disabled={saving}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            {editingPlan ? 'Update Plan' : 'Save Template'}
           </Button>
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
       {/* Plan Details */}
       <div className="rounded-xl border border-border bg-card p-6">
         <h3 className="font-semibold text-foreground mb-4">Plan Details</h3>
-        <div className="grid md:grid-cols-4 gap-4">
+        <div className="grid md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm text-muted mb-2">Plan Name</label>
             <input
@@ -93,58 +253,102 @@ export function MealPlanBuilder() {
             />
           </div>
           <div>
+            <label className="block text-sm text-muted mb-2">Goal Type</label>
+            <select
+              value={planDetails.goal_type}
+              onChange={(e) => setPlanDetails({ ...planDetails, goal_type: e.target.value })}
+              className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="weight_loss">Weight Loss</option>
+              <option value="muscle_building">Muscle Building</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
+          </div>
+          <div>
             <label className="block text-sm text-muted mb-2">Target Calories</label>
             <input
               type="number"
-              value={targetCalories}
-              onChange={(e) => setTargetCalories(parseInt(e.target.value))}
+              value={planDetails.calories_target}
+              onChange={(e) => setPlanDetails({ ...planDetails, calories_target: parseInt(e.target.value) })}
+              className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+        </div>
+        <div className="grid md:grid-cols-3 gap-4 mt-4">
+          <div>
+            <label className="block text-sm text-muted mb-2">Protein (g)</label>
+            <input
+              type="number"
+              value={planDetails.protein_g}
+              onChange={(e) => setPlanDetails({ ...planDetails, protein_g: parseInt(e.target.value) })}
               className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
-            <label className="block text-sm text-muted mb-2">Goal</label>
-            <select className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20">
-              <option>Muscle Building</option>
-              <option>Weight Loss</option>
-              <option>Maintenance</option>
-              <option>Performance</option>
-            </select>
+            <label className="block text-sm text-muted mb-2">Carbs (g)</label>
+            <input
+              type="number"
+              value={planDetails.carbs_g}
+              onChange={(e) => setPlanDetails({ ...planDetails, carbs_g: parseInt(e.target.value) })}
+              className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
           </div>
           <div>
-            <label className="block text-sm text-muted mb-2">Dietary Preference</label>
-            <select className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20">
-              <option>None</option>
-              <option>Vegetarian</option>
-              <option>Vegan</option>
-              <option>Keto</option>
-              <option>Paleo</option>
-            </select>
+            <label className="block text-sm text-muted mb-2">Fat (g)</label>
+            <input
+              type="number"
+              value={planDetails.fat_g}
+              onChange={(e) => setPlanDetails({ ...planDetails, fat_g: parseInt(e.target.value) })}
+              className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
           </div>
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm text-muted mb-2">Description</label>
+          <input
+            type="text"
+            value={planDetails.description}
+            onChange={(e) => setPlanDetails({ ...planDetails, description: e.target.value })}
+            placeholder="Plan description..."
+            className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
         </div>
       </div>
 
-      {/* Quick Templates */}
+      {/* My Meal Plans */}
       <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="font-semibold text-foreground mb-4">Quick Templates</h3>
-        <div className="grid md:grid-cols-4 gap-4">
-          {mealTemplates.map((template, i) => (
-            <button
-              key={i}
-              className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors text-left"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Apple className="size-4 text-primary" />
-                <p className="font-medium text-foreground text-sm">{template.name}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-muted">
-                <span>{template.calories} cal</span>
-                <span>{template.protein}g protein</span>
-                <span>{template.carbs}g carbs</span>
-                <span>{template.fat}g fat</span>
-              </div>
-            </button>
-          ))}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-foreground">My Meal Plans</h3>
+          {loadingPlans && <Loader2 className="size-4 animate-spin text-muted" />}
         </div>
+        {mealPlans.length === 0 && !loadingPlans ? (
+          <p className="text-sm text-muted">No meal plans created yet</p>
+        ) : (
+          <div className="grid md:grid-cols-4 gap-4">
+            {mealPlans.map((plan) => (
+              <div
+                key={plan._id}
+                className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground text-sm">{plan.name}</p>
+                    <p className="text-xs text-muted">{plan.items?.length || 0} items</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" variant="ghost" onClick={() => loadPlan(plan)} className="gap-1">
+                    <Edit className="size-3" />
+                    Edit
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleDeletePlan(plan._id)} className="text-red-600 hover:text-red-700">
+                    <Trash2 className="size-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -239,12 +443,21 @@ export function MealPlanBuilder() {
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs text-muted mb-1">Day</label>
+                      <input
+                        type="number"
+                        value={food.day_number}
+                        onChange={(e) => updateFood(index, 'day_number', parseInt(e.target.value))}
+                        className="w-full px-2 py-1 text-sm border border-border rounded bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
                     <div>
                       <label className="block text-xs text-muted mb-1">Meal</label>
                       <select
-                        value={food.meal}
-                        onChange={(e) => updateFood(index, 'meal', e.target.value)}
+                        value={food.meal_name}
+                        onChange={(e) => updateFood(index, 'meal_name', e.target.value)}
                         className="w-full px-2 py-1 text-sm border border-border rounded bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
                       >
                         {mealTypes.map(type => (
@@ -253,13 +466,50 @@ export function MealPlanBuilder() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-muted mb-1">Portion</label>
+                      <label className="block text-xs text-muted mb-1">Quantity</label>
+                      <input
+                        type="text"
+                        value={food.quantity}
+                        onChange={(e) => updateFood(index, 'quantity', e.target.value)}
+                        placeholder="100g"
+                        className="w-full px-2 py-1 text-sm border border-border rounded bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-3 mt-2">
+                    <div>
+                      <label className="block text-xs text-muted mb-1">Calories</label>
                       <input
                         type="number"
-                        step="0.5"
-                        min="0.5"
-                        value={food.portion}
-                        onChange={(e) => updateFood(index, 'portion', parseFloat(e.target.value))}
+                        value={food.calories}
+                        onChange={(e) => updateFood(index, 'calories', parseInt(e.target.value))}
+                        className="w-full px-2 py-1 text-sm border border-border rounded bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted mb-1">Protein (g)</label>
+                      <input
+                        type="number"
+                        value={food.protein}
+                        onChange={(e) => updateFood(index, 'protein', parseFloat(e.target.value))}
+                        className="w-full px-2 py-1 text-sm border border-border rounded bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted mb-1">Carbs (g)</label>
+                      <input
+                        type="number"
+                        value={food.carbs}
+                        onChange={(e) => updateFood(index, 'carbs', parseFloat(e.target.value))}
+                        className="w-full px-2 py-1 text-sm border border-border rounded bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted mb-1">Fat (g)</label>
+                      <input
+                        type="number"
+                        value={food.fat}
+                        onChange={(e) => updateFood(index, 'fat', parseFloat(e.target.value))}
                         className="w-full px-2 py-1 text-sm border border-border rounded bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
@@ -278,11 +528,11 @@ export function MealPlanBuilder() {
           <div className="grid md:grid-cols-5 gap-4 text-sm">
             <div>
               <p className="text-muted">Total Calories</p>
-              <p className="text-xl font-bold text-foreground">{Math.round(totalNutrition.calories)} / {targetCalories}</p>
+              <p className="text-xl font-bold text-foreground">{Math.round(totalNutrition.calories)} / {planDetails.calories_target}</p>
               <div className="h-2 bg-border rounded-full overflow-hidden mt-2">
                 <div 
                   className="h-full bg-primary rounded-full transition-all"
-                  style={{ width: `${Math.min((totalNutrition.calories / targetCalories) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((totalNutrition.calories / planDetails.calories_target) * 100, 100)}%` }}
                 />
               </div>
             </div>
