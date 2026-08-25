@@ -128,4 +128,24 @@ export const adminService = {
       throw wrapAdminError(error)
     }
   },
+
+  async deleteHealthMetric(healthMetricId) {
+    try {
+      const response = await api.delete(API_ENDPOINTS.ADMIN.HEALTH_METRICS_DELETE(healthMetricId))
+      // Backend returns { success: true, data: {...}, message }
+      return response.data || response
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
+
+  async cleanupNotifications() {
+    try {
+      const response = await api.delete(API_ENDPOINTS.ADMIN.NOTIFICATIONS_CLEANUP)
+      // Backend returns { success: true, data: {...}, message }
+      return response.data || response
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
 }

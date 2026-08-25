@@ -16,7 +16,7 @@ export function AdminClasses() {
 
   useEffect(() => {
     fetchClasses()
-  }, [])
+  }, [selectedDiscipline])
 
   const fetchClasses = async () => {
     try {
@@ -25,7 +25,18 @@ export function AdminClasses() {
       const response = await classesService.getClasses({
         discipline: selectedDiscipline || undefined,
       })
-      setClasses(normalizeListResponse(response))
+      const allClasses = normalizeListResponse(response)
+      
+      // Apply search filter client-side
+      if (searchTerm) {
+        const filtered = allClasses.filter((cls) =>
+          cls.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          cls.trainer_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        setClasses(filtered)
+      } else {
+        setClasses(allClasses)
+      }
     } catch (err) {
       setError(err.message || 'Failed to load classes')
       console.error('Error fetching classes:', err)
@@ -35,22 +46,13 @@ export function AdminClasses() {
     }
   }
 
-  const handleSearch = async () => {
-    try {
-      setLoading(true)
-      const response = await classesService.getClasses({
-        discipline: selectedDiscipline || undefined,
-      })
-      const filtered = normalizeListResponse(response).filter((cls) =>
-        cls.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cls.trainer_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      setClasses(filtered)
-    } catch (err) {
-      setError(err.message || 'Failed to search classes')
-    } finally {
-      setLoading(false)
-    }
+  const handleSearch = () => {
+    fetchClasses()
+  }
+
+  const handleReset = () => {
+    setSearchTerm('')
+    setSelectedDiscipline('')
   }
 
   const handleDelete = async (classId) => {
@@ -178,7 +180,7 @@ export function AdminClasses() {
             <option value="other">Other</option>
           </select>
           <Button onClick={handleSearch}>Search</Button>
-          <Button variant="secondary" onClick={fetchClasses}>Reset</Button>
+          <Button variant="secondary" onClick={handleReset}>Reset</Button>
         </div>
       </div>
 

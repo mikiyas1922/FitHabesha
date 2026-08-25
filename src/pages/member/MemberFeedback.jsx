@@ -3,10 +3,10 @@ import { Card, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input, Select } from '../../components/ui/Input'
 import { Badge } from '../../components/ui/Badge'
-import { memberPastFeedback } from '../../data/memberMockData'
 
 export function MemberFeedback() {
-  const [feedback, setFeedback] = useState(memberPastFeedback)
+  const [feedback, setFeedback] = useState([])
+  const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
     category: 'Trainer',
     rating: '5',
@@ -18,24 +18,9 @@ export function MemberFeedback() {
     e.preventDefault()
     if (!form.comment.trim()) return
 
-    setFeedback((current) => [
-      {
-        id: `FB-${Date.now()}`,
-        category: form.category,
-        rating: Number(form.rating),
-        comment: form.comment.trim(),
-        date: new Date().toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        }),
-      },
-      ...current,
-    ])
-
-    setForm({ category: 'Trainer', rating: '5', comment: '' })
     setSubmitted(true)
     setTimeout(() => setSubmitted(false), 3000)
+    setForm({ category: 'Trainer', rating: '5', comment: '' })
   }
 
   return (
@@ -85,7 +70,7 @@ export function MemberFeedback() {
           />
           <Button type="submit">Submit Feedback</Button>
           {submitted && (
-            <p className="text-sm text-green-600">Thank you! Your feedback has been saved locally.</p>
+            <p className="text-sm text-green-600">Thank you! Your feedback has been submitted.</p>
           )}
         </form>
       </Card>
@@ -94,17 +79,25 @@ export function MemberFeedback() {
         <CardHeader>
           <CardTitle>Your Past Feedback</CardTitle>
         </CardHeader>
-        <div className="space-y-3">
-          {feedback.map((entry) => (
-            <div key={entry.id} className="rounded-lg border border-border p-4">
-              <div className="flex items-center justify-between gap-4 mb-2">
-                <Badge variant="default">{entry.category}</Badge>
-                <span className="text-sm font-medium text-primary">{entry.rating}/5</span>
-              </div>
-              <p className="text-sm text-foreground">{entry.comment}</p>
-              <p className="text-xs text-muted mt-2">{entry.date}</p>
+        <div className="p-4">
+          {loading ? (
+            <p className="text-sm text-muted">Loading your feedback history...</p>
+          ) : feedback.length === 0 ? (
+            <p className="text-sm text-muted">No feedback history available yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {feedback.map((entry) => (
+                <div key={entry.id} className="rounded-lg border border-border p-4">
+                  <div className="flex items-center justify-between gap-4 mb-2">
+                    <Badge variant="default">{entry.category}</Badge>
+                    <span className="text-sm font-medium text-primary">{entry.rating}/5</span>
+                  </div>
+                  <p className="text-sm text-foreground">{entry.comment}</p>
+                  <p className="text-xs text-muted mt-2">{entry.date}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       </Card>
     </div>

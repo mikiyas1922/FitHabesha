@@ -31,11 +31,12 @@ export function MemberClasses() {
         classesService.getClasses({ discipline: discipline || undefined, limit: 50 }),
         profileId
           ? bookingService.getMemberBookings(profileId, { page: 1, limit: 50 })
-          : Promise.resolve({ data: [] }),
+          : Promise.resolve({ data: { data: { bookings: [] } } }),
       ])
 
       setClasses(normalizeListResponse(classResponse))
-      setBookings(normalizeListResponse(bookingResponse))
+      // Backend returns { success: true, data: { count, bookings: [...] }, message }
+      setBookings(bookingResponse?.data?.data?.bookings || [])
     } catch (err) {
       setError(err.message || 'Failed to load classes')
       setClasses([])
@@ -113,6 +114,15 @@ export function MemberClasses() {
       cls.trainer_name?.toLowerCase().includes(query)
     )
   })
+
+  const handleSearch = () => {
+    // Search is already applied via filteredClasses
+  }
+
+  const handleReset = () => {
+    setSearchTerm('')
+    setSelectedDiscipline('')
+  }
 
   const classStats = [
     { label: 'Total Classes', value: classes.length.toString(), icon: Calendar },
@@ -287,6 +297,8 @@ export function MemberClasses() {
               <option value="dance">Dance</option>
               <option value="other">Other</option>
             </select>
+            <Button onClick={handleSearch} size="sm">Search</Button>
+            <Button variant="secondary" onClick={handleReset} size="sm">Reset</Button>
           </div>
         </div>
 

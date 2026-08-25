@@ -19,6 +19,8 @@ export const API_ENDPOINTS = {
     MEMBERS_REACTIVATE: (id) => `/admin/members/${id}/reactivate`,
     TRAINERS_DEACTIVATE: (id) => `/admin/trainers/${id}`,
     TRAINERS_REACTIVATE: (id) => `/admin/trainers/${id}/reactivate`,
+    HEALTH_METRICS_DELETE: (id) => `/admin/health-metrics/${id}`,
+    NOTIFICATIONS_CLEANUP: '/admin/notifications/cleanup',
   },
   MEMBERS: {
     LIST: '/members',

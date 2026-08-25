@@ -2,13 +2,30 @@ import { useState, useEffect } from 'react'
 import { Star, MessageSquare, TrendingUp, AlertTriangle, Search, Filter, MoreVertical, Flag, ThumbsUp, ThumbsDown, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { trainerService } from '../../services/trainerService'
-import { unwrapResource } from '../../utils/apiHelpers'
+import { adminService } from '../../services/adminService'
+import { unwrapResource, normalizeListResponse } from '../../utils/apiHelpers'
 
 export function AdminFeedback() {
   const [feedback, setFeedback] = useState([])
+  const [trainers, setTrainers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadingTrainers, setLoadingTrainers] = useState(true)
   const [error, setError] = useState(null)
   const [selectedTrainerId, setSelectedTrainerId] = useState(null)
+
+  const loadTrainers = async () => {
+    setLoadingTrainers(true)
+    try {
+      const response = await adminService.getTrainers()
+      const trainersList = normalizeListResponse(response)
+      setTrainers(trainersList || [])
+    } catch (err) {
+      console.error('Failed to load trainers:', err)
+      setTrainers([])
+    } finally {
+      setLoadingTrainers(false)
+    }
+  }
 
   const loadFeedback = async (trainerId) => {
     if (!trainerId) return
@@ -26,6 +43,10 @@ export function AdminFeedback() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadTrainers()
+  }, [])
 
   useEffect(() => {
     if (selectedTrainerId) {
@@ -67,10 +88,16 @@ export function AdminFeedback() {
             value={selectedTrainerId || ''}
             onChange={(e) => setSelectedTrainerId(e.target.value || null)}
             className="px-3 py-2 text-sm border border-border rounded-lg bg-surface"
+            disabled={loadingTrainers}
           >
             <option value="">Select a trainer...</option>
-            <option value="trainer-id-1">Trainer 1</option>
-            <option value="trainer-id-2">Trainer 2</option>
+            {trainers.map((trainer) => (
+              <option key={trainer.id} value={trainer.id}>
+                {trainer.name || trainer.first_name && trainer.last_name 
+                  ? `${trainer.first_name} ${trainer.last_name}` 
+                  : 'Unknown Trainer'}
+              </option>
+            ))}
           </select>
         </div>
       </div>

@@ -166,7 +166,7 @@ export function TrainersManagement() {
           emptyComponent={
             <EmptyState
               title="No registered trainers"
-              description="Trainers registered publicly or via admin will appear here from GET /trainers."
+              description="Trainers registered publicly or via admin will appear here."
             />
           }
         >

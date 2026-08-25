@@ -216,7 +216,7 @@ export function MembersManagement() {
           emptyComponent={
             <EmptyState
               title="No registered members"
-              description="Members registered publicly or via admin will appear here from GET /members."
+              description="Members registered publicly or via admin will appear here."
             />
           }
         >
