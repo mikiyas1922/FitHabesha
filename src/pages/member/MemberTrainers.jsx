@@ -49,7 +49,6 @@ export function MemberTrainers() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Trainers</h1>
         <p className="text-sm text-muted">
-          Trainer listing is admin/reception only. This view shows instructors from GET /classes.
         </p>
       </div>
 

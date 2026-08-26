@@ -90,7 +90,6 @@ export function MyClients() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
         <p className="text-sm text-muted">
-          Assigned members for {trainer?.full_name || 'your roster'} from GET /trainers/{'{id}'}/roster
         </p>
       </div>
 
