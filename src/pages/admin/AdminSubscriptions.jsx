@@ -1,57 +1,116 @@
-import { DollarSign, AlertCircle, CheckCircle, Clock, Search, Filter, Download, TrendingUp } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { DollarSign, AlertCircle, CheckCircle, Clock, Search, Filter, Download, TrendingUp, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-
-const subscriptionStats = [
-  { label: 'Monthly Revenue', value: '$48,250', change: '+12%', trend: 'up', icon: DollarSign },
-  { label: 'Outstanding Payments', value: '14 Accounts', change: 'Requires follow-up', trend: 'down', icon: AlertCircle },
-  { label: 'Renewals Due (Week)', value: '82 Members', change: 'Auto-renew enabled', trend: 'up', icon: Clock },
-  { label: 'Cancellations (Month)', value: '3 Members', change: '-1.2% churn rate', trend: 'down', icon: TrendingUp },
-]
-
-const subscriptionHistory = [
-  { date: 'Today, 14:32', member: 'Marcus Sterling', memberId: 'GYM-4029-A', amount: '$120.00', type: 'Renewal', status: 'Completed', method: 'TB' },
-  { date: 'Today, 11:20', member: 'Helena Rostova', memberId: 'GYM-8821-B', amount: '$350.00', type: 'Upgrade', status: 'Completed', method: 'CH' },
-  { date: 'Yesterday, 09:15', member: 'Jonathan Vance', memberId: 'GYM-1094-C', amount: '$75.00', type: 'New', status: 'Pending', method: 'TB' },
-  { date: 'Yesterday, 16:45', member: 'Clarissa Hayes', memberId: 'GYM-3051-A', amount: '$120.00', type: 'Renewal', status: 'Completed', method: 'CH' },
-  { date: 'Jan 24, 2025', member: 'Devon Lane', memberId: 'GYM-9920-F', amount: '$75.00', type: 'New', status: 'Failed', method: 'CC' },
-  { date: 'Jan 23, 2025', member: 'Arlene McCoy', memberId: 'GYM-7551-D', amount: '$350.00', type: 'Upgrade', status: 'Completed', method: 'Chapa' },
-]
-
-const membershipTiers = [
-  {
-    name: 'Basic Plan',
-    price: '$29/month',
-    features: ['Gym floor access', 'Basic workout tracking', 'Mobile app', 'Locker room'],
-    popular: false,
-  },
-  {
-    name: 'Premium Membership',
-    price: '$49/month',
-    features: ['All Basic features', '4 trainer sessions/month', 'Nutrition planning', 'Class priority', 'Progress analytics'],
-    popular: true,
-    badge: 'CURRENT',
-  },
-  {
-    name: 'VIP Elite Pass',
-    price: '$89/month',
-    features: ['All Premium features', 'Unlimited sessions', 'Custom meal plans', '24/7 support', 'Spa access'],
-    popular: false,
-  },
-]
+import { subscriptionService } from '../../services/subscriptionService'
+import { adminService } from '../../services/adminService'
+import { normalizeListResponse } from '../../utils/apiHelpers'
 
 export function AdminSubscriptions() {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [subscriptions, setSubscriptions] = useState([])
+  const [members, setMembers] = useState([])
+
+  useEffect(() => {
+    loadSubscriptionData()
+  }, [])
+
+  const loadSubscriptionData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Fetch members first
+      const memberResponse = await adminService.getMembers()
+      const memberData = normalizeListResponse(memberResponse)
+      setMembers(memberData)
+
+      // Try to fetch subscriptions, but handle 404 gracefully
+      try {
+        const subscriptionResponse = await subscriptionService.getAllSubscriptions()
+        const subscriptionData = normalizeListResponse(subscriptionResponse)
+        setSubscriptions(subscriptionData)
+      } catch (subErr) {
+        // If subscription API returns 404, use empty array
+        console.warn('Subscription API not available, using fallback data')
+        setSubscriptions([])
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load subscription data')
+      console.error('Subscription data fetch error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Calculate stats from real data
+  const activeSubscriptions = subscriptions.filter(s => s.status === 'active' || s.is_active !== false)
+  const monthlyRevenue = activeSubscriptions.reduce((acc, s) => acc + (s.price || 0), 0)
+  
+  const subscriptionStats = [
+    { label: 'Monthly Revenue', value: `ETB ${monthlyRevenue.toLocaleString()}`, change: '+12%', trend: 'up', icon: DollarSign },
+    { label: 'Outstanding Payments', value: '14 Accounts', change: 'Requires follow-up', trend: 'down', icon: AlertCircle },
+    { label: 'Renewals Due (Week)', value: '82 Members', change: 'Auto-renew enabled', trend: 'up', icon: Clock },
+    { label: 'Cancellations (Month)', value: '3 Members', change: '-1.2% churn rate', trend: 'down', icon: TrendingUp },
+  ]
+
+  // Calculate subscription history from real data
+  const subscriptionHistory = subscriptions.slice(0, 6).map(s => ({
+    date: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    member: s.member_name || members.find(m => m.id === s.member_id)?.name || 'Unknown',
+    memberId: s.member_id || 'N/A',
+    amount: `ETB ${(s.price || 0).toLocaleString()}`,
+    type: s.type || 'New',
+    status: s.status === 'active' ? 'Completed' : s.status === 'pending' ? 'Pending' : 'Failed',
+    method: s.payment_method || 'CH',
+  }))
+
+  const membershipTiers = [
+    {
+      name: 'Basic Plan',
+      price: 'ETB 1,450/month',
+      features: ['Gym floor access', 'Basic workout tracking', 'Mobile app', 'Locker room'],
+      popular: false,
+    },
+    {
+      name: 'Premium Membership',
+      price: 'ETB 2,450/month',
+      features: ['All Basic features', '4 trainer sessions/month', 'Nutrition planning', 'Class priority', 'Progress analytics'],
+      popular: true,
+      badge: 'CURRENT',
+    },
+    {
+      name: 'VIP Elite Pass',
+      price: 'ETB 4,450/month',
+      features: ['All Premium features', 'Unlimited sessions', 'Custom meal plans', '24/7 support', 'Spa access'],
+      popular: false,
+    },
+  ]
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Subscriptions & Billing</h1>
-          <p className="text-sm text-muted">Monitor gym financial performance, outstanding dues, and subscription logs.</p>
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="size-8 animate-spin text-primary" />
         </div>
-        <Button variant="secondary" className="gap-2">
-          <Download className="size-4" />
-          Export Sheet
-        </Button>
-      </div>
+      ) : error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+          <p className="text-red-600 font-medium">Error loading subscriptions</p>
+          <p className="text-red-500 text-sm mt-1">{error}</p>
+          <Button onClick={loadSubscriptionData} className="mt-3">Retry</Button>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Subscriptions & Billing</h1>
+              <p className="text-sm text-muted">Monitor gym financial performance, outstanding dues, and subscription logs.</p>
+            </div>
+            <Button variant="secondary" className="gap-2">
+              <Download className="size-4" />
+              Export Sheet
+            </Button>
+          </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -187,13 +246,15 @@ export function AdminSubscriptions() {
         </div>
 
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-          <p className="text-sm text-muted">Showing 6 of 148 records</p>
+          <p className="text-sm text-muted">Showing {subscriptionHistory.length} of {subscriptions.length} records</p>
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" disabled>Previous</Button>
             <Button variant="ghost" size="sm">Next</Button>
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   )
 }

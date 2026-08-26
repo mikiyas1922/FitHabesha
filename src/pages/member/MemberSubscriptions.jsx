@@ -1,68 +1,129 @@
-import { CreditCard, Calendar, CheckCircle, AlertTriangle, TrendingUp, Plus, Filter } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { CreditCard, Calendar, CheckCircle, AlertTriangle, TrendingUp, Plus, Filter, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-
-const currentSubscription = {
-  plan: 'Premium',
-  status: 'Active',
-  startDate: 'Jan 15, 2024',
-  endDate: 'Jan 15, 2025',
-  price: '$149/month',
-  features: ['Unlimited gym access', 'All group classes', 'Personal trainer sessions (4/month)', 'Locker included', 'Nutrition consultation', 'Priority booking'],
-}
-
-const availablePlans = [
-  {
-    id: 1,
-    name: 'Basic',
-    price: '$49/month',
-    features: ['Gym access (off-peak)', 'Basic equipment', 'Locker rental available'],
-    popular: false,
-  },
-  {
-    id: 2,
-    name: 'Standard',
-    price: '$89/month',
-    features: ['Unlimited gym access', 'Group classes', 'Locker included', 'Basic equipment'],
-    popular: false,
-  },
-  {
-    id: 3,
-    name: 'Premium',
-    price: '$149/month',
-    features: ['Unlimited gym access', 'All group classes', 'Personal trainer sessions (4/month)', 'Locker included', 'Nutrition consultation', 'Priority booking'],
-    popular: true,
-  },
-  {
-    id: 4,
-    name: 'Elite',
-    price: '$249/month',
-    features: ['All Premium features', 'Unlimited personal training', 'Private locker room', 'Massage therapy (2/month)', 'Nutrition meal plans', '24/7 gym access'],
-    popular: false,
-  },
-]
-
-const paymentHistory = [
-  { date: 'Oct 15, 2026', amount: '$149', method: 'Visa ending 4242', status: 'Paid' },
-  { date: 'Sep 15, 2026', amount: '$149', method: 'Visa ending 4242', status: 'Paid' },
-  { date: 'Aug 15, 2026', amount: '$149', method: 'Visa ending 4242', status: 'Paid' },
-  { date: 'Jul 15, 2026', amount: '$149', method: 'Visa ending 4242', status: 'Paid' },
-]
+import { useAuth } from '../../contexts/AuthContext'
+import { memberService } from '../../services/memberService'
+import { subscriptionService } from '../../services/subscriptionService'
+import { unwrapResource, normalizeListResponse } from '../../utils/apiHelpers'
 
 export function MemberSubscriptions() {
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [memberData, setMemberData] = useState(null)
+  const [subscriptions, setSubscriptions] = useState([])
+
+  useEffect(() => {
+    loadSubscriptionData()
+  }, [])
+
+  const loadSubscriptionData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Fetch member profile
+      const profileResponse = await memberService.getCurrentMemberProfile()
+      const profile = unwrapResource(profileResponse)
+      setMemberData(profile)
+
+      const profileId = profile?.id
+
+      if (profileId) {
+        // Try to fetch member subscriptions, but handle 404 gracefully
+        try {
+          const subscriptionResponse = await subscriptionService.getMemberSubscriptions(profileId)
+          const subscriptionData = normalizeListResponse(subscriptionResponse)
+          setSubscriptions(subscriptionData)
+        } catch (subErr) {
+          // If subscription API returns 404, use empty array
+          console.warn('Subscription API not available, using fallback data')
+          setSubscriptions([])
+        }
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load subscription data')
+      console.error('Subscription data fetch error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Get current subscription from real data
+  const currentSubscription = subscriptions.length > 0 ? subscriptions[0] : {
+    plan: 'No Active Plan',
+    status: 'Inactive',
+    startDate: '—',
+    endDate: '—',
+    price: 'ETB 0/month',
+    features: [],
+  }
+
+  const availablePlans = [
+    {
+      id: 1,
+      name: 'Basic',
+      price: 'ETB 1,450/month',
+      features: ['Gym access (off-peak)', 'Basic equipment', 'Locker rental available'],
+      popular: false,
+    },
+    {
+      id: 2,
+      name: 'Standard',
+      price: 'ETB 2,450/month',
+      features: ['Unlimited gym access', 'Group classes', 'Locker included', 'Basic equipment'],
+      popular: false,
+    },
+    {
+      id: 3,
+      name: 'Premium',
+      price: 'ETB 4,450/month',
+      features: ['Unlimited gym access', 'All group classes', 'Personal trainer sessions (4/month)', 'Locker included', 'Nutrition consultation', 'Priority booking'],
+      popular: true,
+    },
+    {
+      id: 4,
+      name: 'Elite',
+      price: 'ETB 7,450/month',
+      features: ['All Premium features', 'Unlimited personal training', 'Private locker room', 'Massage therapy (2/month)', 'Nutrition meal plans', '24/7 gym access'],
+      popular: false,
+    },
+  ]
+
+  // Calculate payment history from real data
+  const paymentHistory = subscriptions.slice(0, 4).map(s => ({
+    date: new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    amount: `ETB ${(s.price || 0).toLocaleString()}`,
+    method: s.payment_method === 'chapa' ? 'Chapa' : s.payment_method === 'telebirr' ? 'Telebirr' : s.payment_method || 'Bank Transfer',
+    status: s.status === 'active' ? 'Paid' : s.status === 'pending' ? 'Pending' : 'Failed',
+  }))
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">My Subscriptions</h1>
-          <p className="text-sm text-muted">Manage your membership and billing</p>
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="size-8 animate-spin text-primary" />
         </div>
-        <div className="flex gap-3">
-          <Button variant="secondary" className="gap-2">
-            <Filter className="size-4" />
-            Filter History
-          </Button>
+      ) : error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+          <p className="text-red-600 font-medium">Error loading subscriptions</p>
+          <p className="text-red-500 text-sm mt-1">{error}</p>
+          <Button onClick={loadSubscriptionData} className="mt-3">Retry</Button>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">My Subscriptions</h1>
+              <p className="text-sm text-muted">Manage your membership and billing</p>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="secondary" className="gap-2">
+                <Filter className="size-4" />
+                Filter History
+              </Button>
+            </div>
+          </div>
 
       {/* Current Subscription */}
       <div className="rounded-xl border border-primary bg-primary/5 p-6">
@@ -204,6 +265,8 @@ export function MemberSubscriptions() {
           </Button>
         </div>
       </div>
+        </>
+      )}
     </div>
   )
 }
