@@ -90,6 +90,7 @@ export function MyClients() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
         <p className="text-sm text-muted">
+          Assigned members for {trainer?.full_name || 'your roster'}{'{id}'}/roster
         </p>
       </div>
 

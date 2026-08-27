@@ -49,6 +49,7 @@ export function MemberTrainers() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Trainers</h1>
         <p className="text-sm text-muted">
+          
         </p>
       </div>
 
