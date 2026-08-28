@@ -18,6 +18,7 @@ export function AdminDashboard() {
   const [trainers, setTrainers] = useState([])
   const [checkins, setCheckins] = useState([])
   const [notifications, setNotifications] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     loadDashboardData()
@@ -29,11 +30,12 @@ export function AdminDashboard() {
       setError(null)
 
       // Fetch members, trainers, check-ins, and notifications in parallel
-      const [memberResponse, trainerResponse, checkinResponse, notificationResponse] = await Promise.all([
+      const [memberResponse, trainerResponse, checkinResponse, notificationResponse, unreadResponse] = await Promise.all([
         adminService.getMembers(),
         adminService.getTrainers(),
         checkinService.getTodayCheckins(),
-        notificationsService.listNotifications({ limit: 10 })
+        notificationsService.listNotifications({ page: 1, limit: 10 }),
+        notificationsService.getUnreadCount(),
       ])
 
       // Handle members
@@ -48,9 +50,8 @@ export function AdminDashboard() {
       const checkinData = normalizeListResponse(checkinResponse)
       setCheckins(checkinData)
 
-      // Handle notifications
-      const notificationData = notificationResponse || []
-      setNotifications(notificationData)
+      setNotifications(Array.isArray(notificationResponse) ? notificationResponse : [])
+      setUnreadCount(Number(unreadResponse) || 0)
     } catch (err) {
       setError(err.message || 'Failed to load dashboard data')
       console.error('Admin dashboard data fetch error:', err)
@@ -84,7 +85,7 @@ export function AdminDashboard() {
     },
     { 
       label: 'Unread Notifications', 
-      value: notifications.filter(n => !n.is_read).length.toString(), 
+      value: unreadCount.toString(), 
       change: 'Pending', 
       trend: 'up', 
       icon: MessageSquare 

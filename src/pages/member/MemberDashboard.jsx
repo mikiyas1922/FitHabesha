@@ -19,6 +19,7 @@ export function MemberDashboard() {
   const [bookings, setBookings] = useState([])
   const [classes, setClasses] = useState([])
   const [notifications, setNotifications] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     loadDashboardData()
@@ -38,10 +39,11 @@ export function MemberDashboard() {
 
       if (profileId) {
         // Fetch bookings, classes, and notifications in parallel
-        const [bookingResponse, classResponse, notificationResponse] = await Promise.all([
+        const [bookingResponse, classResponse, notificationResponse, unreadResponse] = await Promise.all([
           bookingService.getMemberBookings(profileId, { page: 1, limit: 10 }),
           classesService.getClasses({ limit: 10 }),
-          notificationsService.listNotifications({ limit: 5 })
+          notificationsService.listNotifications({ page: 1, limit: 5 }),
+          notificationsService.getUnreadCount(),
         ])
 
         // Handle bookings - Backend returns { success: true, data: { count, bookings: [...] }, message }
@@ -52,9 +54,8 @@ export function MemberDashboard() {
         const classData = normalizeListResponse(classResponse)
         setClasses(classData)
 
-        // Handle notifications
-        const notificationData = notificationResponse || []
-        setNotifications(notificationData)
+        setNotifications(Array.isArray(notificationResponse) ? notificationResponse : [])
+        setUnreadCount(Number(unreadResponse) || 0)
       }
     } catch (err) {
       setError(err.message || 'Failed to load dashboard data')
@@ -91,7 +92,7 @@ export function MemberDashboard() {
     },
     { 
       label: 'Notifications', 
-      value: notifications.filter(n => !n.is_read).length.toString(), 
+      value: unreadCount.toString(), 
       change: 'Unread', 
       icon: Award 
     },

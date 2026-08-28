@@ -1,16 +1,27 @@
-import { useState, useEffect } from 'react'
-import { Bell, Search, X, Check, Trash2, Loader2 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Bell, Search, Check, Trash2, Loader2 } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import { roleLabels } from '../../config/navigation'
 import { useAuth } from '../../contexts/AuthContext'
 import { getSettingsPath, getUserDisplay, mapBackendRole } from '../../utils/auth'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { notificationsService } from '../../services/notificationsService'
 
+function openNotificationLink(navigate, link) {
+  if (!link) return
+  if (/^https?:\/\//i.test(link)) {
+    window.location.assign(link)
+    return
+  }
+  navigate(link)
+}
+
 export function Header({ role, title, subtitle, showSearch = true, actions }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const displayUser = getUserDisplay(user, role)
   const frontendRole = user ? mapBackendRole(user.role) : role
+  const panelRef = useRef(null)
 
   const [unreadCount, setUnreadCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -19,8 +30,8 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
 
   const fetchUnreadCount = async () => {
     try {
-      const response = await notificationsService.getUnreadCount()
-      setUnreadCount(response.unread_count || 0)
+      const count = await notificationsService.getUnreadCount()
+      setUnreadCount(Number(count) || 0)
     } catch (err) {
       console.error('Failed to fetch unread count:', err)
     }
@@ -29,8 +40,8 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const response = await notificationsService.listNotifications({ limit: 10 })
-      setNotifications(response.data?.data || [])
+      const items = await notificationsService.listNotifications({ page: 1, limit: 20 })
+      setNotifications(Array.isArray(items) ? items : [])
     } catch (err) {
       console.error('Failed to fetch notifications:', err)
     } finally {
@@ -41,9 +52,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
   const handleMarkAsRead = async (id) => {
     try {
       await notificationsService.markAsRead(id)
-      setNotifications(notifications.map(n => 
-        n._id === id ? { ...n, is_read: true } : n
-      ))
+      setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, is_read: true } : n)))
       fetchUnreadCount()
     } catch (err) {
       console.error('Failed to mark as read:', err)
@@ -53,7 +62,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
   const handleMarkAllAsRead = async () => {
     try {
       await notificationsService.markAllAsRead()
-      setNotifications(notifications.map(n => ({ ...n, is_read: true })))
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
       setUnreadCount(0)
     } catch (err) {
       console.error('Failed to mark all as read:', err)
@@ -63,21 +72,44 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
   const handleDeleteNotification = async (id) => {
     try {
       await notificationsService.deleteNotification(id)
-      setNotifications(notifications.filter(n => n._id !== id))
+      setNotifications((prev) => prev.filter((n) => n._id !== id))
       fetchUnreadCount()
     } catch (err) {
       console.error('Failed to delete notification:', err)
     }
   }
 
+  const handleOpenNotification = async (notification) => {
+    if (!notification.is_read) {
+      await handleMarkAsRead(notification._id)
+    }
+    if (notification.link) {
+      setShowNotifications(false)
+      openNotificationLink(navigate, notification.link)
+    }
+  }
+
   useEffect(() => {
     fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 60000)
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
     if (showNotifications) {
       fetchNotifications()
     }
+  }, [showNotifications])
+
+  useEffect(() => {
+    if (!showNotifications) return undefined
+    const onPointerDown = (event) => {
+      if (panelRef.current && !panelRef.current.contains(event.target)) {
+        setShowNotifications(false)
+      }
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
   }, [showNotifications])
 
   return (
@@ -107,7 +139,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
 
         <ThemeToggle />
 
-        <div className="relative">
+        <div className="relative" ref={panelRef}>
           <button
             type="button"
             className="relative flex size-9 items-center justify-center rounded-lg text-muted hover:bg-hover hover:text-foreground transition-colors"
@@ -116,7 +148,9 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
           >
             <Bell className="size-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-500" />
+              <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-red-500 text-[10px] font-semibold text-white flex items-center justify-center">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
             )}
           </button>
 
@@ -126,6 +160,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
                 <h3 className="font-semibold text-foreground">Notifications</h3>
                 {unreadCount > 0 && (
                   <button
+                    type="button"
                     onClick={handleMarkAllAsRead}
                     className="text-xs text-primary hover:underline"
                   >
@@ -152,18 +187,25 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
+                        <button
+                          type="button"
+                          className="flex-1 text-left"
+                          onClick={() => handleOpenNotification(notification)}
+                        >
                           <p className={`text-sm font-medium ${!notification.is_read ? 'text-foreground' : 'text-muted'}`}>
                             {notification.title}
                           </p>
                           <p className="text-xs text-muted mt-1">{notification.message}</p>
                           <p className="text-xs text-muted mt-2">
-                            {new Date(notification.created_at).toLocaleDateString()}
+                            {notification.created_at
+                              ? new Date(notification.created_at).toLocaleString()
+                              : ''}
                           </p>
-                        </div>
+                        </button>
                         <div className="flex gap-1">
                           {!notification.is_read && (
                             <button
+                              type="button"
                               onClick={() => handleMarkAsRead(notification._id)}
                               className="p-1 text-muted hover:text-primary"
                               title="Mark as read"
@@ -172,6 +214,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
                             </button>
                           )}
                           <button
+                            type="button"
                             onClick={() => handleDeleteNotification(notification._id)}
                             className="p-1 text-muted hover:text-red-600"
                             title="Delete"
