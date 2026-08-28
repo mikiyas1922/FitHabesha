@@ -17,9 +17,8 @@ export function MyRatings() {
       const profile = unwrapResource(profileResponse)
       if (!profile?.id) throw new Error('Trainer profile not found.')
 
-      const response = await trainerService.getTrainerFeedback(profile.id)
-      const payload = unwrapResource(response)
-      setFeedback(Array.isArray(payload?.feedback) ? payload.feedback : [])
+      const { feedback: items } = await trainerService.getTrainerFeedback(profile.id)
+      setFeedback(items)
     } catch (err) {
       setError(err.message || 'Failed to load feedback')
       setFeedback([])
@@ -61,7 +60,7 @@ export function MyRatings() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">My Ratings & Reviews</h1>
-        <p className="text-sm text-muted">Client feedback from GET /trainers/{'{id}'}/feedback</p>
+        <p className="text-sm text-muted">Ratings and comments from your clients</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -95,7 +94,8 @@ export function MyRatings() {
                     : `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Member'}
                 </p>
                 <p className="text-xs text-muted">
-                  {item.rating_type || 'rating'} · {item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}
+                  {[item.rating_type, item.rating_dimension].filter(Boolean).join(' · ')}
+                  {item.created_at ? ` · ${new Date(item.created_at).toLocaleDateString()}` : ''}
                 </p>
               </div>
               <span className="text-sm font-semibold text-foreground">{item.rating_stars || 0}/5</span>

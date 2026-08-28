@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Search, Dumbbell, Target, Calendar, TrendingUp, Users, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { trainerService } from '../../services/trainerService'
-import { unwrapResource } from '../../utils/apiHelpers'
+import { getApiErrorMessage, unwrapResource } from '../../utils/apiHelpers'
+
+function memberProfileId(client) {
+  return client?.member_profile_id || client?.id || null
+}
 
 export function MyClients() {
   const [roster, setRoster] = useState([])
@@ -14,6 +18,7 @@ export function MyClients() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [actionMessage, setActionMessage] = useState('')
+  const [actionTone, setActionTone] = useState('info')
   const [assignPlanTarget, setAssignPlanTarget] = useState(null)
   const [workoutTemplates, setWorkoutTemplates] = useState([])
   const [mealPlans, setMealPlans] = useState([])
@@ -30,10 +35,9 @@ export function MyClients() {
       const profile = unwrapResource(profileResponse)
       if (!profile?.id) throw new Error('Trainer profile not found.')
 
-      const rosterResponse = await trainerService.getTrainerRoster(profile.id)
-      const payload = unwrapResource(rosterResponse)
-      setTrainer(payload?.trainer || { id: profile.id, full_name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() })
-      setRoster(Array.isArray(payload?.roster) ? payload.roster : [])
+      const { trainer, roster } = await trainerService.getTrainerRoster(profile.id)
+      setTrainer(trainer || { id: profile.id, full_name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() })
+      setRoster(roster)
     } catch (err) {
       setError(err.message || 'Failed to load roster')
       setRoster([])
@@ -57,18 +61,31 @@ export function MyClients() {
   }, [roster, search])
 
   const handleRecordAttendance = async () => {
-    if (!attendanceTarget?.member_profile_id) return
+    const profileId = memberProfileId(attendanceTarget)
+    if (!profileId) return
     setSaving(true)
     setActionMessage('')
     try {
-      await trainerService.recordAttendance(attendanceTarget.member_profile_id, {
-        notes: notes || undefined,
-      })
-      setActionMessage('Personal training attendance recorded.')
+      const result = await trainerService.recordAttendance(profileId, { notes })
+      const checkedInAt = result?.data?.checked_in_at
+      setActionTone('success')
+      setActionMessage(
+        checkedInAt
+          ? `${result.message} (${new Date(checkedInAt).toLocaleString()})`
+          : result.message
+      )
+      setRoster((current) =>
+        current.map((client) =>
+          memberProfileId(client) === profileId
+            ? { ...client, last_pt_check_in: checkedInAt || client.last_pt_check_in }
+            : client
+        )
+      )
       setAttendanceTarget(null)
       setNotes('')
     } catch (err) {
-      setActionMessage(err.message || 'Unable to record attendance.')
+      setActionTone('error')
+      setActionMessage(getApiErrorMessage(err, 'Unable to record attendance.'))
     } finally {
       setSaving(false)
     }
@@ -77,14 +94,12 @@ export function MyClients() {
   const loadPlansForAssignment = async (trainerId) => {
     try {
       setLoadingPlans(true)
-      const [templatesResponse, mealsResponse] = await Promise.all([
+      const [templates, meals] = await Promise.all([
         trainerService.getTrainerTemplates(trainerId),
         trainerService.getTrainerMealPlans(trainerId),
       ])
-      const templatesPayload = unwrapResource(templatesResponse)
-      const mealsPayload = unwrapResource(mealsResponse)
-      setWorkoutTemplates(Array.isArray(templatesPayload) ? templatesPayload : [])
-      setMealPlans(Array.isArray(mealsPayload) ? mealsPayload : [])
+      setWorkoutTemplates(templates)
+      setMealPlans(meals)
     } catch (err) {
       console.error('Failed to load plans:', err)
     } finally {
@@ -93,16 +108,22 @@ export function MyClients() {
   }
 
   const handleAssignPlan = async () => {
-    if (!assignPlanTarget?.member_profile_id || !trainer?.id) return
+    if (!memberProfileId(assignPlanTarget) || !trainer?.id) return
+    if (!selectedWorkoutTemplate && !selectedMealPlan) {
+      setActionTone('error')
+      setActionMessage('Select a workout template, a meal plan, or both.')
+      return
+    }
     setSaving(true)
     setActionMessage('')
     try {
       await trainerService.assignPlan(trainer.id, {
-        member_profile_id: assignPlanTarget.member_profile_id,
+        member_profile_id: memberProfileId(assignPlanTarget),
         workout_template_id: selectedWorkoutTemplate || null,
         meal_plan_id: selectedMealPlan || null,
         notes: assignNotes || undefined,
       })
+      setActionTone('success')
       setActionMessage('Plan assigned successfully.')
       setAssignPlanTarget(null)
       setSelectedWorkoutTemplate('')
@@ -110,7 +131,8 @@ export function MyClients() {
       setAssignNotes('')
       loadRoster()
     } catch (err) {
-      setActionMessage(err.message || 'Unable to assign plan.')
+      setActionTone('error')
+      setActionMessage(getApiErrorMessage(err, 'Unable to assign plan.'))
     } finally {
       setSaving(false)
     }
@@ -149,12 +171,23 @@ export function MyClients() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
         <p className="text-sm text-muted">
-          Assigned members for {trainer?.full_name || 'your roster'}{'{id}'}/roster
+          Assigned members for {trainer?.full_name || 'your roster'}
+          {trainer?.specialty ? ` · ${trainer.specialty}` : ''}
         </p>
       </div>
 
       {actionMessage && (
-        <div className="rounded-xl border border-border bg-card p-4 text-sm text-foreground">{actionMessage}</div>
+        <div
+          className={`rounded-xl border p-4 text-sm ${
+            actionTone === 'error'
+              ? 'border-red-200 bg-red-50 text-red-700'
+              : actionTone === 'success'
+                ? 'border-green-200 bg-green-50 text-green-800'
+                : 'border-border bg-card text-foreground'
+          }`}
+        >
+          {actionMessage}
+        </div>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -196,6 +229,7 @@ export function MyClients() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((client) => {
+              const profileId = memberProfileId(client)
               const name = `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email
               const initials = name
                 .split(' ')
@@ -205,7 +239,7 @@ export function MyClients() {
                 .toUpperCase()
 
               return (
-                <div key={client.member_profile_id} className="p-4 rounded-xl border border-border bg-surface">
+                <div key={profileId} className="p-4 rounded-xl border border-border bg-surface">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
                       {initials}
@@ -229,6 +263,9 @@ export function MyClients() {
                       <span>Assigned {client.assigned_at ? new Date(client.assigned_at).toLocaleDateString() : '—'}</span>
                     </div>
                     <p>Subscription: {client.subscription_status || '—'}</p>
+                    {client.last_pt_check_in && (
+                      <p>Last PT session: {new Date(client.last_pt_check_in).toLocaleString()}</p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" className="flex-1" onClick={() => setAttendanceTarget(client)}>
@@ -248,9 +285,12 @@ export function MyClients() {
       {attendanceTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 space-y-4">
-            <h3 className="text-lg font-semibold">Record attendance</h3>
+            <h3 className="text-lg font-semibold">Record PT attendance</h3>
             <p className="text-sm text-muted">
               {attendanceTarget.first_name} {attendanceTarget.last_name} · {attendanceTarget.unique_member_id}
+            </p>
+            <p className="text-xs text-muted">
+              Saves a personal training check-in for this member. Notes are optional.
             </p>
             <textarea
               value={notes}

@@ -33,9 +33,8 @@ export function AdminFeedback() {
     setLoading(true)
     setError(null)
     try {
-      const response = await trainerService.getTrainerFeedback(trainerId)
-      const payload = unwrapResource(response)
-      setFeedback(Array.isArray(payload?.feedback) ? payload.feedback : [])
+      const { feedback: items } = await trainerService.getTrainerFeedback(trainerId)
+      setFeedback(items)
     } catch (err) {
       setError(err.message || 'Failed to load feedback')
       setFeedback([])

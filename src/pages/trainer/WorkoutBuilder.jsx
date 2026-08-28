@@ -1,6 +1,6 @@
 import { Plus, Trash2, Search, Filter, Save, Dumbbell, Clock, Target, ChevronDown, ChevronUp, Loader2, Edit } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { templatesService } from '../../services/templatesService'
 import { trainerService } from '../../services/trainerService'
 import { unwrapResource } from '../../utils/apiHelpers'
@@ -46,7 +46,7 @@ export function WorkoutBuilder() {
     description: ''
   })
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     if (!trainerId) {
       setTemplates([])
       return
@@ -54,16 +54,15 @@ export function WorkoutBuilder() {
     try {
       setLoadingTemplates(true)
       setError(null)
-      const response = await trainerService.getTrainerTemplates(trainerId)
-      const payload = unwrapResource(response)
-      setTemplates(Array.isArray(payload) ? payload : [])
+      const items = await trainerService.getTrainerTemplates(trainerId)
+      setTemplates(items)
     } catch (err) {
       setError(err.message || 'Failed to load templates')
       setTemplates([])
     } finally {
       setLoadingTemplates(false)
     }
-  }
+  }, [trainerId])
 
   useEffect(() => {
     const loadTrainerProfile = async () => {
@@ -72,7 +71,6 @@ export function WorkoutBuilder() {
         const profile = unwrapResource(profileResponse)
         if (profile?.id) {
           setTrainerId(profile.id)
-          fetchTemplates()
         }
       } catch (err) {
         console.error('Failed to load trainer profile:', err)
@@ -82,10 +80,8 @@ export function WorkoutBuilder() {
   }, [])
 
   useEffect(() => {
-    if (trainerId) {
-      fetchTemplates()
-    }
-  }, [trainerId])
+    fetchTemplates()
+  }, [fetchTemplates])
 
   const filteredExercises = selectedCategory === 'All'
     ? exerciseLibrary

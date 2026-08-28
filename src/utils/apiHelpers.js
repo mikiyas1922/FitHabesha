@@ -43,7 +43,9 @@ export function normalizeListResponse(response) {
 /** Unwrap `{ success, data: entity }` bodies returned by most GET/PATCH endpoints. */
 export function unwrapResource(response) {
   if (!response || typeof response !== 'object') return null
-  if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+  if (Array.isArray(response)) return response
+  if (Array.isArray(response.data)) return response.data
+  if (response.data && typeof response.data === 'object') {
     if (Array.isArray(response.data.data) || response.data.pagination) {
       return response.data
     }
@@ -105,7 +107,36 @@ function resolveMemberStatus(record) {
 export function formatPersonName(record) {
   if (!record || typeof record !== 'object') return ''
   if (record?.name) return record.name
+  if (record?.full_name) return record.full_name
   return `${record?.first_name || record?.firstName || ''} ${record?.last_name || record?.lastName || ''}`.trim()
+}
+
+export function resolveMemberProfileId(record) {
+  if (!record || typeof record !== 'object') return null
+  return record.memberProfileId || record.member_profile_id || record.id || record._id || null
+}
+
+export function assignedTrainerName(record) {
+  if (!record || typeof record !== 'object') return ''
+  const nested = record.trainer
+  if (nested && typeof nested === 'object') {
+    return formatPersonName(nested) || nested.email || ''
+  }
+  if (typeof nested === 'string' && nested.trim() && nested !== '—') return nested.trim()
+  const label = record.assigned_trainer || record.trainer_name || record.assignedTrainer
+  if (typeof label === 'string' && label.trim() && label !== '—') return label.trim()
+  return ''
+}
+
+export function assignedTrainerId(record) {
+  if (!record || typeof record !== 'object') return null
+  return (
+    record.trainerId ||
+    record.trainer_id ||
+    record.assigned_trainer_id ||
+    (record.trainer && typeof record.trainer === 'object' ? record.trainer.id : null) ||
+    null
+  )
 }
 
 export function normalizeMember(record) {
@@ -120,7 +151,8 @@ export function normalizeMember(record) {
     phone: record.phone || '—',
     membershipType:
       record.tier_name || record.membership_type || record.membershipType || record.plan || '—',
-    trainer: record.trainer || record.assigned_trainer || '—',
+    trainer: assignedTrainerName(record) || '—',
+    trainerId: assignedTrainerId(record),
     status: resolveMemberStatus(record),
     joinDate: record.join_date || record.joinDate || record.created_at?.slice?.(0, 10) || '—',
     lastCheckIn: record.last_check_in || record.lastCheckIn,
@@ -147,6 +179,8 @@ export function normalizeStaff(record) {
     uniqueMemberId: record.unique_member_id || '—',
     membershipType:
       record.tier_name || record.membership_type || record.membershipType || record.plan || '—',
+    trainer: assignedTrainerName(record) || '—',
+    trainerId: assignedTrainerId(record),
     joinDate: record.join_date || record.joinDate || record.created_at?.slice?.(0, 10) || '—',
     status: resolveMemberStatus(record),
     raw: record,

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, Trash2, RotateCcw, ChevronLeft, ChevronRight, UserPlus, Loader2 } from 'lucide-react'
+import { Plus, Search, Trash2, RotateCcw, ChevronLeft, ChevronRight, UserPlus, UserMinus } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Table } from '../../components/ui/Table'
@@ -8,7 +8,8 @@ import { AsyncState, EmptyState, ErrorState, LoadingState } from '../../componen
 import { StaffRegistrationModal } from '../../components/admin/StaffRegistrationModal'
 import { useAdminMembersList } from '../../hooks/useAdminMembersList'
 import { adminService } from '../../services/adminService'
-import { trainerService } from '../../services/trainerService'
+import { AssignTrainerModal, UnassignTrainerModal } from '../../components/staff/TrainerAssignmentModals'
+import { assignedTrainerId, assignedTrainerName } from '../../utils/apiHelpers'
 
 function getAdminListError(error) {
   if (!error) return error
@@ -58,12 +59,8 @@ export function MembersManagement() {
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError, setActionError] = useState(null)
   const [assignTrainerTarget, setAssignTrainerTarget] = useState(null)
-  const [trainers, setTrainers] = useState([])
-  const [selectedTrainer, setSelectedTrainer] = useState('')
-  const [assignTrainerNotes, setAssignTrainerNotes] = useState('')
-  const [loadingTrainers, setLoadingTrainers] = useState(false)
-  const [assignTrainerSaving, setAssignTrainerSaving] = useState(false)
-  const [assignTrainerError, setAssignTrainerError] = useState(null)
+  const [unassignTrainerTarget, setUnassignTrainerTarget] = useState(null)
+  const [assignmentMessage, setAssignmentMessage] = useState('')
 
   const {
     items = [],
@@ -158,58 +155,9 @@ export function MembersManagement() {
     }
   }
 
-  const loadTrainers = async () => {
-    try {
-      setLoadingTrainers(true)
-      const trainers = await adminService.getTrainersList()
-      console.log('Loaded trainers:', trainers)
-      setTrainers(Array.isArray(trainers) ? trainers : [])
-    } catch (err) {
-      console.error('Failed to load trainers:', err)
-      setTrainers([])
-    } finally {
-      setLoadingTrainers(false)
-    }
-  }
-
-  const handleAssignTrainer = async () => {
-    if (!assignTrainerTarget || !selectedTrainer) return
-    setAssignTrainerSaving(true)
-    setAssignTrainerError(null)
-    try {
-      const memberProfileId = assignTrainerTarget.memberProfileId || assignTrainerTarget.id || assignTrainerTarget._id
-      await trainerService.assignTrainer(selectedTrainer, {
-        member_profile_id: memberProfileId,
-        notes: assignTrainerNotes || undefined,
-      })
-      setAssignTrainerTarget(null)
-      setSelectedTrainer('')
-      setAssignTrainerNotes('')
-      await reload()
-      // Log the updated items to check if trainer field is present
-      setTimeout(() => {
-        console.log('After reload, items:', items)
-        console.log('Looking for member with ID:', memberProfileId)
-        const updatedMember = items.find(m => 
-          (m.memberProfileId === memberProfileId) || 
-          (m.id === memberProfileId) || 
-          (m._id === memberProfileId)
-        )
-        console.log('Updated member data:', updatedMember)
-      }, 500)
-    } catch (err) {
-      setAssignTrainerError(err?.response?.data?.message || err?.message || 'Failed to assign trainer')
-    } finally {
-      setAssignTrainerSaving(false)
-    }
-  }
-
-  const openAssignTrainerModal = async (member) => {
-    setAssignTrainerTarget(member)
-    setSelectedTrainer('')
-    setAssignTrainerNotes('')
-    setAssignTrainerError(null)
-    await loadTrainers()
+  const handleAssignmentComplete = (result) => {
+    setAssignmentMessage(result?.message || 'Trainer assignment updated.')
+    reload()
   }
 
   return (
@@ -218,7 +166,8 @@ export function MembersManagement() {
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-foreground">Members</h2>
           <p className="text-sm text-muted">
-            {filteredItems.length} member{filteredItems.length === 1 ? '' : 's'} found.
+            {filteredItems.length} member{filteredItems.length === 1 ? '' : 's'} found. Assign or unassign trainers
+            without attaching workout or meal plans.
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {source === 'api' && (
@@ -260,6 +209,12 @@ export function MembersManagement() {
           </Button>
         </div>
       </div>
+
+      {assignmentMessage && (
+        <Card className="p-4 border-green-200 dark:border-green-500/30 bg-green-50/50 dark:bg-green-500/5">
+          <p className="text-sm text-green-800 dark:text-green-300">{assignmentMessage}</p>
+        </Card>
+      )}
 
       {displayError && source === 'local' && filteredItems.length > 0 && (
         <Card className="p-4 border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/5">
@@ -312,21 +267,33 @@ export function MembersManagement() {
                 key: 'trainer',
                 header: 'Trainer',
                 render: (row) => {
-                  const assignedTrainer = row.trainer || row.assigned_trainer || row.trainer_name
+                  const trainerLabel = assignedTrainerName(row) || row.trainer
+                  const hasTrainer = Boolean(assignedTrainerId(row) || (trainerLabel && trainerLabel !== '—'))
                   return (
                     <div className="flex flex-col gap-2">
-                      <span className="text-sm text-foreground">
-                        {assignedTrainer || '—'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => openAssignTrainerModal(row)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10 transition-colors"
-                        title="Assign trainer to member"
-                      >
-                        <UserPlus className="size-3.5" />
-                        Assign Trainer
-                      </button>
+                      <span className="text-sm text-foreground">{trainerLabel && trainerLabel !== '—' ? trainerLabel : '—'}</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setAssignTrainerTarget(row)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10 transition-colors"
+                          title="Assign trainer to member"
+                        >
+                          <UserPlus className="size-3.5" />
+                          {hasTrainer ? 'Reassign' : 'Assign'}
+                        </button>
+                        {hasTrainer && (
+                          <button
+                            type="button"
+                            onClick={() => setUnassignTrainerTarget(row)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 transition-colors"
+                            title="Unassign trainer from member"
+                          >
+                            <UserMinus className="size-3.5" />
+                            Unassign
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )
                 },
@@ -454,89 +421,20 @@ export function MembersManagement() {
         </div>
       )}
 
-      {/* Assign Trainer Modal */}
       {assignTrainerTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-md space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Assign Trainer</h3>
-              <p className="text-sm text-muted mt-1">
-                Assign a trainer to{' '}
-                <strong>
-                  {assignTrainerTarget.name || `${assignTrainerTarget.first_name || ''} ${assignTrainerTarget.last_name || ''}`}
-                </strong>
-              </p>
-            </div>
+        <AssignTrainerModal
+          member={assignTrainerTarget}
+          onClose={() => setAssignTrainerTarget(null)}
+          onAssigned={handleAssignmentComplete}
+        />
+      )}
 
-            {loadingTrainers ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="size-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Select Trainer</label>
-                  <select
-                    value={selectedTrainer}
-                    onChange={(e) => setSelectedTrainer(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-surface p-2 text-sm"
-                  >
-                    <option value="">Select a trainer...</option>
-                    {trainers.map((trainer) => (
-                      <option key={trainer.id || trainer._id} value={trainer.id || trainer._id}>
-                        {trainer.name || `${trainer.first_name || ''} ${trainer.last_name || ''}`.trim() || 'Trainer'} 
-                        {trainer.specialty && ` (${trainer.specialty})`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Notes</label>
-                  <textarea
-                    value={assignTrainerNotes}
-                    onChange={(e) => setAssignTrainerNotes(e.target.value)}
-                    placeholder="Optional notes for this assignment..."
-                    className="w-full rounded-lg border border-border bg-surface p-3 text-sm"
-                    rows={2}
-                  />
-                </div>
-              </div>
-            )}
-
-            {assignTrainerError && (
-              <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded text-sm text-red-700 dark:text-red-400">
-                {assignTrainerError}
-              </div>
-            )}
-
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setAssignTrainerTarget(null)}
-                disabled={assignTrainerSaving}
-                className="px-4 py-2 rounded border border-border text-sm font-medium hover:bg-muted disabled:opacity-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleAssignTrainer}
-                disabled={assignTrainerSaving || loadingTrainers || !selectedTrainer}
-                className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center gap-2"
-              >
-                {assignTrainerSaving ? (
-                  <>
-                    <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Assigning...
-                  </>
-                ) : (
-                  'Assign Trainer'
-                )}
-              </button>
-            </div>
-          </Card>
-        </div>
+      {unassignTrainerTarget && (
+        <UnassignTrainerModal
+          member={unassignTrainerTarget}
+          onClose={() => setUnassignTrainerTarget(null)}
+          onUnassigned={handleAssignmentComplete}
+        />
       )}
 
       <StaffRegistrationModal

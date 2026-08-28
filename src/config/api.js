@@ -44,6 +44,7 @@ export const API_ENDPOINTS = {
     MEAL_PLANS: (trainerId) => `/trainers/${trainerId}/meal-plans`,
     ASSIGN_PLAN: (trainerId) => `/trainers/${trainerId}/assign-plan`,
     ASSIGN_TRAINER: (trainerId) => `/trainers/${trainerId}/assign-trainer`,
+    UNASSIGN_MEMBER: (memberProfileId) => `/trainers/assignments/member/${memberProfileId}`,
   },
   CLASSES: {
     LIST: '/classes',

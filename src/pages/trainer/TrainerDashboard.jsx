@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { trainerService } from '../../services/trainerService'
 import { classesService } from '../../services/classesService'
 import { unwrapResource, normalizeListResponse } from '../../utils/apiHelpers'
+import { formatLocalDate } from '../../utils/format'
 
 export function TrainerDashboard() {
   const { user } = useAuth()
@@ -36,21 +37,15 @@ export function TrainerDashboard() {
 
       if (trainerId) {
         // Fetch schedule, clients, and classes in parallel
-        const [scheduleResponse, rosterResponse, classResponse] = await Promise.all([
-          trainerService.getTrainerSchedule(trainerId),
+        const [scheduleResult, rosterResult, classResponse] = await Promise.all([
+          trainerService.getTrainerSchedule(trainerId, { date: formatLocalDate() }),
           trainerService.getTrainerRoster(trainerId),
-          classesService.getClasses({ limit: 10 })
+          classesService.getClasses({ limit: 10 }),
         ])
 
-        // Handle schedule
-        const scheduleData = normalizeListResponse(scheduleResponse)
-        setSchedule(scheduleData)
+        setSchedule(scheduleResult.schedule)
+        setClients(rosterResult.roster)
 
-        // Handle roster (assigned clients)
-        const rosterData = normalizeListResponse(rosterResponse)
-        setClients(rosterData)
-
-        // Handle classes
         const classData = normalizeListResponse(classResponse)
         setClasses(classData)
       }
@@ -71,14 +66,9 @@ export function TrainerDashboard() {
       icon: Users 
     },
     { 
-      label: 'Sessions This Week', 
-      value: schedule.filter(s => {
-        const sessionDate = new Date(s.start_time)
-        const now = new Date()
-        const weekAgo = new Date(now.setDate(now.getDate() - 7))
-        return sessionDate >= weekAgo
-      }).length.toString(),
-      change: 'This week', 
+      label: "Today's Sessions", 
+      value: schedule.length.toString(),
+      change: 'Today', 
       icon: Calendar 
     },
     { 
@@ -90,23 +80,24 @@ export function TrainerDashboard() {
   ]
 
   // Get today's schedule
-  const todaySchedule = schedule.filter(s => {
-    const sessionDate = new Date(s.start_time)
-    const today = new Date()
-    return sessionDate.toDateString() === today.toDateString()
-  }).map(s => ({
-    time: new Date(s.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-    client: s.client_name || s.member_name || 'Client',
-    type: s.type || s.name || 'Session',
-    duration: s.duration || '60m',
-    sessionType: s.session_type || 'Session',
-  }))
+  const todaySchedule = schedule.map((s) => {
+    const start = s.start_time ? new Date(s.start_time) : null
+    const end = s.end_time ? new Date(s.end_time) : null
+    const durationMins = start && end ? Math.round((end - start) / 60000) : null
+    return {
+      id: s.id,
+      time: start ? start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '—',
+      name: s.name || 'Class',
+      type: [s.category, s.location].filter(Boolean).join(' · ') || 'Class',
+      duration: durationMins ? `${durationMins}m` : '—',
+      sessionType: `${s.current_bookings || 0}/${s.capacity || 0} booked`,
+    }
+  })
 
-  // Get assigned clients with progress
-  const assignedClients = clients.slice(0, 3).map(c => ({
-    name: c.name || c.first_name && c.last_name ? `${c.first_name} ${c.last_name}` : 'Client',
-    progress: c.progress || 50,
-    goal: c.goal || c.fitness_goal || 'General Fitness',
+  const assignedClients = clients.slice(0, 3).map((c) => ({
+    name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.email || 'Client',
+    progress: c.is_active === false ? 0 : 100,
+    goal: c.fitness_goal || c.active_workout_plan || 'General Fitness',
   }))
 
   // Get upcoming classes
@@ -193,13 +184,13 @@ export function TrainerDashboard() {
                 {todaySchedule.length === 0 ? (
                   <p className="text-sm text-muted">No sessions scheduled for today</p>
                 ) : (
-                  todaySchedule.map((session, i) => (
-                    <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-surface hover:bg-surface/80 transition-colors">
+                  todaySchedule.map((session) => (
+                    <div key={session.id} className="flex items-center gap-4 p-3 rounded-lg bg-surface hover:bg-surface/80 transition-colors">
                       <div className="text-center min-w-16">
                         <p className="text-sm font-medium text-foreground">{session.time}</p>
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-foreground text-sm">{session.client}</p>
+                        <p className="font-medium text-foreground text-sm">{session.name}</p>
                         <p className="text-xs text-muted">{session.type}</p>
                       </div>
                       <div className="text-right">
@@ -228,7 +219,7 @@ export function TrainerDashboard() {
                     <div key={i} className="p-3 rounded-lg bg-surface">
                       <div className="flex items-center justify-between mb-2">
                         <p className="font-medium text-foreground text-sm">{client.name}</p>
-                        <span className="text-xs text-muted">{client.progress}%</span>
+                        <span className="text-xs text-muted">{client.progress ? 'Active' : 'Inactive'}</span>
                       </div>
                       <div className="h-1.5 bg-border rounded-full overflow-hidden">
                         <div 

@@ -4,7 +4,8 @@ import { Button } from '../../components/ui/Button'
 import { ClassFormModal } from '../../components/ClassFormModal'
 import { ClassRosterModal } from '../../components/trainer/ClassRosterModal'
 import { trainerService } from '../../services/trainerService'
-import { normalizeListResponse, unwrapResource } from '../../utils/apiHelpers'
+import { unwrapResource } from '../../utils/apiHelpers'
+import { formatLocalDate } from '../../utils/format'
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -34,9 +35,7 @@ export function TrainerSchedule() {
       }
       setTrainerId(profile.id)
 
-      const response = await trainerService.getTrainerSchedule(profile.id)
-      const payload = unwrapResource(response)
-      const schedule = Array.isArray(payload?.schedule) ? payload.schedule : normalizeListResponse(response)
+      const { schedule } = await trainerService.getTrainerSchedule(profile.id)
       setClasses(schedule)
     } catch (err) {
       setError(err.message || 'Failed to load schedule')
@@ -79,20 +78,13 @@ export function TrainerSchedule() {
   }
 
   const getClassesForDate = (date) => {
-    const dateStr = date.toISOString().split('T')[0]
-    return classes.filter(cls => {
-      const classDate = new Date(cls.start_time).toISOString().split('T')[0]
-      return classDate === dateStr
-    })
+    const dateStr = formatLocalDate(date)
+    return classes.filter((cls) => formatLocalDate(cls.start_time) === dateStr)
   }
 
   const getTodayClasses = () => {
-    const today = new Date()
-    const todayStr = today.toISOString().split('T')[0]
-    return classes.filter(cls => {
-      const classDate = new Date(cls.start_time).toISOString().split('T')[0]
-      return classDate === todayStr
-    })
+    const todayStr = formatLocalDate()
+    return classes.filter((cls) => formatLocalDate(cls.start_time) === todayStr)
   }
 
   const formatDuration = (startTime, endTime) => {
@@ -238,7 +230,12 @@ export function TrainerSchedule() {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium text-foreground">{cls.name}</p>
-                    <p className="text-sm text-muted">{cls.category} • {cls.current_bookings || 0}/{cls.capacity} booked</p>
+                    <p className="text-sm text-muted">
+                      {[cls.category, cls.location].filter(Boolean).join(' · ')}
+                      {' · '}
+                      {cls.current_bookings || 0}/{cls.capacity} booked
+                      {typeof cls.available_spots === 'number' ? ` · ${cls.available_spots} spots left` : ''}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${

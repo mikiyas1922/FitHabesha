@@ -1,6 +1,6 @@
 import { Plus, Trash2, Search, Save, Apple, Beef, Fish, Wheat, Clock, Target, Loader2, Edit } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { templatesService } from '../../services/templatesService'
 import { trainerService } from '../../services/trainerService'
 import { unwrapResource } from '../../utils/apiHelpers'
@@ -45,20 +45,23 @@ export function MealPlanBuilder() {
     description: ''
   })
 
-  const fetchMealPlans = async () => {
+  const fetchMealPlans = useCallback(async () => {
+    if (!trainerId) {
+      setMealPlans([])
+      return
+    }
     try {
       setLoadingPlans(true)
       setError(null)
-      const response = await trainerService.getTrainerMealPlans(trainerId)
-      const payload = unwrapResource(response)
-      setMealPlans(Array.isArray(payload) ? payload : [])
+      const items = await trainerService.getTrainerMealPlans(trainerId)
+      setMealPlans(items)
     } catch (err) {
       setError(err.message || 'Failed to load meal plans')
       setMealPlans([])
     } finally {
       setLoadingPlans(false)
     }
-  }
+  }, [trainerId])
 
   useEffect(() => {
     const loadTrainerProfile = async () => {
@@ -67,7 +70,6 @@ export function MealPlanBuilder() {
         const profile = unwrapResource(profileResponse)
         if (profile?.id) {
           setTrainerId(profile.id)
-          fetchMealPlans()
         }
       } catch (err) {
         console.error('Failed to load trainer profile:', err)
@@ -77,10 +79,8 @@ export function MealPlanBuilder() {
   }, [])
 
   useEffect(() => {
-    if (trainerId) {
-      fetchMealPlans()
-    }
-  }, [trainerId])
+    fetchMealPlans()
+  }, [fetchMealPlans])
 
   const filteredFoods = selectedCategory === 'All'
     ? foodLibrary

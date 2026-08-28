@@ -10,6 +10,16 @@ export const GENDER_OPTIONS = [
   { value: 'female', label: 'Female' },
 ]
 
+/** Local calendar date as YYYY-MM-DD (avoids UTC shift from toISOString). */
+export function formatLocalDate(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export function formatDateInput(value) {
   if (!value) return ''
   const date = new Date(value)

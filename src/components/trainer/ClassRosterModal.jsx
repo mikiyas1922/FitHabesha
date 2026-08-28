@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Users, Calendar, Clock, X, Loader2 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { trainerService } from '../../services/trainerService'
-import { unwrapResource } from '../../utils/apiHelpers'
+import { getInitials } from '../../utils/format'
 
 export function ClassRosterModal({ open, onClose, classData, trainerId }) {
   const [roster, setRoster] = useState([])
@@ -15,9 +15,8 @@ export function ClassRosterModal({ open, onClose, classData, trainerId }) {
     setLoading(true)
     setError(null)
     try {
-      const response = await trainerService.getClassRoster(trainerId, classData.id)
-      const payload = unwrapResource(response)
-      setRoster(Array.isArray(payload) ? payload : [])
+      const bookedMembers = await trainerService.getClassRoster(trainerId, classData.id)
+      setRoster(bookedMembers)
     } catch (err) {
       setError(err.message || 'Failed to load class roster')
       setRoster([])
@@ -88,7 +87,7 @@ export function ClassRosterModal({ open, onClose, classData, trainerId }) {
         {!loading && !error && roster.length > 0 && (
           <div className="space-y-3">
             {roster.map((member) => {
-              const initials = `${member.first_name || ''}${member.last_name || ''}`.slice(0, 2).toUpperCase()
+              const initials = getInitials(member.first_name, member.last_name, member.email)
               return (
                 <div key={member.booking_id || member.member_profile_id} className="flex items-center gap-4 p-3 rounded-lg bg-surface">
                   <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
@@ -100,8 +99,12 @@ export function ClassRosterModal({ open, onClose, classData, trainerId }) {
                     </p>
                     <p className="text-xs text-muted">{member.unique_member_id}</p>
                     <p className="text-xs text-muted">{member.email}</p>
+                    {member.phone && <p className="text-xs text-muted">{member.phone}</p>}
                   </div>
                   <div className="text-right">
+                    {member.booking_reference && (
+                      <p className="text-xs text-muted">{member.booking_reference}</p>
+                    )}
                     <p className="text-xs text-muted">Booked: {member.booked_at ? new Date(member.booked_at).toLocaleDateString() : '—'}</p>
                     <span className={`text-xs font-medium ${member.status === 'confirmed' ? 'text-green-600' : 'text-yellow-600'}`}>
                       {member.status || 'Confirmed'}
