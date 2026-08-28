@@ -49,8 +49,9 @@ export function MealPlanBuilder() {
     try {
       setLoadingPlans(true)
       setError(null)
-      const response = await templatesService.listMealPlans({ trainer_id: trainerId })
-      setMealPlans(response)
+      const response = await trainerService.getTrainerMealPlans(trainerId)
+      const payload = unwrapResource(response)
+      setMealPlans(Array.isArray(payload) ? payload : [])
     } catch (err) {
       setError(err.message || 'Failed to load meal plans')
       setMealPlans([])

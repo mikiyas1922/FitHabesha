@@ -40,6 +40,10 @@ export const API_ENDPOINTS = {
     CLASS_ROSTER: (trainerId, classId) => `/trainers/${trainerId}/classes/${classId}/roster`,
     FEEDBACK: (id) => `/trainers/${id}/feedback`,
     ATTENDANCE: (memberProfileId) => `/trainers/attendance/${memberProfileId}`,
+    TEMPLATES: (trainerId) => `/trainers/${trainerId}/templates`,
+    MEAL_PLANS: (trainerId) => `/trainers/${trainerId}/meal-plans`,
+    ASSIGN_PLAN: (trainerId) => `/trainers/${trainerId}/assign-plan`,
+    ASSIGN_TRAINER: (trainerId) => `/trainers/${trainerId}/assign-trainer`,
   },
   CLASSES: {
     LIST: '/classes',

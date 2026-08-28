@@ -47,11 +47,16 @@ export function WorkoutBuilder() {
   })
 
   const fetchTemplates = async () => {
+    if (!trainerId) {
+      setTemplates([])
+      return
+    }
     try {
       setLoadingTemplates(true)
       setError(null)
-      const response = await templatesService.listWorkoutTemplates({ trainer_id: trainerId })
-      setTemplates(response)
+      const response = await trainerService.getTrainerTemplates(trainerId)
+      const payload = unwrapResource(response)
+      setTemplates(Array.isArray(payload) ? payload : [])
     } catch (err) {
       setError(err.message || 'Failed to load templates')
       setTemplates([])

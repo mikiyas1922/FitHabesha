@@ -14,6 +14,13 @@ export function MyClients() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [actionMessage, setActionMessage] = useState('')
+  const [assignPlanTarget, setAssignPlanTarget] = useState(null)
+  const [workoutTemplates, setWorkoutTemplates] = useState([])
+  const [mealPlans, setMealPlans] = useState([])
+  const [selectedWorkoutTemplate, setSelectedWorkoutTemplate] = useState('')
+  const [selectedMealPlan, setSelectedMealPlan] = useState('')
+  const [assignNotes, setAssignNotes] = useState('')
+  const [loadingPlans, setLoadingPlans] = useState(false)
 
   const loadRoster = useCallback(async () => {
     setLoading(true)
@@ -64,6 +71,58 @@ export function MyClients() {
       setActionMessage(err.message || 'Unable to record attendance.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const loadPlansForAssignment = async (trainerId) => {
+    try {
+      setLoadingPlans(true)
+      const [templatesResponse, mealsResponse] = await Promise.all([
+        trainerService.getTrainerTemplates(trainerId),
+        trainerService.getTrainerMealPlans(trainerId),
+      ])
+      const templatesPayload = unwrapResource(templatesResponse)
+      const mealsPayload = unwrapResource(mealsResponse)
+      setWorkoutTemplates(Array.isArray(templatesPayload) ? templatesPayload : [])
+      setMealPlans(Array.isArray(mealsPayload) ? mealsPayload : [])
+    } catch (err) {
+      console.error('Failed to load plans:', err)
+    } finally {
+      setLoadingPlans(false)
+    }
+  }
+
+  const handleAssignPlan = async () => {
+    if (!assignPlanTarget?.member_profile_id || !trainer?.id) return
+    setSaving(true)
+    setActionMessage('')
+    try {
+      await trainerService.assignPlan(trainer.id, {
+        member_profile_id: assignPlanTarget.member_profile_id,
+        workout_template_id: selectedWorkoutTemplate || null,
+        meal_plan_id: selectedMealPlan || null,
+        notes: assignNotes || undefined,
+      })
+      setActionMessage('Plan assigned successfully.')
+      setAssignPlanTarget(null)
+      setSelectedWorkoutTemplate('')
+      setSelectedMealPlan('')
+      setAssignNotes('')
+      loadRoster()
+    } catch (err) {
+      setActionMessage(err.message || 'Unable to assign plan.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const openAssignPlanModal = async (client) => {
+    setAssignPlanTarget(client)
+    setSelectedWorkoutTemplate('')
+    setSelectedMealPlan('')
+    setAssignNotes('')
+    if (trainer?.id) {
+      await loadPlansForAssignment(trainer.id)
     }
   }
 
@@ -171,9 +230,14 @@ export function MyClients() {
                     </div>
                     <p>Subscription: {client.subscription_status || '—'}</p>
                   </div>
-                  <Button size="sm" className="w-full" onClick={() => setAttendanceTarget(client)}>
-                    Record PT attendance
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="flex-1" onClick={() => setAttendanceTarget(client)}>
+                      Record PT attendance
+                    </Button>
+                    <Button size="sm" variant="secondary" className="flex-1" onClick={() => openAssignPlanModal(client)}>
+                      Assign Plan
+                    </Button>
+                  </div>
                 </div>
               )
             })}
@@ -201,6 +265,79 @@ export function MyClients() {
               </Button>
               <Button onClick={handleRecordAttendance} disabled={saving}>
                 {saving ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {assignPlanTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold">Assign Plan</h3>
+            <p className="text-sm text-muted">
+              {assignPlanTarget.first_name} {assignPlanTarget.last_name} · {assignPlanTarget.unique_member_id}
+            </p>
+            
+            {loadingPlans ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="size-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Workout Template</label>
+                    <select
+                      value={selectedWorkoutTemplate}
+                      onChange={(e) => setSelectedWorkoutTemplate(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-surface p-2 text-sm"
+                    >
+                      <option value="">Select workout template...</option>
+                      {workoutTemplates.map((template) => (
+                        <option key={template._id || template.id} value={template._id || template.id}>
+                          {template.name} ({template.difficulty})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Meal Plan</label>
+                    <select
+                      value={selectedMealPlan}
+                      onChange={(e) => setSelectedMealPlan(e.target.value)}
+                      className="w-full rounded-lg border border-border bg-surface p-2 text-sm"
+                    >
+                      <option value="">Select meal plan...</option>
+                      {mealPlans.map((plan) => (
+                        <option key={plan._id || plan.id} value={plan._id || plan.id}>
+                          {plan.name} ({plan.calories_target} kcal)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Notes</label>
+                    <textarea
+                      value={assignNotes}
+                      onChange={(e) => setAssignNotes(e.target.value)}
+                      placeholder="Optional notes for this assignment..."
+                      className="w-full rounded-lg border border-border bg-surface p-3 text-sm"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+            
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setAssignPlanTarget(null)} disabled={saving}>
+                Cancel
+              </Button>
+              <Button onClick={handleAssignPlan} disabled={saving || loadingPlans}>
+                {saving ? 'Assigning...' : 'Assign'}
               </Button>
             </div>
           </div>
