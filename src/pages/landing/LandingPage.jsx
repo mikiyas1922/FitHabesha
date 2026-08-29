@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Dumbbell,
@@ -15,6 +15,7 @@ import {
   Trophy,
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { ratingService } from '../../services/ratingService'
 
 const navLinks = [
   { label: 'Features', href: '#features' },
@@ -269,6 +270,17 @@ function SocialIcon({ children, label, href }) {
 
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [facilityRating, setFacilityRating] = useState(null)
+
+  useEffect(() => {
+    ratingService
+      .getFacilityRating()
+      .then(setFacilityRating)
+      .catch(() => setFacilityRating(null))
+  }, [])
+
+  const facilityAverage =
+    facilityRating?.total_reviews > 0 ? Number(facilityRating.average_rating).toFixed(1) : '4.9'
 
   return (
     <div className="min-h-screen bg-dark text-white">
@@ -345,7 +357,7 @@ export function LandingPage() {
               <div className="mt-10 flex flex-wrap gap-8">
                 {[
                   { value: '1,200+', label: 'Active Members' },
-                  { value: '4.9', label: 'Average Rating' },
+                  { value: facilityAverage, label: 'Average Rating' },
                   { value: '24', label: 'Expert Trainers' },
                 ].map((s) => (
                   <div key={s.label}>
@@ -366,7 +378,7 @@ export function LandingPage() {
           {[
             { value: '1,200+', label: 'Active Members' },
             { value: '24', label: 'Expert Trainers' },
-            { value: '4.9 / 5', label: 'Average Rating' },
+            { value: `${facilityAverage} / 5`, label: 'Average Rating' },
             { value: '98%', label: 'Retention Rate' },
           ].map((s) => (
             <div key={s.label} className="text-center">

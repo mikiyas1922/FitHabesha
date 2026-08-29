@@ -89,8 +89,10 @@ apiClient.interceptors.response.use(
       authUrl.includes('/auth/reset-password')
 
     if (statusCode === 401 && !skipRefresh) {
-      const isTrainerListCall = originalRequest?.url?.includes('/trainers')
-      if (!isTrainerListCall) {
+      const requestUrl = originalRequest?.url || ''
+      const skipLoginRedirect =
+        requestUrl.includes('/trainers') || requestUrl.includes('/ratings/facility')
+      if (!skipLoginRedirect) {
         tokenStorage.clearTokens()
         window.location.href = '/login'
       }

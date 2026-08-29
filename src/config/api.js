@@ -21,6 +21,13 @@ export const API_ENDPOINTS = {
     TRAINERS_REACTIVATE: (id) => `/admin/trainers/${id}/reactivate`,
     HEALTH_METRICS_DELETE: (id) => `/admin/health-metrics/${id}`,
     NOTIFICATIONS_CLEANUP: '/admin/notifications/cleanup',
+    RATINGS_FLAGGED: '/admin/ratings/flagged',
+    RATINGS_MODERATE: (id) => `/admin/ratings/${id}/moderate`,
+  },
+  RATINGS: {
+    SUBMIT: (type) => `/ratings/${type}`,
+    TRAINER_AVERAGE: (trainerId) => `/ratings/trainer/${trainerId}/average`,
+    FACILITY: '/ratings/facility',
   },
   MEMBERS: {
     LIST: '/members',

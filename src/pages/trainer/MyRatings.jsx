@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Star, MessageSquare, TrendingUp, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { ratingService } from '../../services/ratingService'
 import { trainerService } from '../../services/trainerService'
 import { unwrapResource } from '../../utils/apiHelpers'
 
 export function MyRatings() {
   const [feedback, setFeedback] = useState([])
+  const [summary, setSummary] = useState(ratingService.emptyTrainerAverage())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -17,11 +19,16 @@ export function MyRatings() {
       const profile = unwrapResource(profileResponse)
       if (!profile?.id) throw new Error('Trainer profile not found.')
 
-      const { feedback: items } = await trainerService.getTrainerFeedback(profile.id)
+      const [average, { feedback: items }] = await Promise.all([
+        ratingService.getTrainerAverage(profile.id),
+        trainerService.getTrainerFeedback(profile.id),
+      ])
+      setSummary(average)
       setFeedback(items)
     } catch (err) {
-      setError(err.message || 'Failed to load feedback')
+      setError(err.message || 'Failed to load ratings')
       setFeedback([])
+      setSummary(ratingService.emptyTrainerAverage())
     } finally {
       setLoading(false)
     }
@@ -32,11 +39,7 @@ export function MyRatings() {
   }, [loadFeedback])
 
   const average =
-    feedback.length > 0
-      ? (
-          feedback.reduce((sum, item) => sum + Number(item.rating_stars || 0), 0) / feedback.length
-        ).toFixed(1)
-      : '—'
+    summary.total_reviews > 0 ? Number(summary.average_rating).toFixed(1) : '—'
 
   if (loading) {
     return (
@@ -66,7 +69,7 @@ export function MyRatings() {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           { label: 'Average Rating', value: average === '—' ? average : `${average} / 5.0`, icon: Star },
-          { label: 'Total Reviews', value: String(feedback.length), icon: MessageSquare },
+          { label: 'Total Reviews', value: String(summary.total_reviews), icon: MessageSquare },
           { label: 'Anonymous', value: String(feedback.filter((item) => item.is_anonymous).length), icon: TrendingUp },
         ].map((stat) => {
           const Icon = stat.icon
@@ -82,6 +85,24 @@ export function MyRatings() {
         })}
       </div>
 
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h3 className="font-semibold text-foreground mb-4">Star breakdown</h3>
+        <div className="space-y-2 text-sm text-muted">
+          {[
+            [5, summary.five_star_count],
+            [4, summary.four_star_count],
+            [3, summary.three_star_count],
+            [2, summary.two_star_count],
+            [1, summary.one_star_count],
+          ].map(([stars, count]) => (
+            <div key={stars} className="flex items-center justify-between">
+              <span>{stars} star{stars === 1 ? '' : 's'}</span>
+              <span className="font-medium text-foreground">{count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="rounded-xl border border-border bg-card p-6 space-y-4">
         {feedback.length === 0 && <p className="text-sm text-muted">No client feedback yet.</p>}
         {feedback.map((item) => (
@@ -91,7 +112,7 @@ export function MyRatings() {
                 <p className="font-medium text-foreground">
                   {item.is_anonymous
                     ? 'Anonymous member'
-                    : `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Member'}
+                    : item.member_name || `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Member'}
                 </p>
                 <p className="text-xs text-muted">
                   {[item.rating_type, item.rating_dimension].filter(Boolean).join(' · ')}

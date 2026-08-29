@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Users, Calendar, TrendingUp, Clock, MessageSquare, Plus, Search, Filter, Loader2 } from 'lucide-react'
+import { Users, Calendar, TrendingUp, Clock, Plus, Search, Filter, Loader2, Star } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { trainerService } from '../../services/trainerService'
 import { classesService } from '../../services/classesService'
+import { ratingService } from '../../services/ratingService'
 import { unwrapResource, normalizeListResponse } from '../../utils/apiHelpers'
 import { formatLocalDate } from '../../utils/format'
 
@@ -18,6 +19,7 @@ export function TrainerDashboard() {
   const [schedule, setSchedule] = useState([])
   const [clients, setClients] = useState([])
   const [classes, setClasses] = useState([])
+  const [ratingSummary, setRatingSummary] = useState(ratingService.emptyTrainerAverage())
 
   useEffect(() => {
     loadDashboardData()
@@ -37,14 +39,16 @@ export function TrainerDashboard() {
 
       if (trainerId) {
         // Fetch schedule, clients, and classes in parallel
-        const [scheduleResult, rosterResult, classResponse] = await Promise.all([
+        const [scheduleResult, rosterResult, classResponse, average] = await Promise.all([
           trainerService.getTrainerSchedule(trainerId, { date: formatLocalDate() }),
           trainerService.getTrainerRoster(trainerId),
           classesService.getClasses({ limit: 10 }),
+          ratingService.getTrainerAverage(trainerId).catch(() => ratingService.emptyTrainerAverage()),
         ])
 
         setSchedule(scheduleResult.schedule)
         setClients(rosterResult.roster)
+        setRatingSummary(average)
 
         const classData = normalizeListResponse(classResponse)
         setClasses(classData)
@@ -76,6 +80,12 @@ export function TrainerDashboard() {
       value: classes.filter(c => new Date(c.start_time) > new Date()).length.toString(), 
       change: 'Available', 
       icon: TrendingUp 
+    },
+    {
+      label: 'Average Rating',
+      value: ratingSummary.total_reviews > 0 ? `${Number(ratingSummary.average_rating).toFixed(1)} / 5` : '—',
+      change: `${ratingSummary.total_reviews} reviews`,
+      icon: Star,
     },
   ]
 
@@ -150,7 +160,7 @@ export function TrainerDashboard() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {trainerStats.map((stat) => {
               const Icon = stat.icon
               return (
