@@ -18,7 +18,9 @@ import {
   UserCheck,
   Home,
   Clock,
+  TrendingUp,
 } from 'lucide-react'
+
 import { navByRole } from '../../config/navigation'
 import { useAuth } from '../../contexts/AuthContext'
 import { getSettingsPath, getUserDisplay } from '../../utils/auth'
@@ -42,7 +44,9 @@ const iconMap = {
   UserCheck,
   Home,
   Clock,
+  TrendingUp,
 }
+
 
 export function Sidebar({ role }) {
   const { user, logout } = useAuth()

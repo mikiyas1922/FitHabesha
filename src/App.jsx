@@ -35,6 +35,7 @@ import { MemberTrainers } from './pages/member/MemberTrainers.jsx'
 import { MemberSubscriptions } from './pages/member/MemberSubscriptions.jsx'
 import { MemberFeedback } from './pages/member/MemberFeedback.jsx'
 
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -116,6 +117,7 @@ export default function App() {
           <Route path="trainers" element={<MemberTrainers />} />
           <Route path="subscriptions" element={<MemberSubscriptions />} />
           <Route path="feedback" element={<MemberFeedback />} />
+
           <Route path="settings" element={<ProfileSettings />} />
           <Route path="profile" element={<ProfileSettings />} />
         </Route>

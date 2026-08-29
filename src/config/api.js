@@ -24,6 +24,11 @@ export const API_ENDPOINTS = {
     RATINGS_FLAGGED: '/admin/ratings/flagged',
     RATINGS_MODERATE: (id) => `/admin/ratings/${id}/moderate`,
   },
+  PROGRESS: {
+    LOG: '/progress',
+    HISTORY: (memberProfileId) => `/progress/member/${memberProfileId}`,
+    LATEST: (memberProfileId) => `/progress/member/${memberProfileId}/latest`,
+  },
   RATINGS: {
     SUBMIT: (type) => `/ratings/${type}`,
     TRAINER_AVERAGE: (trainerId) => `/ratings/trainer/${trainerId}/average`,
