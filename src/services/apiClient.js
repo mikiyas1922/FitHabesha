@@ -50,6 +50,20 @@ apiClient.interceptors.request.use(
   }
 )
 
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+  failedQueue = []
+}
+
 // Response interceptor for error handling and token refresh
 apiClient.interceptors.response.use(
   (response) => {
@@ -61,9 +75,7 @@ apiClient.interceptors.response.use(
 
     const refreshStatus = response.headers['x-refresh-status']
     if (refreshStatus === 'expired' || refreshStatus === 'invalid' || refreshStatus === 'revoked') {
-      console.warn(`Refresh token ${refreshStatus}, clearing session`)
-      tokenStorage.clearTokens()
-      window.location.href = '/login'
+      console.warn(`Refresh token ${refreshStatus}`)
     }
 
     return response
@@ -88,13 +100,75 @@ apiClient.interceptors.response.use(
       authUrl.includes('/auth/forgot-password') ||
       authUrl.includes('/auth/reset-password')
 
-    if (statusCode === 401 && !skipRefresh) {
-      const requestUrl = originalRequest?.url || ''
-      const skipLoginRedirect =
-        requestUrl.includes('/trainers') || requestUrl.includes('/ratings/facility')
-      if (!skipLoginRedirect) {
-        tokenStorage.clearTokens()
-        window.location.href = '/login'
+    if (statusCode === 401 && !skipRefresh && originalRequest) {
+      if (originalRequest._retry) {
+        return Promise.reject(error)
+      }
+
+      const refreshToken = tokenStorage.getRefreshToken()
+      if (!refreshToken) {
+        return Promise.reject(error)
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`
+            }
+            return apiClient(originalRequest)
+          })
+          .catch((err) => Promise.reject(err))
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        const refreshResponse = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          { refreshToken, refresh_token: refreshToken },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'x-refresh-token': refreshToken,
+            },
+          }
+        )
+
+        const refreshData = refreshResponse.data?.data || refreshResponse.data || {}
+        const newAccessToken =
+          refreshData.accessToken ||
+          refreshData.access_token ||
+          refreshResponse.headers?.['x-access-token']
+        const newRefreshToken =
+          refreshData.refreshToken ||
+          refreshData.refresh_token ||
+          refreshResponse.headers?.['x-refresh-token']
+
+        if (newAccessToken) {
+          tokenStorage.setAccessToken(newAccessToken)
+          if (newRefreshToken) {
+            tokenStorage.setRefreshToken(newRefreshToken)
+          }
+
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+          }
+
+          processQueue(null, newAccessToken)
+          return apiClient(originalRequest)
+        } else {
+          throw new Error('No access token in refresh response')
+        }
+      } catch (refreshErr) {
+        processQueue(refreshErr, null)
+        return Promise.reject(refreshErr)
+      } finally {
+        isRefreshing = false
       }
     }
 

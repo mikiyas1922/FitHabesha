@@ -18,8 +18,9 @@ export function Input({ label, error, className = '', id, ...props }) {
   )
 }
 
-export function Select({ label, options, className = '', id, ...props }) {
+export function Select({ label, options = [], className = '', id, ...props }) {
   const selectId = id || label?.toLowerCase().replace(/\s+/g, '-')
+  const safeOptions = Array.isArray(options) ? options : []
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -33,7 +34,7 @@ export function Select({ label, options, className = '', id, ...props }) {
         className={`w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors ${className}`}
         {...props}
       >
-        {options.map((opt) => (
+        {safeOptions.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>

@@ -4,6 +4,7 @@ export const BACKEND_TO_FRONTEND_ROLE = {
   admin: 'admin',
   trainer: 'trainer',
   reception: 'receptionist',
+  receptionist: 'receptionist',
   member: 'member',
 }
 
@@ -11,11 +12,14 @@ export const FRONTEND_TO_BACKEND_ROLE = {
   admin: 'admin',
   trainer: 'trainer',
   receptionist: 'reception',
+  reception: 'reception',
   member: 'member',
 }
 
 export function mapBackendRole(role) {
-  return BACKEND_TO_FRONTEND_ROLE[role] || role
+  if (!role || typeof role !== 'string') return ''
+  const normalized = role.trim().toLowerCase()
+  return BACKEND_TO_FRONTEND_ROLE[normalized] || normalized
 }
 
 export function getDashboardPath(role) {

@@ -11,6 +11,13 @@ function isUuid(value) {
 
 function wrapRatingError(error, fallbacks = {}) {
   const status = error?.status
+  const serverMsg =
+    error?.details?.error ||
+    error?.details?.message ||
+    (error?.message && error.message !== 'An error occurred' ? error.message : null)
+  if (serverMsg) {
+    throw { ...error, message: serverMsg }
+  }
   if (status && fallbacks[status]) {
     throw { ...error, message: fallbacks[status] }
   }

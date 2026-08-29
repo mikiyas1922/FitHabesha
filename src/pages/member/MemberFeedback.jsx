@@ -68,23 +68,41 @@ export function MemberFeedback() {
     setLoadError(null)
     try {
       const [profileResponse, facility] = await Promise.all([
-        memberService.getCurrentMemberProfile(),
-        ratingService.getFacilityRating().catch(() => null),
+        memberService.getCurrentMemberProfile().catch((err) => {
+          console.warn('Member profile could not be loaded:', err)
+          return null
+        }),
+        ratingService.getFacilityRating().catch((err) => {
+          console.warn('Facility rating could not be loaded:', err)
+          return null
+        }),
       ])
-      const profile = unwrapResource(profileResponse)
+
+      const profile = profileResponse ? unwrapResource(profileResponse) : null
       const trainerId = assignedTrainerId(profile)
-      setAssignedTrainer({
-        id: trainerId,
-        name: assignedTrainerName(profile) || 'Assigned trainer',
-      })
+      const trainerName = assignedTrainerName(profile)
+
       if (trainerId) {
+        setAssignedTrainer({
+          id: trainerId,
+          name: trainerName || 'Assigned trainer',
+        })
         setForm((prev) => ({ ...prev, trainer_id: prev.trainer_id || trainerId }))
       }
 
       if (profile?.id) {
-        const bookingResponse = await bookingService.getMemberBookings(profile.id, { page: 1, limit: 50 })
-        const items = bookingResponse?.data?.data?.bookings || []
-        setBookings(items.filter((booking) => booking.status !== 'cancelled'))
+        try {
+          const bookingResponse = await bookingService.getMemberBookings(profile.id, { page: 1, limit: 50 })
+          const payload = bookingResponse?.data || bookingResponse || {}
+          const items =
+            payload?.data?.bookings ||
+            payload?.bookings ||
+            (Array.isArray(payload) ? payload : [])
+          setBookings(items.filter((booking) => booking && booking.status !== 'cancelled'))
+        } catch (bookingErr) {
+          console.warn('Member bookings could not be loaded:', bookingErr)
+          setBookings([])
+        }
       }
 
       setFacilitySummary(facility)
@@ -101,18 +119,20 @@ export function MemberFeedback() {
 
   const trainerOptions = useMemo(() => {
     const seen = new Map()
-    if (assignedTrainer.id) {
+    if (assignedTrainer?.id) {
       seen.set(assignedTrainer.id, {
         value: assignedTrainer.id,
         label: assignedTrainer.name || 'Assigned trainer',
       })
     }
-    bookings.forEach((booking) => {
-      const id = booking.trainer_id
+    const safeBookings = Array.isArray(bookings) ? bookings : []
+    safeBookings.forEach((booking) => {
+      if (!booking || typeof booking !== 'object') return
+      const id = booking.trainer_id || booking.trainerId
       if (!id || seen.has(id)) return
       seen.set(id, {
         value: id,
-        label: booking.trainer_name || 'Trainer',
+        label: booking.trainer_name || booking.trainerName || 'Trainer',
       })
     })
     return [...seen.values()]
@@ -120,23 +140,35 @@ export function MemberFeedback() {
 
   const classOptions = useMemo(() => {
     const seen = new Map()
-    bookings.forEach((booking) => {
-      const id = booking.class_id
+    const safeBookings = Array.isArray(bookings) ? bookings : []
+    safeBookings.forEach((booking) => {
+      if (!booking || typeof booking !== 'object') return
+      const id = booking.class_id || booking.classId
       if (!id || seen.has(id)) return
       seen.set(id, {
         value: id,
-        label: booking.class_name || booking.name || 'Class',
+        label: booking.class_name || booking.className || booking.name || 'Class',
       })
     })
     return [...seen.values()]
   }, [bookings])
+
+  useEffect(() => {
+    if (form.type === 'trainer' && !form.trainer_id && trainerOptions.length > 0) {
+      setForm((prev) => ({ ...prev, trainer_id: trainerOptions[0].value }))
+    }
+    if (form.type === 'class' && !form.class_id && classOptions.length > 0) {
+      setForm((prev) => ({ ...prev, class_id: classOptions[0].value }))
+    }
+  }, [trainerOptions, classOptions, form.type, form.trainer_id, form.class_id])
 
   const handleTypeChange = (type) => {
     setForm((prev) => ({
       ...prev,
       type,
       rating_dimension: 'overall',
-      trainer_id: prev.trainer_id || assignedTrainer.id || '',
+      trainer_id: prev.trainer_id || assignedTrainer?.id || (trainerOptions[0]?.value || ''),
+      class_id: prev.class_id || (classOptions[0]?.value || ''),
     }))
   }
 
@@ -274,7 +306,7 @@ export function MemberFeedback() {
             label="Dimension"
             value={form.rating_dimension}
             onChange={(e) => setForm({ ...form, rating_dimension: e.target.value })}
-            options={DIMENSIONS[form.type]}
+            options={DIMENSIONS[form.type] || []}
           />
 
           <Input

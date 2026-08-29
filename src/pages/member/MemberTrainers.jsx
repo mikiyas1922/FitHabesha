@@ -17,12 +17,12 @@ export function MemberTrainers() {
       try {
         setLoading(true)
         const [classResponse, profileResponse] = await Promise.all([
-          classesService.getClasses({ limit: 50 }),
-          memberService.getCurrentMemberProfile(),
+          classesService.getClasses({ limit: 50 }).catch(() => []),
+          memberService.getCurrentMemberProfile().catch(() => null),
         ])
         setClasses(normalizeListResponse(classResponse))
 
-        const profile = unwrapResource(profileResponse)
+        const profile = profileResponse ? unwrapResource(profileResponse) : null
         const trainerId = assignedTrainerId(profile)
         const trainerName = assignedTrainerName(profile)
         setAssigned({ id: trainerId, name: trainerName })
