@@ -148,4 +148,24 @@ export const adminService = {
       throw wrapAdminError(error)
     }
   },
+
+  async getDashboardKPIs() {
+    try {
+      const response = await api.get(API_ENDPOINTS.ADMIN.KPIS)
+      // Backend returns { success: true, data: { active_members, today_checkins, monthly_revenue, avg_trainer_rating, satisfaction_index, last_updated }, message }
+      return response?.data?.data || response?.data || response
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
+
+  async getTrainerAssignments() {
+    try {
+      const response = await api.get(API_ENDPOINTS.MEMBERS.ASSIGNMENTS)
+      // Backend returns array of assignments
+      return response?.data?.data || response?.data || []
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
 }

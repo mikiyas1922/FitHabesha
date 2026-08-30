@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Plus, Search, Trash2, RotateCcw, ChevronLeft, ChevronRight, UserPlus, UserMinus } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -61,6 +61,7 @@ export function MembersManagement() {
   const [assignTrainerTarget, setAssignTrainerTarget] = useState(null)
   const [unassignTrainerTarget, setUnassignTrainerTarget] = useState(null)
   const [assignmentMessage, setAssignmentMessage] = useState('')
+  const [trainerAssignments, setTrainerAssignments] = useState([])
 
   const {
     items = [],
@@ -158,6 +159,10 @@ export function MembersManagement() {
   const handleAssignmentComplete = (result) => {
     setAssignmentMessage(result?.message || 'Trainer assignment updated.')
     reload()
+    // Reload trainer assignments to update the UI
+    adminService.getTrainerAssignments()
+      .then(assignments => setTrainerAssignments(Array.isArray(assignments) ? assignments : []))
+      .catch(err => console.error('Failed to reload trainer assignments:', err))
   }
 
   return (
@@ -267,8 +272,16 @@ export function MembersManagement() {
                 key: 'trainer',
                 header: 'Trainer',
                 render: (row) => {
-                  const trainerLabel = assignedTrainerName(row) || row.trainer
-                  const hasTrainer = Boolean(assignedTrainerId(row) || (trainerLabel && trainerLabel !== '—'))
+                  // Find assignment for this member
+                  const memberProfileId = row.memberProfileId || row.id || row._id
+                  const assignment = trainerAssignments.find(
+                    a => a.member_profile_id === memberProfileId || a.memberProfileId === row.member_profile_id
+                  )
+                  
+                  const trainerLabel = assignment?.trainer_name || assignedTrainerName(row) || row.trainer
+                  const trainerId = assignment?.trainer_id || assignedTrainerId(row)
+                  const hasTrainer = Boolean(assignment?.is_active || trainerId || (trainerLabel && trainerLabel !== '—'))
+                  
                   return (
                     <div className="flex flex-col gap-2">
                       <span className="text-sm text-foreground">{trainerLabel && trainerLabel !== '—' ? trainerLabel : '—'}</span>

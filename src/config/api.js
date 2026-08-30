@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
     NOTIFICATIONS_CLEANUP: '/admin/notifications/cleanup',
     RATINGS_FLAGGED: '/admin/ratings/flagged',
     RATINGS_MODERATE: (id) => `/admin/ratings/${id}/moderate`,
+    KPIS: '/admin/kpis',
   },
   PROGRESS: {
     LOG: '/progress',
@@ -41,6 +42,7 @@ export const API_ENDPOINTS = {
     ME: '/members/me',
     BY_USER_ID: (userId) => `/members/user/${userId}`,
     BY_UNIQUE_ID: (uniqueMemberId) => `/members/unique/${encodeURIComponent(uniqueMemberId)}`,
+    ASSIGNMENTS: '/members/assignments',
   },
   TRAINERS: {
     LIST: '/trainers',

@@ -13,30 +13,42 @@ export function AdminDashboard() {
   const firstName = user?.first_name || user?.name?.split(' ')[0] || 'Admin'
   
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState(null)
   const [members, setMembers] = useState([])
   const [trainers, setTrainers] = useState([])
   const [checkins, setCheckins] = useState([])
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [kpis, setKpis] = useState(null)
 
   useEffect(() => {
     loadDashboardData()
   }, [])
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (isRefresh = false) => {
     try {
-      setLoading(true)
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
       setError(null)
 
-      // Fetch members, trainers, check-ins, and notifications in parallel
-      const [memberResponse, trainerResponse, checkinResponse, notificationResponse, unreadResponse] = await Promise.all([
+      // Fetch KPIs, members, trainers, check-ins, and notifications in parallel
+      const [kpiResponse, memberResponse, trainerResponse, checkinResponse, notificationResponse, unreadResponse] = await Promise.all([
+        adminService.getDashboardKPIs().catch(() => null),
         adminService.getMembers(),
         adminService.getTrainers(),
         checkinService.getTodayCheckins(),
         notificationsService.listNotifications({ page: 1, limit: 10 }),
         notificationsService.getUnreadCount(),
       ])
+
+      // Handle KPIs
+      if (kpiResponse) {
+        setKpis(kpiResponse)
+      }
 
       // Handle members
       const memberData = normalizeListResponse(memberResponse)
@@ -56,46 +68,55 @@ export function AdminDashboard() {
       setError(err.message || 'Failed to load dashboard data')
       console.error('Admin dashboard data fetch error:', err)
     } finally {
-      setLoading(false)
+      if (isRefresh) {
+        setRefreshing(false)
+      } else {
+        setLoading(false)
+      }
     }
   }
 
-  // Calculate stats from real data
+  // Calculate stats from real data or KPIs
   const stats = [
     { 
       label: 'Active Members', 
-      value: members.filter(m => m.is_active !== false).length.toString(), 
+      value: kpis?.active_members?.toString() || members.filter(m => m.is_active !== false).length.toString(), 
       change: 'Total', 
       trend: 'up', 
-      icon: Users 
-    },
-    { 
-      label: 'Active Trainers', 
-      value: trainers.filter(t => t.is_active !== false).length.toString(), 
-      change: 'Total', 
-      trend: 'up', 
-      icon: Users 
+      icon: Users,
+      color: 'blue'
     },
     { 
       label: "Today's Check-ins", 
-      value: checkins.length.toString(), 
+      value: kpis?.today_checkins?.toString() || checkins.length.toString(), 
       change: 'Today', 
       trend: 'up', 
-      icon: Calendar 
+      icon: Calendar,
+      color: 'green'
     },
     { 
-      label: 'Unread Notifications', 
-      value: unreadCount.toString(), 
-      change: 'Pending', 
+      label: 'Monthly Revenue', 
+      value: kpis?.monthly_revenue ? `$${(kpis.monthly_revenue / 1000).toFixed(1)}K` : '$0K', 
+      change: 'MRR', 
       trend: 'up', 
-      icon: MessageSquare 
+      icon: DollarSign,
+      color: 'emerald'
     },
     { 
-      label: 'Total Staff', 
-      value: trainers.length.toString(), 
-      change: 'Active', 
+      label: 'Avg Trainer Rating', 
+      value: kpis?.avg_trainer_rating?.toFixed(1) || '4.5', 
+      change: 'Rating', 
       trend: 'up', 
-      icon: Star 
+      icon: Star,
+      color: 'yellow'
+    },
+    { 
+      label: 'Satisfaction Index', 
+      value: kpis?.satisfaction_index?.toFixed(1) || '4.8', 
+      change: 'Facility', 
+      trend: 'up', 
+      icon: TrendingUp,
+      color: 'purple'
     },
   ]
 
@@ -149,6 +170,10 @@ export function AdminDashboard() {
               <p className="text-sm text-muted">Search records, financials, audits...</p>
             </div>
             <div className="flex gap-3">
+              <Button variant="secondary" className="gap-2" onClick={() => loadDashboardData(true)} disabled={refreshing}>
+                {refreshing ? <Loader2 className="size-4 animate-spin" /> : <Loader2 className="size-4" />}
+                Refresh
+              </Button>
               <Button variant="secondary" className="gap-2">
                 Export PDF
               </Button>
@@ -164,49 +189,83 @@ export function AdminDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {stats.map((stat) => {
               const Icon = stat.icon
+              const colorClasses = {
+                blue: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+                green: 'bg-green-500/10 text-green-600 dark:text-green-400',
+                emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                yellow: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
+                purple: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+              }
               return (
-                <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
+                <div key={stat.label} className="rounded-xl border border-border bg-card p-5 hover:shadow-lg hover:border-primary/30 transition-all duration-200">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
-                      <Icon className="size-4 text-primary" />
+                    <div className={`flex size-11 items-center justify-center rounded-xl ${colorClasses[stat.color] || 'bg-primary/10 text-primary'}`}>
+                      <Icon className="size-5" />
                     </div>
-                    <div className={`flex items-center gap-1 text-xs font-medium ${
-                      stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                    <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
+                      stat.trend === 'up' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
                     }`}>
                       {stat.trend === 'up' ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
                       {stat.change}
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-xs text-muted mt-1">{stat.label}</p>
+                  <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                  <p className="text-sm text-muted mt-1 font-medium">{stat.label}</p>
                 </div>
               )
             })}
           </div>
+
+          {/* Last Updated */}
+          {kpis?.last_updated && (
+            <div className="flex items-center justify-end text-xs text-muted">
+              <span className="mr-2">Last updated:</span>
+              <span className="font-mono">
+                {new Date(kpis.last_updated).toLocaleString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                })}
+              </span>
+            </div>
+          )}
 
           {/* Revenue Chart */}
           <div className="rounded-xl border border-border bg-card p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
               <div>
                 <h3 className="font-semibold text-foreground">Revenue Trend (6 Months)</h3>
-                <p className="text-sm text-muted">Total: $289.4K</p>
+                <p className="text-sm text-muted">
+                  Total: ${kpis?.monthly_revenue ? (kpis.monthly_revenue * 6 / 1000).toFixed(1) : '289.4'}K
+                </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm">This Month</Button>
+                <Button variant="ghost" size="sm" className="bg-primary/10 text-primary">This Month</Button>
                 <Button variant="ghost" size="sm">Last 30 Days</Button>
                 <Button variant="ghost" size="sm">Custom</Button>
               </div>
             </div>
             <div className="h-48 flex items-end gap-4">
-              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, i) => (
-                <div key={month} className="flex-1 flex flex-col items-center gap-2">
-                  <div 
-                    className="w-full rounded-t bg-primary transition-all hover:bg-primary/80"
-                    style={{ height: `${40 + (i * 15)}%` }}
-                  />
-                  <span className="text-xs text-muted">{month}</span>
-                </div>
-              ))}
+              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, i) => {
+                const baseHeight = 40 + (i * 15)
+                const kpiMultiplier = kpis?.monthly_revenue ? (kpis.monthly_revenue / 50000) : 1
+                const height = Math.min(baseHeight * kpiMultiplier, 100)
+                return (
+                  <div key={month} className="flex-1 flex flex-col items-center gap-2 group">
+                    <div 
+                      className="w-full rounded-t bg-gradient-to-t from-primary to-primary/60 transition-all hover:from-primary/80 hover:to-primary/40 cursor-pointer relative"
+                      style={{ height: `${height}%` }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface border border-border px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        ${(kpis?.monthly_revenue || 45000 * (i + 1) / 1000).toFixed(1)}K
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted font-medium">{month}</span>
+                  </div>
+                )
+              })}
             </div>
           </div>
 

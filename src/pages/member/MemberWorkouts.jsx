@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Dumbbell, Play, Clock, Target, Calendar, CheckCircle, Plus, Filter, Search, TrendingUp, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Link } from 'react-router-dom'
-import { templatesService } from '../../services/templatesService'
+import { templateService } from '../../services/templateService'
 
 export function MemberWorkouts() {
   const [workouts, setWorkouts] = useState([])
@@ -13,10 +13,15 @@ export function MemberWorkouts() {
     try {
       setLoading(true)
       setError(null)
-      const response = await templatesService.listWorkoutTemplates({ include_public: true })
-      setWorkouts(response)
+      const { items } = await templateService.getWorkoutTemplates({ include_public: true })
+      setWorkouts(items)
     } catch (err) {
-      setError(err.message || 'Failed to load workouts')
+      // Handle 403 specifically - templates endpoint may not be available for members yet
+      if (err.response?.status === 403) {
+        setError('Workout templates are not currently available. Please check back later.')
+      } else {
+        setError(err.message || 'Failed to load workouts')
+      }
       setWorkouts([])
     } finally {
       setLoading(false)
@@ -98,7 +103,7 @@ export function MemberWorkouts() {
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
             {workouts.map((workout) => (
-              <div key={workout._id} className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors">
+              <div key={workout.id} className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <p className="font-medium text-foreground">{workout.name}</p>

@@ -1,7 +1,7 @@
 import { Plus, Trash2, Search, Filter, Save, Dumbbell, Clock, Target, ChevronDown, ChevronUp, Loader2, Edit } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useState, useEffect, useCallback } from 'react'
-import { templatesService } from '../../services/templatesService'
+import { templateService } from '../../services/templateService'
 import { trainerService } from '../../services/trainerService'
 import { unwrapResource } from '../../utils/apiHelpers'
 
@@ -54,7 +54,7 @@ export function WorkoutBuilder() {
     try {
       setLoadingTemplates(true)
       setError(null)
-      const items = await trainerService.getTrainerTemplates(trainerId)
+      const { items } = await templateService.getWorkoutTemplates({ trainer_id: trainerId })
       setTemplates(items)
     } catch (err) {
       setError(err.message || 'Failed to load templates')
@@ -152,11 +152,10 @@ export function WorkoutBuilder() {
         }))
       }
 
-      let response
       if (editingTemplate) {
-        response = await templatesService.updateWorkoutTemplate(editingTemplate._id, templateData)
+        await templateService.updateWorkoutTemplate(editingTemplate.id, templateData)
       } else {
-        response = await templatesService.createWorkoutTemplate(templateData)
+        await templateService.createWorkoutTemplate(templateData)
       }
 
       setEditingTemplate(null)
@@ -181,7 +180,7 @@ export function WorkoutBuilder() {
     if (!confirm('Are you sure you want to delete this template?')) return
 
     try {
-      await templatesService.deleteWorkoutTemplate(templateId)
+      await templateService.deleteWorkoutTemplate(templateId)
       fetchTemplates()
     } catch (err) {
       setError(err.message || 'Failed to delete template')
@@ -320,7 +319,7 @@ export function WorkoutBuilder() {
           <div className="grid md:grid-cols-4 gap-4">
             {templates.map((template) => (
               <div
-                key={template._id}
+                key={template.id}
                 className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors"
               >
                 <div className="flex items-start justify-between mb-2">
@@ -337,7 +336,7 @@ export function WorkoutBuilder() {
                     <Edit className="size-3" />
                     Edit
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDeleteTemplate(template._id)} className="text-red-600 hover:text-red-700">
+                  <Button size="sm" variant="ghost" onClick={() => handleDeleteTemplate(template.id)} className="text-red-600 hover:text-red-700">
                     <Trash2 className="size-3" />
                   </Button>
                 </div>
