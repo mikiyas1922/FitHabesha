@@ -86,6 +86,9 @@ export const API_ENDPOINTS = {
     CREATE: '/subscriptions',
     UPDATE: (id) => `/subscriptions/${id}`,
     DELETE: (id) => `/subscriptions/${id}`,
+    ACTIVE: (memberProfileId) => `/subscriptions/active/${memberProfileId}`,
+    MEMBER: (memberProfileId) => `/subscriptions/member/${memberProfileId}`,
+    UPDATE_STATUS: (id) => `/subscriptions/${id}/status`,
   },
   WORKOUTS: {
     LIST: '/workouts',
@@ -145,5 +148,9 @@ export const API_ENDPOINTS = {
     MARK_ALL_READ: '/notifications/read-all',
     DELETE: (id) => `/notifications/${id}`,
     USER_NOTIFICATIONS: (userId) => `/notifications/user/${userId}`,
+  },
+  PAYMENTS: {
+    INIT: '/payments/init',
+    VERIFY: (orderId) => `/payments/verify/${orderId}`,
   },
 }

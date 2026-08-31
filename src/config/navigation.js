@@ -39,7 +39,7 @@ export const navByRole = {
     { label: 'Subscriptions', path: '/member/subscriptions', icon: 'CreditCard' },
     { label: 'Feedback', path: '/member/feedback', icon: 'MessageSquare' },
     { label: 'Progress', path: '/member/progress', icon: 'TrendingUp' },
-    { label: 'Profile', path: '/member/settings', icon: 'Settings' },
+    
 
     { label: 'Profile', path: '/member/settings', icon: 'Settings' },
   ],

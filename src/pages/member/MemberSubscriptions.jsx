@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { CreditCard, Calendar, CheckCircle, AlertTriangle, TrendingUp, Plus, Filter, Loader2 } from 'lucide-react'
+import { CreditCard, Calendar, CheckCircle, AlertTriangle, TrendingUp, Plus, Filter, Loader2, ExternalLink } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../../contexts/AuthContext'
 import { memberService } from '../../services/memberService'
 import { subscriptionService } from '../../services/subscriptionService'
+import { paymentService } from '../../services/paymentService'
 import { unwrapResource, normalizeListResponse } from '../../utils/apiHelpers'
 
 export function MemberSubscriptions() {
@@ -12,6 +13,9 @@ export function MemberSubscriptions() {
   const [error, setError] = useState(null)
   const [memberData, setMemberData] = useState(null)
   const [subscriptions, setSubscriptions] = useState([])
+  const [activeSubscription, setActiveSubscription] = useState(null)
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState(null)
 
   useEffect(() => {
     loadSubscriptionData()
@@ -30,9 +34,19 @@ export function MemberSubscriptions() {
       const profileId = profile?.id
 
       if (profileId) {
-        // Try to fetch member subscriptions, but handle 404 gracefully
+        // Fetch active subscription
         try {
-          const subscriptionResponse = await subscriptionService.getMemberSubscriptions(profileId)
+          const activeResponse = await subscriptionService.getActiveSubscription(profileId)
+          setActiveSubscription(unwrapResource(activeResponse))
+        } catch (activeErr) {
+          // No active subscription is OK
+          console.warn('No active subscription found')
+          setActiveSubscription(null)
+        }
+
+        // Fetch all member subscriptions with pagination
+        try {
+          const subscriptionResponse = await subscriptionService.getMemberSubscriptions(profileId, { page: 1, limit: 10 })
           const subscriptionData = normalizeListResponse(subscriptionResponse)
           setSubscriptions(subscriptionData)
         } catch (subErr) {
@@ -50,14 +64,14 @@ export function MemberSubscriptions() {
   }
 
   // Get current subscription from real data
-  const currentSubscription = subscriptions.length > 0 ? subscriptions[0] : {
+  const currentSubscription = activeSubscription || (subscriptions.length > 0 ? subscriptions[0] : {
     plan: 'No Active Plan',
     status: 'Inactive',
     startDate: '—',
     endDate: '—',
     price: 'ETB 0/month',
     features: [],
-  }
+  })
 
   const availablePlans = [
     {
@@ -66,6 +80,7 @@ export function MemberSubscriptions() {
       price: 'ETB 1,450/month',
       features: ['Gym access (off-peak)', 'Basic equipment', 'Locker rental available'],
       popular: false,
+      tierId: 'basic-tier-id', // Replace with actual tier ID from backend
     },
     {
       id: 2,
@@ -73,6 +88,7 @@ export function MemberSubscriptions() {
       price: 'ETB 2,450/month',
       features: ['Unlimited gym access', 'Group classes', 'Locker included', 'Basic equipment'],
       popular: false,
+      tierId: 'standard-tier-id', // Replace with actual tier ID from backend
     },
     {
       id: 3,
@@ -80,6 +96,7 @@ export function MemberSubscriptions() {
       price: 'ETB 4,450/month',
       features: ['Unlimited gym access', 'All group classes', 'Personal trainer sessions (4/month)', 'Locker included', 'Nutrition consultation', 'Priority booking'],
       popular: true,
+      tierId: 'premium-tier-id', // Replace with actual tier ID from backend
     },
     {
       id: 4,
@@ -87,8 +104,64 @@ export function MemberSubscriptions() {
       price: 'ETB 7,450/month',
       features: ['All Premium features', 'Unlimited personal training', 'Private locker room', 'Massage therapy (2/month)', 'Nutrition meal plans', '24/7 gym access'],
       popular: false,
+      tierId: 'elite-tier-id', // Replace with actual tier ID from backend
     },
   ]
+
+  const handleInitiatePayment = async (plan) => {
+    if (!memberData?.id) {
+      setError('Member profile not found')
+      return
+    }
+
+    try {
+      setPaymentLoading(true)
+      setSelectedPlan(plan)
+
+      const today = new Date().toISOString().split('T')[0]
+      const paymentData = {
+        member_profile_id: memberData.id,
+        membership_tier_id: plan.tierId,
+        start_date: today,
+        auto_renew: true,
+      }
+
+      console.log('Initiating payment with data:', paymentData)
+      const response = await paymentService.initiatePayment(paymentData)
+      const { subscription, payment } = unwrapResource(response)
+
+      // Redirect to payment URL
+      if (payment?.paymentUrl) {
+        window.open(payment.paymentUrl, '_blank', 'noopener,noreferrer')
+      } else {
+        setError('Payment URL not received')
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to initiate payment'
+      setError(errorMessage)
+      console.error('Payment initiation error:', err)
+      console.error('Error response:', err.response?.data)
+    } finally {
+      setPaymentLoading(false)
+    }
+  }
+
+  const handleVerifyPayment = async (orderId) => {
+    try {
+      const response = await paymentService.verifyPayment(orderId)
+      const paymentData = unwrapResource(response)
+      
+      if (paymentData.status === 'PAID') {
+        // Reload subscription data after successful payment
+        await loadSubscriptionData()
+      }
+      
+      return paymentData
+    } catch (err) {
+      console.error('Payment verification error:', err)
+      throw err
+    }
+  }
 
   // Calculate payment history from real data
   const paymentHistory = subscriptions.slice(0, 4).map(s => ({
@@ -170,7 +243,7 @@ export function MemberSubscriptions() {
         <div>
           <p className="text-sm font-medium text-foreground mb-2">Plan Features</p>
           <div className="grid md:grid-cols-2 gap-2">
-            {currentSubscription.features.map((feature, i) => (
+            {(currentSubscription.features || []).map((feature, i) => (
               <div key={i} className="flex items-center gap-2 text-sm text-muted">
                 <CheckCircle className="size-4 text-green-600" />
                 <span>{feature}</span>
@@ -209,8 +282,15 @@ export function MemberSubscriptions() {
                 size="sm" 
                 variant={plan.popular ? 'default' : 'secondary'}
                 className="w-full"
+                onClick={() => handleInitiatePayment(plan)}
+                disabled={paymentLoading}
               >
-                {plan.name === currentSubscription.plan ? 'Current Plan' : 'Select Plan'}
+                {paymentLoading && selectedPlan?.id === plan.id ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : plan.name === currentSubscription.plan ? 'Current Plan' : 'Select Plan'}
               </Button>
             </div>
           ))}
