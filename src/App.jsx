@@ -34,7 +34,6 @@ import { MemberClasses } from './pages/member/MemberClasses.jsx'
 import { MemberTrainers } from './pages/member/MemberTrainers.jsx'
 import { MemberSubscriptions } from './pages/member/MemberSubscriptions.jsx'
 import { MemberFeedback } from './pages/member/MemberFeedback.jsx'
-import { MemberProgress } from './pages/member/MemberProgress.jsx'
 
 
 export default function App() {
@@ -118,7 +117,6 @@ export default function App() {
           <Route path="trainers" element={<MemberTrainers />} />
           <Route path="subscriptions" element={<MemberSubscriptions />} />
           <Route path="feedback" element={<MemberFeedback />} />
-          <Route path="progress" element={<MemberProgress />} />
 
           <Route path="settings" element={<ProfileSettings />} />
           <Route path="profile" element={<ProfileSettings />} />

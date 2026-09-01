@@ -23,7 +23,6 @@ export const API_ENDPOINTS = {
     NOTIFICATIONS_CLEANUP: '/admin/notifications/cleanup',
     RATINGS_FLAGGED: '/admin/ratings/flagged',
     RATINGS_MODERATE: (id) => `/admin/ratings/${id}/moderate`,
-    KPIS: '/admin/kpis',
   },
   PROGRESS: {
     LOG: '/progress',
@@ -42,7 +41,6 @@ export const API_ENDPOINTS = {
     ME: '/members/me',
     BY_USER_ID: (userId) => `/members/user/${userId}`,
     BY_UNIQUE_ID: (uniqueMemberId) => `/members/unique/${encodeURIComponent(uniqueMemberId)}`,
-    ASSIGNMENTS: '/members/assignments',
   },
   TRAINERS: {
     LIST: '/trainers',
@@ -86,9 +84,6 @@ export const API_ENDPOINTS = {
     CREATE: '/subscriptions',
     UPDATE: (id) => `/subscriptions/${id}`,
     DELETE: (id) => `/subscriptions/${id}`,
-    ACTIVE: (memberProfileId) => `/subscriptions/active/${memberProfileId}`,
-    MEMBER: (memberProfileId) => `/subscriptions/member/${memberProfileId}`,
-    UPDATE_STATUS: (id) => `/subscriptions/${id}/status`,
   },
   WORKOUTS: {
     LIST: '/workouts',
@@ -148,9 +143,5 @@ export const API_ENDPOINTS = {
     MARK_ALL_READ: '/notifications/read-all',
     DELETE: (id) => `/notifications/${id}`,
     USER_NOTIFICATIONS: (userId) => `/notifications/user/${userId}`,
-  },
-  PAYMENTS: {
-    INIT: '/payments/init',
-    VERIFY: (orderId) => `/payments/verify/${orderId}`,
   },
 }

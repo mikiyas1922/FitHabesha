@@ -1,7 +1,7 @@
 import { Plus, Trash2, Search, Save, Apple, Beef, Fish, Wheat, Clock, Target, Loader2, Edit } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { useState, useEffect, useCallback } from 'react'
-import { templateService } from '../../services/templateService'
+import { templatesService } from '../../services/templatesService'
 import { trainerService } from '../../services/trainerService'
 import { unwrapResource } from '../../utils/apiHelpers'
 
@@ -53,7 +53,7 @@ export function MealPlanBuilder() {
     try {
       setLoadingPlans(true)
       setError(null)
-      const { items } = await templateService.getMealTemplates({ trainer_id: trainerId })
+      const items = await trainerService.getTrainerMealPlans(trainerId)
       setMealPlans(items)
     } catch (err) {
       setError(err.message || 'Failed to load meal plans')
@@ -106,27 +106,13 @@ export function MealPlanBuilder() {
       setPlanName(plan.name)
       setPlanDetails({
         goal_type: plan.goal_type,
-        calories_target: plan.calories_target || 2000,
-        protein_g: plan.protein_g || 150,
-        carbs_g: plan.carbs_g || 180,
-        fat_g: plan.fat_g || 60,
+        calories_target: plan.calories_target,
+        protein_g: plan.protein_g,
+        carbs_g: plan.carbs_g,
+        fat_g: plan.fat_g,
         description: plan.description || ''
       })
-      // Convert meals array back to selectedFoods format
-      const foods = plan.meals?.flatMap(meal => 
-        meal.food_items?.map(foodName => ({
-          name: foodName,
-          meal_name: meal.meal_type,
-          day_number: meal.day_number,
-          calories: meal.calories || 0,
-          protein: meal.protein_g || 0,
-          carbs: meal.carbs_g || 0,
-          fat: meal.fat_g || 0,
-          quantity: '100g',
-          category: 'Protein'
-        })) || []
-      )
-      setSelectedFoods(foods)
+      setSelectedFoods(plan.items || [])
     } catch (err) {
       setError(err.message || 'Failed to load meal plan')
     }
@@ -152,12 +138,15 @@ export function MealPlanBuilder() {
         name: planName,
         description: planDetails.description,
         goal_type: planDetails.goal_type,
-        duration_weeks: 4,
-        is_public: false,
-        meals: selectedFoods.map((food, index) => ({
+        calories_target: planDetails.calories_target,
+        protein_g: planDetails.protein_g,
+        carbs_g: planDetails.carbs_g,
+        fat_g: planDetails.fat_g,
+        items: selectedFoods.map((food, index) => ({
           day_number: food.day_number || index + 1,
-          meal_type: food.meal_name,
-          food_items: [food.name],
+          meal_name: food.meal_name,
+          food_item: food.name,
+          quantity: food.quantity,
           calories: food.calories,
           protein_g: food.protein,
           carbs_g: food.carbs,
@@ -165,10 +154,11 @@ export function MealPlanBuilder() {
         }))
       }
 
+      let response
       if (editingPlan) {
-        await templateService.updateMealTemplate(editingPlan.id, planData)
+        response = await templatesService.updateMealPlan(editingPlan._id, planData)
       } else {
-        await templateService.createMealTemplate(planData)
+        response = await templatesService.createMealPlan(planData)
       }
 
       setEditingPlan(null)
@@ -194,7 +184,7 @@ export function MealPlanBuilder() {
     if (!confirm('Are you sure you want to delete this meal plan?')) return
 
     try {
-      await templateService.deleteMealTemplate(planId)
+      await templatesService.deleteMealPlan(planId)
       fetchMealPlans()
     } catch (err) {
       setError(err.message || 'Failed to delete meal plan')
@@ -338,13 +328,13 @@ export function MealPlanBuilder() {
           <div className="grid md:grid-cols-4 gap-4">
             {mealPlans.map((plan) => (
               <div
-                key={plan.id}
+                key={plan._id}
                 className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
                     <p className="font-medium text-foreground text-sm">{plan.name}</p>
-                    <p className="text-xs text-muted">{plan.meals?.length || 0} meals</p>
+                    <p className="text-xs text-muted">{plan.items?.length || 0} items</p>
                   </div>
                 </div>
                 <div className="flex gap-2 mt-3">
@@ -352,7 +342,7 @@ export function MealPlanBuilder() {
                     <Edit className="size-3" />
                     Edit
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDeletePlan(plan.id)} className="text-red-600 hover:text-red-700">
+                  <Button size="sm" variant="ghost" onClick={() => handleDeletePlan(plan._id)} className="text-red-600 hover:text-red-700">
                     <Trash2 className="size-3" />
                   </Button>
                 </div>

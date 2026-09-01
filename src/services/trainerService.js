@@ -107,15 +107,15 @@ export const trainerService = {
     }
   },
 
-  /** GET /trainers/{trainerId}/templates */
+  /** GET /templates/workout?trainer_id={trainerId} */
   getTrainerTemplates: async (trainerId) => {
-    const payload = unwrapResource(await api.get(API_ENDPOINTS.TRAINERS.TEMPLATES(trainerId)))
+    const payload = unwrapResource(await api.get(API_ENDPOINTS.TEMPLATES.WORKOUT_LIST, { trainer_id: trainerId }))
     return asArray(payload)
   },
 
-  /** GET /trainers/{trainerId}/meal-plans */
+  /** GET /templates/meal?trainer_id={trainerId} */
   getTrainerMealPlans: async (trainerId) => {
-    const payload = unwrapResource(await api.get(API_ENDPOINTS.TRAINERS.MEAL_PLANS(trainerId)))
+    const payload = unwrapResource(await api.get(API_ENDPOINTS.TEMPLATES.MEAL_LIST, { trainer_id: trainerId }))
     return asArray(payload)
   },
 

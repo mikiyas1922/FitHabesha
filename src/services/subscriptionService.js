@@ -16,13 +16,8 @@ export const subscriptionService = {
   getSubscriptionById: (subscriptionId) => api.get(API_ENDPOINTS.SUBSCRIPTIONS.DETAIL(subscriptionId)),
 
   /**
-   * Create a new subscription (Admin/Reception only)
-   * Creates a subscription directly (bypassing payment)
+   * Create a new subscription
    * @param {Object} data - Subscription data
-   * @param {string} data.member_profile_id - Member profile UUID
-   * @param {string} data.membership_tier_id - Membership tier UUID
-   * @param {string} data.start_date - Start date (YYYY-MM-DD format)
-   * @param {boolean} data.auto_renew - Auto-renewal flag
    * @returns {Promise<Object>} Created subscription data
    */
   createSubscription: (data) => api.post(API_ENDPOINTS.SUBSCRIPTIONS.CREATE, data),
@@ -43,28 +38,9 @@ export const subscriptionService = {
   deleteSubscription: (subscriptionId) => api.delete(API_ENDPOINTS.SUBSCRIPTIONS.DELETE(subscriptionId)),
 
   /**
-   * Get active subscription for a member
-   * @param {string} memberProfileId - Member profile UUID
-   * @returns {Promise<Object>} Active subscription data
+   * Get subscriptions for a specific member
+   * @param {string} memberId - Member UUID
+   * @returns {Promise<Object>} Member subscriptions
    */
-  getActiveSubscription: (memberProfileId) => api.get(API_ENDPOINTS.SUBSCRIPTIONS.ACTIVE(memberProfileId)),
-
-  /**
-   * Get all subscriptions for a member (historical and current)
-   * @param {string} memberProfileId - Member profile UUID
-   * @param {Object} params - Query parameters
-   * @param {number} params.page - Page number (default: 1)
-   * @param {number} params.limit - Items per page (default: 20)
-   * @returns {Promise<Object>} Member subscriptions with pagination
-   */
-  getMemberSubscriptions: (memberProfileId, params = {}) => api.get(API_ENDPOINTS.SUBSCRIPTIONS.MEMBER(memberProfileId), params),
-
-  /**
-   * Update subscription status (Admin/Reception only)
-   * @param {string} subscriptionId - Subscription UUID
-   * @param {Object} data - Status update data
-   * @param {string} data.status - New status (active, frozen, expired, cancelled)
-   * @returns {Promise<Object>} Updated subscription data
-   */
-  updateSubscriptionStatus: (subscriptionId, data) => api.patch(API_ENDPOINTS.SUBSCRIPTIONS.UPDATE_STATUS(subscriptionId), data),
+  getMemberSubscriptions: (memberId) => api.get(`${API_ENDPOINTS.MEMBERS.DETAIL(memberId)}/subscriptions`),
 }

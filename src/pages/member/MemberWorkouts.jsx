@@ -1,40 +1,86 @@
 import { useState, useEffect } from 'react'
-import { Dumbbell, Play, Clock, Target, Calendar, CheckCircle, Plus, Filter, Search, TrendingUp, Loader2 } from 'lucide-react'
+import { Dumbbell, Play, Clock, Target, Calendar, CheckCircle, Plus, Filter, Search, TrendingUp, Loader2, Users } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Link } from 'react-router-dom'
-import { templateService } from '../../services/templateService'
+import { templatesService } from '../../services/templatesService'
+import { useAuth } from '../../contexts/AuthContext'
+import { memberService } from '../../services/memberService'
+import { bookingService } from '../../services/bookingService'
+import { classesService } from '../../services/classesService'
+import { unwrapResource } from '../../utils/apiHelpers'
 
 export function MemberWorkouts() {
+  const { user } = useAuth()
   const [workouts, setWorkouts] = useState([])
+  const [bookedClasses, setBookedClasses] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [memberProfileId, setMemberProfileId] = useState(null)
 
-  const fetchWorkouts = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true)
       setError(null)
-      const { items } = await templateService.getWorkoutTemplates({ include_public: true })
-      setWorkouts(items)
-    } catch (err) {
-      // Handle 403 specifically - templates endpoint may not be available for members yet
-      if (err.response?.status === 403) {
-        setError('Workout templates are not currently available. Please check back later.')
-      } else {
-        setError(err.message || 'Failed to load workouts')
+      
+      // Get member profile
+      const profileResponse = await memberService.getCurrentMemberProfile()
+      const profile = unwrapResource(profileResponse)
+      const profileId = profile?.id
+      setMemberProfileId(profileId)
+
+      // Fetch workouts (requires trainer_id)
+      let workoutData = []
+      if (user?.trainer_id) {
+        const response = await templatesService.listWorkoutTemplates({ trainer_id: user.trainer_id })
+        workoutData = response
       }
+      setWorkouts(workoutData)
+
+      // Fetch booked classes
+      let classesData = []
+      if (profileId) {
+        try {
+          const bookingResponse = await bookingService.getMemberBookings(profileId, { page: 1, limit: 50 })
+          const bookings =
+            bookingResponse?.data?.bookings ||
+            bookingResponse?.data?.data?.bookings ||
+            []
+          
+          // Filter out cancelled bookings
+          const activeBookings = bookings.filter((b) => b.status && b.status !== 'cancelled')
+          
+          // Fetch full class details for each booking
+          const classDetailsPromises = activeBookings.map((booking) =>
+            classesService.getClassById(booking.class_id)
+              .then((response) => unwrapResource(response))
+              .catch(() => null)
+          )
+          
+          const classDetails = await Promise.all(classDetailsPromises)
+          classesData = classDetails.filter((cls) => cls !== null)
+        } catch (err) {
+          console.error('Error fetching booked classes:', err)
+          // Continue without booked classes if fetch fails
+        }
+      }
+      
+      setBookedClasses(classesData)
+    } catch (err) {
+      setError(err.message || 'Failed to load workouts')
       setWorkouts([])
+      setBookedClasses([])
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchWorkouts()
-  }, [])
+    fetchData()
+  }, [user?.trainer_id])
 
   const workoutStats = [
+    { label: 'Booked Classes', value: String(bookedClasses.length), icon: Calendar },
     { label: 'Available Workouts', value: String(workouts.length), icon: Dumbbell },
-    { label: 'Public Templates', value: String(workouts.filter(w => w.is_public).length), icon: TrendingUp },
     { label: 'Total Exercises', value: String(workouts.reduce((sum, w) => sum + (w.exercises?.length || 0), 0)), icon: CheckCircle },
   ]
 
@@ -83,6 +129,77 @@ export function MemberWorkouts() {
         })}
       </div>
 
+      {/* Booked Classes Section */}
+      {bookedClasses.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Calendar className="size-4" />
+              My Booked Classes
+            </h3>
+          </div>
+
+          <div className="space-y-3">
+            {bookedClasses.map((bookedClass) => (
+              <div key={bookedClass._id || bookedClass.id} className="p-4 rounded-lg border border-primary/20 bg-primary/5 hover:border-primary/40 transition-colors">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">{bookedClass.name || 'Class'}</p>
+                    {bookedClass.description && (
+                      <p className="text-xs text-muted mt-1">{bookedClass.description}</p>
+                    )}
+                  </div>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                    Booked
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-muted mt-3">
+                  {bookedClass.start_time && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="size-3" />
+                      <span>{new Date(bookedClass.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  )}
+                  {bookedClass.discipline && (
+                    <div className="flex items-center gap-2">
+                      <Target className="size-3" />
+                      <span>{bookedClass.discipline}</span>
+                    </div>
+                  )}
+                  {bookedClass.trainer_name && (
+                    <div className="flex items-center gap-2">
+                      <Users className="size-3" />
+                      <span>{bookedClass.trainer_name}</span>
+                    </div>
+                  )}
+                  {bookedClass.max_participants && (
+                    <div className="flex items-center gap-2">
+                      <Users className="size-3" />
+                      <span>{bookedClass.current_participants || 0}/{bookedClass.max_participants}</span>
+                    </div>
+                  )}
+                </div>
+
+                {bookedClass.location && (
+                  <p className="text-xs text-muted mt-2">📍 {bookedClass.location}</p>
+                )}
+
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" className="flex-1 gap-1">
+                    <Play className="size-3" />
+                    Join Class
+                  </Button>
+                  <Button variant="secondary" size="sm">
+                    View Details
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border border-border bg-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-foreground">Available Workout Templates</h3>
@@ -103,7 +220,7 @@ export function MemberWorkouts() {
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
             {workouts.map((workout) => (
-              <div key={workout.id} className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors">
+              <div key={workout._id} className="p-4 rounded-lg border border-border bg-surface hover:border-primary/30 transition-colors">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <p className="font-medium text-foreground">{workout.name}</p>

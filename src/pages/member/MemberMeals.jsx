@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { Apple, Calendar, TrendingUp, Target, Plus, Filter, CheckCircle, Clock, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { templatesService } from '../../services/templatesService'
+import { useAuth } from '../../contexts/AuthContext'
 
 export function MemberMeals() {
+  const { user } = useAuth()
   const [mealPlans, setMealPlans] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -12,7 +14,15 @@ export function MemberMeals() {
     try {
       setLoading(true)
       setError(null)
-      const response = await templatesService.listMealPlans()
+      
+      // Members can only access meal plans assigned through their trainer
+      if (!user?.trainer_id) {
+        setError('No trainer assigned. Please contact support to get a trainer assigned.')
+        setMealPlans([])
+        return
+      }
+      
+      const response = await templatesService.listMealPlans({ trainer_id: user.trainer_id })
       setMealPlans(response)
     } catch (err) {
       setError(err.message || 'Failed to load meal plans')
@@ -24,7 +34,7 @@ export function MemberMeals() {
 
   useEffect(() => {
     fetchMealPlans()
-  }, [])
+  }, [user?.trainer_id])
 
   const mealStats = [
     { label: 'Available Plans', value: String(mealPlans.length), icon: Apple },
