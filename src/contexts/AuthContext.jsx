@@ -9,6 +9,14 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     checkAuth()
+
+    const handleSessionExpired = () => {
+      setUser(null)
+      authService.clearSession()
+    }
+
+    window.addEventListener('auth:session-expired', handleSessionExpired)
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired)
   }, [])
 
   const checkAuth = () => {

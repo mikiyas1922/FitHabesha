@@ -102,6 +102,12 @@ export function MyClients() {
       setMealPlans(meals)
     } catch (err) {
       console.error('Failed to load plans:', err)
+      setActionTone('error')
+      setActionMessage(
+        err?.status === 401
+          ? 'Your session has expired. Please log in again.'
+          : getApiErrorMessage(err, 'Unable to load workout and meal plans.')
+      )
     } finally {
       setLoadingPlans(false)
     }

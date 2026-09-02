@@ -3,6 +3,8 @@ import { Apple, Calendar, TrendingUp, Target, Plus, Filter, CheckCircle, Clock, 
 import { Button } from '../../components/ui/Button'
 import { templatesService } from '../../services/templatesService'
 import { useAuth } from '../../contexts/AuthContext'
+import { memberService } from '../../services/memberService'
+import { assignedTrainerId, unwrapResource } from '../../utils/apiHelpers'
 
 export function MemberMeals() {
   const { user } = useAuth()
@@ -15,14 +17,20 @@ export function MemberMeals() {
       setLoading(true)
       setError(null)
       
-      // Members can only access meal plans assigned through their trainer
-      if (!user?.trainer_id) {
+      const profileResponse = await memberService.getCurrentMemberProfile()
+      const profile = unwrapResource(profileResponse)
+      const trainerId = assignedTrainerId(profile) || user?.trainer_id
+
+      if (!trainerId) {
         setError('No trainer assigned. Please contact support to get a trainer assigned.')
         setMealPlans([])
         return
       }
       
-      const response = await templatesService.listMealPlans({ trainer_id: user.trainer_id })
+      const response = await templatesService.listMealPlans({
+        trainer_id: trainerId,
+        include_public: true,
+      })
       setMealPlans(response)
     } catch (err) {
       setError(err.message || 'Failed to load meal plans')

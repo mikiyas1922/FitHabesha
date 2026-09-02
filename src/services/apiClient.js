@@ -6,11 +6,18 @@ import { STORAGE_KEYS } from '../constants/storage'
 const TOKEN_KEY = STORAGE_KEYS.ACCESS_TOKEN
 const REFRESH_TOKEN_KEY = STORAGE_KEYS.REFRESH_TOKEN
 
+function notifySessionExpired() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('auth:session-expired'))
+  }
+}
+
 export const tokenStorage = {
   getAccessToken: () => localStorage.getItem(TOKEN_KEY),
   getRefreshToken: () => localStorage.getItem(REFRESH_TOKEN_KEY),
   setAccessToken: (token) => localStorage.setItem(TOKEN_KEY, token),
   setRefreshToken: (token) => localStorage.setItem(REFRESH_TOKEN_KEY, token),
+  clearRefreshToken: () => localStorage.removeItem(REFRESH_TOKEN_KEY),
   clearTokens: () => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
@@ -32,13 +39,9 @@ console.log('API Base URL:', API_BASE_URL)
 apiClient.interceptors.request.use(
   (config) => {
     const token = tokenStorage.getAccessToken()
-    const refreshToken = tokenStorage.getRefreshToken()
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
-    }
-    if (refreshToken && config.headers) {
-      config.headers['x-refresh-token'] = refreshToken
     }
 
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
@@ -75,6 +78,7 @@ apiClient.interceptors.response.use(
 
     const refreshStatus = response.headers['x-refresh-status']
     if (refreshStatus === 'expired' || refreshStatus === 'invalid' || refreshStatus === 'revoked') {
+      tokenStorage.clearRefreshToken()
       console.warn(`Refresh token ${refreshStatus}`)
     }
 
@@ -107,6 +111,8 @@ apiClient.interceptors.response.use(
 
       const refreshToken = tokenStorage.getRefreshToken()
       if (!refreshToken) {
+        tokenStorage.clearTokens()
+        notifySessionExpired()
         return Promise.reject(error)
       }
 
@@ -165,19 +171,26 @@ apiClient.interceptors.response.use(
           throw new Error('No access token in refresh response')
         }
       } catch (refreshErr) {
+        tokenStorage.clearTokens()
+        notifySessionExpired()
         processQueue(refreshErr, null)
-        return Promise.reject(refreshErr)
+        return Promise.reject(error)
       } finally {
         isRefreshing = false
       }
     }
 
+    const responseData = error.response?.data
+    const responseMessage = responseData?.error || responseData?.message || responseData?.detail
+    const message =
+      typeof responseMessage === 'string'
+        ? responseMessage
+        : responseMessage
+          ? JSON.stringify(responseMessage)
+          : error.message || 'An error occurred'
+
     const apiError = {
-      message:
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        error.message ||
-        'An error occurred',
+      message,
       status: statusCode,
       details: error.response?.data,
     }

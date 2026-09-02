@@ -112,7 +112,13 @@ export function MealPlanBuilder() {
         fat_g: plan.fat_g,
         description: plan.description || ''
       })
-      setSelectedFoods(plan.items || [])
+      setSelectedFoods((plan.items || []).map((item) => ({
+        ...item,
+        name: item.food_item || item.name || '',
+        protein: item.protein ?? item.protein_g ?? 0,
+        carbs: item.carbs ?? item.carbs_g ?? 0,
+        fat: item.fat ?? item.fat_g ?? 0,
+      })))
     } catch (err) {
       setError(err.message || 'Failed to load meal plan')
     }
@@ -124,8 +130,41 @@ export function MealPlanBuilder() {
       return
     }
 
+    if (!trainerId) {
+      setError('Trainer profile is required to save a meal plan')
+      return
+    }
+
     if (selectedFoods.length === 0) {
       setError('At least one food item is required')
+      return
+    }
+
+    const nutritionFields = ['calories_target', 'protein_g', 'carbs_g', 'fat_g']
+    if (nutritionFields.some((field) => {
+      const value = Number(planDetails[field])
+      return !Number.isInteger(value) || value < 0
+    })) {
+      setError('All nutrition targets must be non-negative whole numbers')
+      return
+    }
+
+    if (selectedFoods.some((food) =>
+      !food.food_item && !food.name ||
+      !food.meal_name?.trim() ||
+      !food.quantity?.trim() ||
+      !Number.isFinite(Number(food.day_number)) ||
+      !Number.isInteger(Number(food.day_number)) ||
+      !Number.isInteger(Number(food.calories)) ||
+      Number(food.calories) < 0 ||
+      !Number.isFinite(Number(food.protein_g ?? food.protein)) ||
+      Number(food.protein_g ?? food.protein) < 0 ||
+      !Number.isFinite(Number(food.carbs_g ?? food.carbs)) ||
+      Number(food.carbs_g ?? food.carbs) < 0 ||
+      !Number.isFinite(Number(food.fat_g ?? food.fat)) ||
+      Number(food.fat_g ?? food.fat) < 0
+    )) {
+      setError('Each meal item must have a name and non-negative nutrition values')
       return
     }
 
@@ -138,19 +177,19 @@ export function MealPlanBuilder() {
         name: planName,
         description: planDetails.description,
         goal_type: planDetails.goal_type,
-        calories_target: planDetails.calories_target,
-        protein_g: planDetails.protein_g,
-        carbs_g: planDetails.carbs_g,
-        fat_g: planDetails.fat_g,
+        calories_target: Math.round(Number(planDetails.calories_target)),
+        protein_g: Math.round(Number(planDetails.protein_g)),
+        carbs_g: Math.round(Number(planDetails.carbs_g)),
+        fat_g: Math.round(Number(planDetails.fat_g)),
         items: selectedFoods.map((food, index) => ({
-          day_number: food.day_number || index + 1,
-          meal_name: food.meal_name,
-          food_item: food.name,
-          quantity: food.quantity,
-          calories: food.calories,
-          protein_g: food.protein,
-          carbs_g: food.carbs,
-          fat_g: food.fat
+          day_number: Number(food.day_number) || index + 1,
+          meal_name: food.meal_name.trim(),
+          food_item: (food.food_item || food.name).trim(),
+          quantity: food.quantity.trim(),
+          calories: Math.round(Number(food.calories)),
+          protein_g: Math.round(Number(food.protein_g ?? food.protein)),
+          carbs_g: Math.round(Number(food.carbs_g ?? food.carbs)),
+          fat_g: Math.round(Number(food.fat_g ?? food.fat))
         }))
       }
 
@@ -174,7 +213,16 @@ export function MealPlanBuilder() {
       setSelectedFoods([])
       fetchMealPlans()
     } catch (err) {
-      setError(err.message || 'Failed to save meal plan')
+      const validationDetails =
+        err.details?.errors ||
+        err.details?.validation_errors ||
+        err.details?.detail ||
+        err.details?.details
+      setError(
+        validationDetails
+          ? `${err.message || 'Validation failed'}: ${JSON.stringify(validationDetails)}`
+          : err.message || 'Failed to save meal plan'
+      )
     } finally {
       setSaving(false)
     }
