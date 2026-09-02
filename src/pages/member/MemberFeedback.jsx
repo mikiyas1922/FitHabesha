@@ -4,9 +4,47 @@ import { Button } from '../../components/ui/Button'
 import { Input, Select } from '../../components/ui/Input'
 import { Badge } from '../../components/ui/Badge'
 import { bookingService } from '../../services/bookingService'
+import { classesService } from '../../services/classesService'
 import { memberService } from '../../services/memberService'
 import { ratingService } from '../../services/ratingService'
-import { assignedTrainerId, assignedTrainerName, unwrapResource } from '../../utils/apiHelpers'
+import { trainerService } from '../../services/trainerService'
+import {
+  assignedTrainerId,
+  assignedTrainerName,
+  formatPersonName,
+  normalizeListResponse,
+  unwrapResource,
+} from '../../utils/apiHelpers'
+
+function resolveMemberProfile(profileResponse) {
+  const profile = profileResponse ? unwrapResource(profileResponse) : null
+  if (!profile || typeof profile !== 'object') return null
+  if (profile.id) return profile
+  const nested = profile.member
+  if (nested && typeof nested === 'object') {
+    return {
+      ...nested,
+      trainer: profile.trainer || nested.trainer,
+      assignment: profile.assignment || profile.current_assignment || nested.assignment,
+      current_assignment: profile.current_assignment || profile.assignment || nested.current_assignment,
+    }
+  }
+  return profile
+}
+
+function addTrainerOption(seen, id, name) {
+  if (!id) return
+  const value = String(id)
+  const label = (name && String(name).trim()) || 'Trainer'
+  const existing = seen.get(value)
+  if (existing) {
+    if (existing.label === 'Trainer' || existing.label === 'Assigned trainer') {
+      seen.set(value, { value, label })
+    }
+    return
+  }
+  seen.set(value, { value, label })
+}
 
 const RATING_TYPES = [
   { value: 'trainer', label: 'Trainer' },
@@ -46,6 +84,8 @@ function formatRatingDate(value) {
 export function MemberFeedback() {
   const [history, setHistory] = useState([])
   const [bookings, setBookings] = useState([])
+  const [classes, setClasses] = useState([])
+  const [catalogTrainers, setCatalogTrainers] = useState([])
   const [assignedTrainer, setAssignedTrainer] = useState({ id: null, name: '' })
   const [facilitySummary, setFacilitySummary] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -67,7 +107,7 @@ export function MemberFeedback() {
     setLoading(true)
     setLoadError(null)
     try {
-      const [profileResponse, facility] = await Promise.all([
+      const [profileResponse, facility, classResponse, trainersResponse] = await Promise.all([
         memberService.getCurrentMemberProfile().catch((err) => {
           console.warn('Member profile could not be loaded:', err)
           return null
@@ -76,28 +116,37 @@ export function MemberFeedback() {
           console.warn('Facility rating could not be loaded:', err)
           return null
         }),
+        classesService.getClasses({ limit: 50 }).catch((err) => {
+          console.warn('Classes could not be loaded:', err)
+          return []
+        }),
+        trainerService.getAllTrainers({ page: 1, limit: 100 }).catch((err) => {
+          console.warn('Trainers list could not be loaded:', err)
+          return null
+        }),
       ])
 
-      const profile = profileResponse ? unwrapResource(profileResponse) : null
+      const profile = resolveMemberProfile(profileResponse)
       const trainerId = assignedTrainerId(profile)
       const trainerName = assignedTrainerName(profile)
+      const trainerIdValue = trainerId ? String(trainerId) : ''
 
-      if (trainerId) {
+      if (trainerIdValue) {
         setAssignedTrainer({
-          id: trainerId,
+          id: trainerIdValue,
           name: trainerName || 'Assigned trainer',
         })
-        setForm((prev) => ({ ...prev, trainer_id: prev.trainer_id || trainerId }))
+        setForm((prev) => ({ ...prev, trainer_id: prev.trainer_id || trainerIdValue }))
       }
 
-      if (profile?.id) {
+      setClasses(normalizeListResponse(classResponse))
+      setCatalogTrainers(normalizeListResponse(trainersResponse))
+
+      const profileId = profile?.id || profile?.member_profile_id
+      if (profileId) {
         try {
-          const bookingResponse = await bookingService.getMemberBookings(profile.id, { page: 1, limit: 50 })
-          const payload = bookingResponse?.data || bookingResponse || {}
-          const items =
-            payload?.data?.bookings ||
-            payload?.bookings ||
-            (Array.isArray(payload) ? payload : [])
+          const bookingResponse = await bookingService.getMemberBookings(profileId, { page: 1, limit: 50 })
+          const items = normalizeListResponse(bookingResponse)
           setBookings(items.filter((booking) => booking && booking.status !== 'cancelled'))
         } catch (bookingErr) {
           console.warn('Member bookings could not be loaded:', bookingErr)
@@ -120,38 +169,50 @@ export function MemberFeedback() {
   const trainerOptions = useMemo(() => {
     const seen = new Map()
     if (assignedTrainer?.id) {
-      seen.set(assignedTrainer.id, {
-        value: assignedTrainer.id,
-        label: assignedTrainer.name || 'Assigned trainer',
-      })
+      addTrainerOption(seen, assignedTrainer.id, assignedTrainer.name || 'Assigned trainer')
+    }
+    const safeCatalog = Array.isArray(catalogTrainers) ? catalogTrainers : []
+    safeCatalog.forEach((trainer) => {
+      if (!trainer || typeof trainer !== 'object') return
+      addTrainerOption(seen, trainer.id || trainer.trainer_id, formatPersonName(trainer) || trainer.email)
+    })
+    const safeBookings = Array.isArray(bookings) ? bookings : []
+    safeBookings.forEach((booking) => {
+      if (!booking || typeof booking !== 'object') return
+      addTrainerOption(seen, assignedTrainerId(booking), assignedTrainerName(booking))
+    })
+    const safeClasses = Array.isArray(classes) ? classes : []
+    safeClasses.forEach((cls) => {
+      if (!cls || typeof cls !== 'object') return
+      addTrainerOption(seen, assignedTrainerId(cls) || cls.trainer_id, assignedTrainerName(cls) || cls.trainer_name)
+    })
+    return [...seen.values()]
+  }, [assignedTrainer, bookings, catalogTrainers, classes])
+
+  const classOptions = useMemo(() => {
+    const seen = new Map()
+    const addClass = (id, name) => {
+      if (!id) return
+      const value = String(id)
+      if (seen.has(value)) return
+      seen.set(value, { value, label: name || 'Class' })
     }
     const safeBookings = Array.isArray(bookings) ? bookings : []
     safeBookings.forEach((booking) => {
       if (!booking || typeof booking !== 'object') return
-      const id = booking.trainer_id || booking.trainerId
-      if (!id || seen.has(id)) return
-      seen.set(id, {
-        value: id,
-        label: booking.trainer_name || booking.trainerName || 'Trainer',
-      })
+      const nestedClass = booking.class && typeof booking.class === 'object' ? booking.class : null
+      addClass(
+        booking.class_id || booking.classId || nestedClass?.id,
+        booking.class_name || booking.className || nestedClass?.name || booking.name
+      )
+    })
+    const safeClasses = Array.isArray(classes) ? classes : []
+    safeClasses.forEach((cls) => {
+      if (!cls || typeof cls !== 'object') return
+      addClass(cls.id || cls.class_id, cls.name || cls.class_name)
     })
     return [...seen.values()]
-  }, [assignedTrainer, bookings])
-
-  const classOptions = useMemo(() => {
-    const seen = new Map()
-    const safeBookings = Array.isArray(bookings) ? bookings : []
-    safeBookings.forEach((booking) => {
-      if (!booking || typeof booking !== 'object') return
-      const id = booking.class_id || booking.classId
-      if (!id || seen.has(id)) return
-      seen.set(id, {
-        value: id,
-        label: booking.class_name || booking.className || booking.name || 'Class',
-      })
-    })
-    return [...seen.values()]
-  }, [bookings])
+  }, [bookings, classes])
 
   useEffect(() => {
     if (form.type === 'trainer' && !form.trainer_id && trainerOptions.length > 0) {

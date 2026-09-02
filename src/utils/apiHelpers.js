@@ -12,6 +12,11 @@ const LIST_KEYS = [
   'content',
   'entities',
   'entries',
+  'bookings',
+  'classes',
+  'feedback',
+  'ratings',
+  'reviews',
 ]
 
 function extractArray(value) {
@@ -52,6 +57,60 @@ export function unwrapResource(response) {
     return response.data
   }
   return response
+}
+
+export function extractFeedbackList(response) {
+  const payload = unwrapResource(response)
+  if (Array.isArray(payload)) return payload
+  if (!payload || typeof payload !== 'object') return normalizeListResponse(response)
+
+  if (Array.isArray(payload.feedback)) return payload.feedback
+  if (Array.isArray(payload.ratings)) return payload.ratings
+  if (Array.isArray(payload.reviews)) return payload.reviews
+  if (Array.isArray(payload.items)) return payload.items
+
+  return normalizeListResponse(payload)
+}
+
+export function unwrapTrainerProfile(response) {
+  const profile = unwrapResource(response)
+  if (!profile || typeof profile !== 'object') return null
+  if (profile.id) return profile
+  const nested = profile.trainer
+  if (nested && typeof nested === 'object') return nested
+  return profile
+}
+
+export function normalizeRating(record) {
+  if (!record || typeof record !== 'object') return null
+  const nestedMember = record.member && typeof record.member === 'object' ? record.member : null
+  const nestedTrainer = record.trainer && typeof record.trainer === 'object' ? record.trainer : null
+  const stars = Math.round(Number(record.rating_stars ?? record.stars ?? record.rating) || 0)
+
+  return {
+    id: record.id || record.rating_id || `${record.trainer_id || 'rating'}-${record.created_at || Date.now()}`,
+    rating_type: record.rating_type || record.type || 'trainer',
+    rating_stars: Math.min(5, Math.max(0, stars)),
+    rating_dimension: record.rating_dimension || record.dimension || '',
+    comment: record.comment || record.feedback || record.message || '',
+    is_anonymous: Boolean(record.is_anonymous ?? record.anonymous),
+    created_at: record.created_at || record.createdAt || '',
+    member_name: record.member_name || formatPersonName(nestedMember) || '',
+    first_name: record.first_name || nestedMember?.first_name || '',
+    last_name: record.last_name || nestedMember?.last_name || '',
+    trainer_id: record.trainer_id || record.trainerId || nestedTrainer?.id || null,
+    trainer_name: record.trainer_name || formatPersonName(nestedTrainer) || '',
+    class_id: record.class_id || record.classId || null,
+    class_name: record.class_name || record.className || '',
+    raw: record,
+  }
+}
+
+export function ratingAuthorName(review) {
+  if (!review) return 'Member'
+  if (review.is_anonymous) return 'Anonymous member'
+  const fromFields = `${review.first_name || ''} ${review.last_name || ''}`.trim()
+  return review.member_name || fromFields || 'Member'
 }
 
 export function normalizePaginatedListResponse(response) {
@@ -116,27 +175,70 @@ export function resolveMemberProfileId(record) {
   return record.memberProfileId || record.member_profile_id || record.id || record._id || null
 }
 
-export function assignedTrainerName(record) {
+function trainerLabelFromRecord(record) {
   if (!record || typeof record !== 'object') return ''
   const nested = record.trainer
   if (nested && typeof nested === 'object') {
     return formatPersonName(nested) || nested.email || ''
   }
   if (typeof nested === 'string' && nested.trim() && nested !== '—') return nested.trim()
-  const label = record.assigned_trainer || record.trainer_name || record.assignedTrainer
+  const instructor = record.instructor
+  if (instructor && typeof instructor === 'object') {
+    return formatPersonName(instructor) || instructor.email || ''
+  }
+  const label = record.assigned_trainer || record.trainer_name || record.assignedTrainer || record.instructor_name
   if (typeof label === 'string' && label.trim() && label !== '—') return label.trim()
   return ''
 }
 
-export function assignedTrainerId(record) {
+function trainerIdFromRecord(record) {
   if (!record || typeof record !== 'object') return null
+  const nested = record.trainer && typeof record.trainer === 'object' ? record.trainer : null
   return (
     record.trainerId ||
     record.trainer_id ||
     record.assigned_trainer_id ||
-    (record.trainer && typeof record.trainer === 'object' ? record.trainer.id : null) ||
+    record.trainer_profile_id ||
+    record.instructor_id ||
+    record.instructorId ||
+    nested?.id ||
+    nested?.trainer_id ||
+    nested?.trainerId ||
+    (record.instructor && typeof record.instructor === 'object' ? record.instructor.id : null) ||
     null
   )
+}
+
+function relatedTrainerSources(record) {
+  if (!record || typeof record !== 'object') return []
+  return [
+    record.current_assignment,
+    record.assignment,
+    record.active_assignment,
+    record.member,
+    record.class,
+    record.gym_class,
+  ].filter((value) => value && typeof value === 'object')
+}
+
+export function assignedTrainerName(record) {
+  const direct = trainerLabelFromRecord(record)
+  if (direct) return direct
+  for (const related of relatedTrainerSources(record)) {
+    const nested = trainerLabelFromRecord(related)
+    if (nested) return nested
+  }
+  return ''
+}
+
+export function assignedTrainerId(record) {
+  const direct = trainerIdFromRecord(record)
+  if (direct) return direct
+  for (const related of relatedTrainerSources(record)) {
+    const nested = trainerIdFromRecord(related)
+    if (nested) return nested
+  }
+  return null
 }
 
 export function normalizeMember(record) {
