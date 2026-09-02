@@ -7,11 +7,9 @@ import { bookingService } from '../../services/bookingService'
 import { classesService } from '../../services/classesService'
 import { memberService } from '../../services/memberService'
 import { ratingService } from '../../services/ratingService'
-import { trainerService } from '../../services/trainerService'
 import {
   assignedTrainerId,
   assignedTrainerName,
-  formatPersonName,
   normalizeListResponse,
   unwrapResource,
 } from '../../utils/apiHelpers'
@@ -85,7 +83,6 @@ export function MemberFeedback() {
   const [history, setHistory] = useState([])
   const [bookings, setBookings] = useState([])
   const [classes, setClasses] = useState([])
-  const [catalogTrainers, setCatalogTrainers] = useState([])
   const [assignedTrainer, setAssignedTrainer] = useState({ id: null, name: '' })
   const [facilitySummary, setFacilitySummary] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -107,7 +104,7 @@ export function MemberFeedback() {
     setLoading(true)
     setLoadError(null)
     try {
-      const [profileResponse, facility, classResponse, trainersResponse] = await Promise.all([
+      const [profileResponse, facility, classResponse] = await Promise.all([
         memberService.getCurrentMemberProfile().catch((err) => {
           console.warn('Member profile could not be loaded:', err)
           return null
@@ -119,10 +116,6 @@ export function MemberFeedback() {
         classesService.getClasses({ limit: 50 }).catch((err) => {
           console.warn('Classes could not be loaded:', err)
           return []
-        }),
-        trainerService.getAllTrainers({ page: 1, limit: 100 }).catch((err) => {
-          console.warn('Trainers list could not be loaded:', err)
-          return null
         }),
       ])
 
@@ -140,12 +133,15 @@ export function MemberFeedback() {
       }
 
       setClasses(normalizeListResponse(classResponse))
-      setCatalogTrainers(normalizeListResponse(trainersResponse))
 
       const profileId = profile?.id || profile?.member_profile_id
       if (profileId) {
         try {
-          const bookingResponse = await bookingService.getMemberBookings(profileId, { page: 1, limit: 50 })
+          const bookingResponse = await bookingService.getMemberBookings(profileId, {
+            page: 1,
+            limit: 50,
+            skipSessionExpiry: true,
+          })
           const items = normalizeListResponse(bookingResponse)
           setBookings(items.filter((booking) => booking && booking.status !== 'cancelled'))
         } catch (bookingErr) {
@@ -171,11 +167,6 @@ export function MemberFeedback() {
     if (assignedTrainer?.id) {
       addTrainerOption(seen, assignedTrainer.id, assignedTrainer.name || 'Assigned trainer')
     }
-    const safeCatalog = Array.isArray(catalogTrainers) ? catalogTrainers : []
-    safeCatalog.forEach((trainer) => {
-      if (!trainer || typeof trainer !== 'object') return
-      addTrainerOption(seen, trainer.id || trainer.trainer_id, formatPersonName(trainer) || trainer.email)
-    })
     const safeBookings = Array.isArray(bookings) ? bookings : []
     safeBookings.forEach((booking) => {
       if (!booking || typeof booking !== 'object') return
@@ -187,7 +178,7 @@ export function MemberFeedback() {
       addTrainerOption(seen, assignedTrainerId(cls) || cls.trainer_id, assignedTrainerName(cls) || cls.trainer_name)
     })
     return [...seen.values()]
-  }, [assignedTrainer, bookings, catalogTrainers, classes])
+  }, [assignedTrainer, bookings, classes])
 
   const classOptions = useMemo(() => {
     const seen = new Map()

@@ -12,6 +12,10 @@ function notifySessionExpired() {
   }
 }
 
+function isFeedbackRequest(url = '') {
+  return url.includes('/ratings') || url.includes('/feedback')
+}
+
 export const tokenStorage = {
   getAccessToken: () => localStorage.getItem(TOKEN_KEY),
   getRefreshToken: () => localStorage.getItem(REFRESH_TOKEN_KEY),
@@ -96,6 +100,7 @@ apiClient.interceptors.response.use(
     }
 
     const authUrl = originalRequest?.url || ''
+    const feedbackRequest = isFeedbackRequest(authUrl) || originalRequest?.skipSessionExpiry
     const skipRefresh =
       authUrl.includes('/auth/logout') ||
       authUrl.includes('/auth/login') ||
@@ -106,6 +111,10 @@ apiClient.interceptors.response.use(
 
     if (statusCode === 401 && !skipRefresh && originalRequest) {
       if (originalRequest._retry) {
+        return Promise.reject(error)
+      }
+
+      if (feedbackRequest) {
         return Promise.reject(error)
       }
 

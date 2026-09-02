@@ -17,7 +17,10 @@ export const bookingService = {
 
   getMemberBookings: (memberProfileId, params = {}) =>
     api.get(API_ENDPOINTS.BOOKINGS.MEMBER(memberProfileId), {
-      page: params.page || 1,
-      limit: params.limit || 20,
+      params: {
+        page: params.page || 1,
+        limit: params.limit || 20,
+      },
+      skipSessionExpiry: params.skipSessionExpiry,
     }),
 }

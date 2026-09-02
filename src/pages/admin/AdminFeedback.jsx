@@ -15,8 +15,10 @@ export function AdminFeedback() {
   const [feedback, setFeedback] = useState([])
   const [summary, setSummary] = useState(ratingService.emptyTrainerAverage())
   const [trainers, setTrainers] = useState([])
+  const [trainerRatings, setTrainerRatings] = useState([])
+  const [facilitySummary, setFacilitySummary] = useState(null)
   const [flagged, setFlagged] = useState([])
-  const [threshold, setThreshold] = useState(3)
+  const [threshold, setThreshold] = useState(5)
   const [loading, setLoading] = useState(false)
   const [loadingTrainers, setLoadingTrainers] = useState(true)
   const [loadingFlagged, setLoadingFlagged] = useState(true)
@@ -31,7 +33,22 @@ export function AdminFeedback() {
     setLoadingTrainers(true)
     try {
       const response = await adminService.getTrainers()
-      setTrainers(normalizeListResponse(response) || [])
+      const trainerList = normalizeListResponse(response) || []
+      setTrainers(trainerList)
+      const trainerResults = await Promise.all(
+        trainerList
+          .map((trainer) => trainer.id)
+          .filter(Boolean)
+          .map(async (trainerId) => {
+            const [average, feedbackResult] = await Promise.all([
+              ratingService.getTrainerAverage(trainerId).catch(() => ratingService.emptyTrainerAverage()),
+              trainerService.getTrainerFeedback(trainerId).catch(() => ({ feedback: [] })),
+            ])
+            const trainer = trainerList.find((item) => item.id === trainerId)
+            return { trainer, average, feedback: feedbackResult.feedback || [] }
+          })
+      )
+      setTrainerRatings(trainerResults)
     } catch (err) {
       console.error('Failed to load trainers:', err)
       setTrainers([])
@@ -77,7 +94,10 @@ export function AdminFeedback() {
 
   useEffect(() => {
     loadTrainers()
-    loadFlagged(3)
+    loadFlagged(5)
+    ratingService.getFacilityRating()
+      .then(setFacilitySummary)
+      .catch(() => setFacilitySummary(null))
   }, [])
 
   useEffect(() => {
@@ -119,6 +139,9 @@ export function AdminFeedback() {
     percentage: summary.total_reviews > 0 ? Math.round((item.count / summary.total_reviews) * 100) : 0,
   }))
 
+  const classRatings = flagged.filter((review) => review.rating_type === 'class')
+  const facilityRatings = flagged.filter((review) => review.rating_type === 'facility')
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -139,6 +162,124 @@ export function AdminFeedback() {
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Star className="size-5 text-yellow-500" />
+            <h3 className="font-semibold text-foreground">Trainer ratings</h3>
+          </div>
+          <p className="text-3xl font-bold text-foreground">
+            {trainerRatings.reduce((total, item) => total + item.feedback.length, 0)}
+          </p>
+          <p className="text-sm text-muted mt-1">Feedback across {trainers.length} trainers</p>
+          <Button size="sm" variant="secondary" className="mt-4" onClick={() => setSelectedTrainerId(trainers[0]?.id || null)} disabled={!trainers.length}>
+            View trainer feedback
+          </Button>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <MessageSquare className="size-5 text-primary" />
+            <h3 className="font-semibold text-foreground">Facility rating</h3>
+          </div>
+          <p className="text-3xl font-bold text-foreground">
+            {facilitySummary?.total_reviews ? `${Number(facilitySummary.average_rating).toFixed(1)} / 5` : '—'}
+          </p>
+          <p className="text-sm text-muted mt-1">{facilitySummary?.total_reviews || 0} total reviews</p>
+          <p className="text-xs text-muted mt-4">Individual facility reviews are available only when returned as flagged.</p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Flag className="size-5 text-red-600" />
+            <h3 className="font-semibold text-foreground">Class ratings</h3>
+          </div>
+          <p className="text-3xl font-bold text-foreground">{classRatings.length}</p>
+          <p className="text-sm text-muted mt-1">Flagged class ratings</p>
+          <p className="text-xs text-muted mt-4">Class reviews are currently exposed through the flagged-ratings endpoint.</p>
+        </div>
+      </div>
+
+      {facilityRatings.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h3 className="font-semibold text-foreground mb-4">Flagged facility feedback</h3>
+          <div className="space-y-3">
+            {facilityRatings.map((review) => (
+              <div key={review.id} className="rounded-lg border border-border bg-surface p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-medium text-foreground">{reviewName(review)}</p>
+                  <span className="font-semibold text-foreground">{review.rating_stars}/5</span>
+                </div>
+                {review.comment && <p className="text-sm text-muted mt-2">{review.comment}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h3 className="font-semibold text-foreground mb-4">Class ratings and feedback</h3>
+        {classRatings.length === 0 ? (
+          <p className="text-sm text-muted">No flagged class ratings are available.</p>
+        ) : (
+          <div className="space-y-3">
+            {classRatings.map((review) => (
+              <div key={review.id} className="rounded-lg border border-border bg-surface p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-foreground">{reviewName(review)}</p>
+                    <p className="text-xs text-muted">Class rating{review.class_name ? ` · ${review.class_name}` : ''}</p>
+                  </div>
+                  <span className="font-semibold text-foreground">{review.rating_stars || 0}/5</span>
+                </div>
+                {review.comment && <p className="text-sm text-muted mt-2">{review.comment}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="font-semibold text-foreground">Feedback by trainer</h3>
+        {trainerRatings.length === 0 ? (
+          <div className="rounded-xl border border-border bg-card p-6">
+            <p className="text-sm text-muted">No trainers or trainer feedback are available.</p>
+          </div>
+        ) : (
+          trainerRatings.map(({ trainer, average: trainerAverage, feedback: trainerFeedback }) => (
+            <div key={trainer.id} className="rounded-xl border border-border bg-card p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div>
+                  <h4 className="font-semibold text-foreground">{formatPersonName(trainer) || trainer.email || 'Trainer'}</h4>
+                  <p className="text-sm text-muted">{trainerFeedback.length} feedback items</p>
+                </div>
+                <div className="text-sm font-medium text-foreground">
+                  {trainerAverage.total_reviews ? `${Number(trainerAverage.average_rating).toFixed(1)} / 5` : 'No ratings'}
+                </div>
+              </div>
+              {trainerFeedback.length === 0 ? (
+                <p className="text-sm text-muted">No feedback for this trainer.</p>
+              ) : (
+                <div className="space-y-3">
+                  {trainerFeedback.map((review) => (
+                    <div key={review.id} className="rounded-lg border border-border bg-surface p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-foreground">{reviewName(review)}</p>
+                          <p className="text-xs text-muted">{review.rating_dimension || 'Overall'}</p>
+                        </div>
+                        <span className="font-semibold text-foreground">{review.rating_stars || 0}/5</span>
+                      </div>
+                      {review.comment && <p className="text-sm text-muted mt-2">{review.comment}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       <div className="rounded-xl border border-red-200 bg-red-50 p-6">
