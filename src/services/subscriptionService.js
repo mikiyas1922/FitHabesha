@@ -3,44 +3,62 @@ import { API_ENDPOINTS } from '../config/api'
 
 export const subscriptionService = {
   /**
-   * List all subscriptions
-   * @returns {Promise<Object>} Response with subscriptions data
-   */
-  getAllSubscriptions: () => api.get(API_ENDPOINTS.SUBSCRIPTIONS.LIST),
-
-  /**
-   * Get a single subscription by ID
-   * @param {string} subscriptionId - Subscription UUID
-   * @returns {Promise<Object>} Subscription data
-   */
-  getSubscriptionById: (subscriptionId) => api.get(API_ENDPOINTS.SUBSCRIPTIONS.DETAIL(subscriptionId)),
-
-  /**
-   * Create a new subscription
+   * Create a new subscription (Admin/Reception only)
    * @param {Object} data - Subscription data
    * @returns {Promise<Object>} Created subscription data
    */
-  createSubscription: (data) => api.post(API_ENDPOINTS.SUBSCRIPTIONS.CREATE, data),
+  createSubscription: (data) => {
+    console.log('subscriptionService.createSubscription called with:', data)
+    console.log('Endpoint:', API_ENDPOINTS.SUBSCRIPTIONS.CREATE)
+    return api.post(API_ENDPOINTS.SUBSCRIPTIONS.CREATE, data)
+  },
 
   /**
-   * Update an existing subscription
+   * Update subscription status (Admin/Reception only)
    * @param {string} subscriptionId - Subscription UUID
-   * @param {Object} data - Fields to update
+   * @param {Object} statusData - Status update data
+   * @param {string} statusData.status - New status (active, frozen, expired, cancelled)
    * @returns {Promise<Object>} Updated subscription data
    */
-  updateSubscription: (subscriptionId, data) => api.put(API_ENDPOINTS.SUBSCRIPTIONS.UPDATE(subscriptionId), data),
+  updateSubscriptionStatus: (subscriptionId, statusData) => {
+    console.log('subscriptionService.updateSubscriptionStatus called with:', subscriptionId, statusData)
+    console.log('Endpoint:', API_ENDPOINTS.SUBSCRIPTIONS.UPDATE_STATUS(subscriptionId))
+    return api.patch(API_ENDPOINTS.SUBSCRIPTIONS.UPDATE_STATUS(subscriptionId), statusData)
+  },
 
   /**
-   * Delete a subscription
+   * Get active subscription for a member
+   * @param {string} memberProfileId - Member profile UUID
+   * @returns {Promise<Object>} Active subscription data
+   */
+  getActiveSubscription: (memberProfileId) => {
+    console.log('subscriptionService.getActiveSubscription called with:', memberProfileId)
+    console.log('Endpoint:', API_ENDPOINTS.SUBSCRIPTIONS.ACTIVE(memberProfileId))
+    return api.get(API_ENDPOINTS.SUBSCRIPTIONS.ACTIVE(memberProfileId))
+  },
+
+  /**
+   * Get all subscriptions for a member
+   * @param {string} memberProfileId - Member profile UUID
+   * @param {Object} params - Query parameters
+   * @param {number} params.page - Page number (default: 1)
+   * @param {number} params.limit - Items per page (default: 20)
+   * @returns {Promise<Object>} Paginated subscriptions data
+   */
+  getMemberAllSubscriptions: (memberProfileId, params = {}) => {
+    console.log('subscriptionService.getMemberAllSubscriptions called with:', memberProfileId, params)
+    console.log('Endpoint:', API_ENDPOINTS.SUBSCRIPTIONS.MEMBER(memberProfileId))
+    return api.get(API_ENDPOINTS.SUBSCRIPTIONS.MEMBER(memberProfileId), { params })
+  },
+
+  /**
+   * Get subscription by ID (Admin only)
    * @param {string} subscriptionId - Subscription UUID
-   * @returns {Promise<Object>} Deletion response
+   * @returns {Promise<Object>} Subscription data
    */
-  deleteSubscription: (subscriptionId) => api.delete(API_ENDPOINTS.SUBSCRIPTIONS.DELETE(subscriptionId)),
-
-  /**
-   * Get subscriptions for a specific member
-   * @param {string} memberId - Member UUID
-   * @returns {Promise<Object>} Member subscriptions
-   */
-  getMemberSubscriptions: (memberId) => api.get(`${API_ENDPOINTS.MEMBERS.DETAIL(memberId)}/subscriptions`),
+  getAdminSubscriptionById: (subscriptionId) => {
+    console.log('subscriptionService.getAdminSubscriptionById called with:', subscriptionId)
+    console.log('Endpoint:', API_ENDPOINTS.SUBSCRIPTIONS.ADMIN_DETAIL(subscriptionId))
+    return api.get(API_ENDPOINTS.SUBSCRIPTIONS.ADMIN_DETAIL(subscriptionId))
+  },
 }

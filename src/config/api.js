@@ -79,11 +79,15 @@ export const API_ENDPOINTS = {
     TODAY: '/checkin/today',
   },
   SUBSCRIPTIONS: {
-    LIST: '/subscriptions',
-    DETAIL: (id) => `/subscriptions/${id}`,
     CREATE: '/subscriptions',
-    UPDATE: (id) => `/subscriptions/${id}`,
-    DELETE: (id) => `/subscriptions/${id}`,
+    UPDATE_STATUS: (id) => `/subscriptions/${id}/status`,
+    ACTIVE: (memberProfileId) => `/subscriptions/active/${memberProfileId}`,
+    MEMBER: (memberProfileId) => `/subscriptions/member/${memberProfileId}`,
+    ADMIN_DETAIL: (id) => `/admin/subscriptions/${id}`,
+  },
+  PAYMENTS: {
+    INIT: '/payments/init',
+    VERIFY: (orderId) => `/payments/verify/${orderId}`,
   },
   WORKOUTS: {
     LIST: '/workouts',

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Users, Calendar, LogIn, AlertTriangle, Plus, Search, DoorOpen } from 'lucide-react'
+import { Users, Calendar, LogIn, AlertTriangle, Plus, Search, DoorOpen, CreditCard, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Link } from 'react-router-dom'
 import { checkinService } from '../../services/checkinService'
 import { classesService } from '../../services/classesService'
+import { PaymentInitiationModal } from '../../components/PaymentInitiationModal'
+import { PaymentVerification } from '../../components/PaymentVerification'
 import { normalizeListResponse } from '../../utils/apiHelpers'
 
 const lockerStatus = {
@@ -21,8 +23,50 @@ export function ReceptionistDashboard() {
   const [busy, setBusy] = useState(false)
   const [todayCheckins, setTodayCheckins] = useState([])
   const [classes, setClasses] = useState([])
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [selectedMemberForPayment, setSelectedMemberForPayment] = useState(null)
+
+  // TODO: Replace these with REAL membership tier UUIDs from your backend database
+  const membershipTiers = [
+    {
+      id: 'REPLACE_WITH_REAL_UUID_1',
+      name: 'Basic',
+      price: 'ETB 1,450/month',
+      features: ['Gym access (off-peak)', 'Basic equipment', 'Locker rental available'],
+      popular: false,
+      duration_months: 1,
+    },
+    {
+      id: 'REPLACE_WITH_REAL_UUID_2',
+      name: 'Standard',
+      price: 'ETB 2,450/month',
+      features: ['Unlimited gym access', 'Group classes', 'Locker included', 'Basic equipment'],
+      popular: false,
+      duration_months: 1,
+    },
+    {
+      id: 'REPLACE_WITH_REAL_UUID_3',
+      name: 'Premium',
+      price: 'ETB 4,450/month',
+      features: ['Unlimited gym access', 'All group classes', 'Personal trainer sessions (4/month)', 'Locker included', 'Nutrition consultation', 'Priority booking'],
+      popular: true,
+      duration_months: 1,
+    },
+    {
+      id: 'REPLACE_WITH_REAL_UUID_4',
+      name: 'Elite',
+      price: 'ETB 7,450/month',
+      features: ['All Premium features', 'Unlimited personal training', 'Private locker room', 'Massage therapy (2/month)', 'Nutrition meal plans', '24/7 gym access'],
+      popular: false,
+      duration_months: 1,
+    },
+  ]
 
   const today = new Date().toISOString().slice(0, 10)
+
+  useEffect(() => {
+    loadDashboard()
+  }, [])
 
   const loadDashboard = async () => {
     try {
@@ -76,6 +120,25 @@ export function ReceptionistDashboard() {
     }
   }
 
+  const handleInitiatePayment = () => {
+    if (lookup?.id) {
+      setSelectedMemberForPayment(lookup)
+      setShowPaymentModal(true)
+    }
+  }
+
+  const handlePaymentSuccess = (result) => {
+    console.log('Payment successful:', result)
+    setCheckinMessage('Payment completed successfully')
+    handleLookup()
+  }
+
+  const handlePaymentVerified = (result) => {
+    console.log('Payment verified:', result)
+    setCheckinMessage('Payment verified successfully')
+    handleLookup()
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -121,9 +184,17 @@ export function ReceptionistDashboard() {
           </Button>
         </div>
         {lookup && (
-          <p className="text-sm text-muted">
-            {lookup.first_name} {lookup.last_name} · {lookup.unique_member_id} · subscription {lookup.subscription_status || '—'} · {lookup.is_active === false ? 'inactive' : 'active'}
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-muted">
+              {lookup.first_name} {lookup.last_name} · {lookup.unique_member_id} · subscription {lookup.subscription_status || '—'} · {lookup.is_active === false ? 'inactive' : 'active'}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={handleInitiatePayment} className="gap-2">
+                <CreditCard className="size-4" />
+                Initiate Payment
+              </Button>
+            </div>
+          </div>
         )}
         {checkinMessage && <p className="text-sm text-green-700">{checkinMessage}</p>}
         {checkinError && <p className="text-sm text-red-600">{checkinError}</p>}
@@ -235,6 +306,25 @@ export function ReceptionistDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Payment Verification */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h3 className="font-semibold text-foreground mb-4">Verify Payment Status</h3>
+        <p className="text-sm text-muted mb-4">
+          If a member completed a payment but their subscription hasn't been activated yet, enter the StarPay order ID to verify the payment status.
+        </p>
+        <PaymentVerification onPaymentVerified={handlePaymentVerified} />
+      </div>
+
+      {/* Payment Initiation Modal */}
+      <PaymentInitiationModal
+        open={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        memberProfileId={selectedMemberForPayment?.id}
+        membershipTiers={membershipTiers}
+        isAdmin={false}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   )
 }
