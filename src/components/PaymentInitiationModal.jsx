@@ -115,7 +115,13 @@ export function PaymentInitiationModal({ open, onClose, memberProfileId, members
       } else if (err.response?.status === 404) {
         setError('Member or membership tier not found.')
       } else if (err.response?.status === 409) {
-        setError('Member already has an active subscription.')
+        const conflictError = err.response?.data
+        if (conflictError?.existing_subscription) {
+          const sub = conflictError.existing_subscription
+          setError(`Member already has an active subscription (${sub.tier_name || 'Unknown'}) until ${new Date(sub.end_date).toLocaleDateString()}. Please renew or upgrade the existing subscription.`)
+        } else {
+          setError('Member already has an active subscription. Please renew or upgrade the existing subscription.')
+        }
       } else if (err.response?.status === 500) {
         setError('Payment gateway error. Please try again later.')
       } else {

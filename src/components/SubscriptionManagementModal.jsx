@@ -15,6 +15,7 @@ export function SubscriptionManagementModal({ open, onClose, subscriptionData, m
     start_date: new Date().toISOString().split('T')[0],
     auto_renew: true,
     status: 'active',
+    frozen_until: '',
   })
 
   const statusOptions = [
@@ -32,6 +33,7 @@ export function SubscriptionManagementModal({ open, onClose, subscriptionData, m
         setFormData({
           ...formData,
           status: subscriptionData.status || 'active',
+          frozen_until: subscriptionData.frozen_until ? new Date(subscriptionData.frozen_until).toISOString().split('T')[0] : '',
         })
       } else {
         // Create mode - new subscription
@@ -42,6 +44,7 @@ export function SubscriptionManagementModal({ open, onClose, subscriptionData, m
           start_date: new Date().toISOString().split('T')[0],
           auto_renew: true,
           status: 'active',
+          frozen_until: '',
         })
       }
       setError('')
@@ -86,12 +89,25 @@ export function SubscriptionManagementModal({ open, onClose, subscriptionData, m
           throw new Error('Subscription ID is required')
         }
 
+        console.log('=== Updating subscription status ===')
+        console.log('Subscription ID:', subscriptionData.id)
+        console.log('New status:', formData.status)
+
         const payload = {
           status: formData.status,
         }
 
+        // Add frozen_until date if status is frozen
+        if (formData.status === 'frozen' && formData.frozen_until) {
+          payload.frozen_until = formData.frozen_until
+          console.log('Adding frozen_until date:', formData.frozen_until)
+        }
+
+        console.log('Payload:', payload)
         const response = await subscriptionService.updateSubscriptionStatus(subscriptionData.id, payload)
+        console.log('Status update response:', response)
         const result = unwrapResource(response)
+        console.log('Unwrapped result:', result)
 
         if (onSuccess) {
           onSuccess(result)
@@ -349,10 +365,32 @@ export function SubscriptionManagementModal({ open, onClose, subscriptionData, m
               </div>
 
               {formData.status === 'frozen' && (
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    <strong>Note:</strong> Freezing a subscription will temporarily suspend member access. The system will automatically set a frozen_until date based on your subscription tier policy.
-                  </p>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-foreground">
+                      Frozen Until Date <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted" />
+                      <input
+                        type="date"
+                        name="frozen_until"
+                        value={formData.frozen_until}
+                        onChange={handleChange}
+                        min={new Date().toISOString().split('T')[0]}
+                        required
+                        className="w-full pl-12 pr-4 py-3 border border-border rounded-xl bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent transition-all"
+                      />
+                    </div>
+                    <p className="text-xs text-muted">
+                      Select the date when the freeze should end. Member access will be automatically restored on this date.
+                    </p>
+                  </div>
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <strong>Note:</strong> Freezing a subscription will temporarily suspend member access until the specified date.
+                    </p>
+                  </div>
                 </div>
               )}
 

@@ -22,8 +22,10 @@ export const subscriptionService = {
    */
   updateSubscriptionStatus: (subscriptionId, statusData) => {
     console.log('subscriptionService.updateSubscriptionStatus called with:', subscriptionId, statusData)
-    console.log('Endpoint:', API_ENDPOINTS.SUBSCRIPTIONS.UPDATE_STATUS(subscriptionId))
-    return api.patch(API_ENDPOINTS.SUBSCRIPTIONS.UPDATE_STATUS(subscriptionId), statusData)
+    const endpoint = API_ENDPOINTS.SUBSCRIPTIONS.UPDATE_STATUS(subscriptionId)
+    console.log('Endpoint:', endpoint)
+    console.log('Full URL:', `${import.meta.env.VITE_API_BASE_URL || 'https://gym-management-system-backend-xb5m.onrender.com/api/v1'}${endpoint}`)
+    return api.patch(endpoint, statusData)
   },
 
   /**
@@ -33,8 +35,10 @@ export const subscriptionService = {
    */
   getActiveSubscription: (memberProfileId) => {
     console.log('subscriptionService.getActiveSubscription called with:', memberProfileId)
-    console.log('Endpoint:', API_ENDPOINTS.SUBSCRIPTIONS.ACTIVE(memberProfileId))
-    return api.get(API_ENDPOINTS.SUBSCRIPTIONS.ACTIVE(memberProfileId))
+    const endpoint = API_ENDPOINTS.SUBSCRIPTIONS.ACTIVE(memberProfileId)
+    console.log('Endpoint:', endpoint)
+    console.log('Full URL:', `${import.meta.env.VITE_API_BASE_URL || 'https://gym-management-system-backend-xb5m.onrender.com/api/v1'}${endpoint}`)
+    return api.get(endpoint)
   },
 
   /**
@@ -47,8 +51,11 @@ export const subscriptionService = {
    */
   getMemberAllSubscriptions: (memberProfileId, params = {}) => {
     console.log('subscriptionService.getMemberAllSubscriptions called with:', memberProfileId, params)
-    console.log('Endpoint:', API_ENDPOINTS.SUBSCRIPTIONS.MEMBER(memberProfileId))
-    return api.get(API_ENDPOINTS.SUBSCRIPTIONS.MEMBER(memberProfileId), { params })
+    const endpoint = API_ENDPOINTS.SUBSCRIPTIONS.MEMBER(memberProfileId)
+    console.log('Endpoint:', endpoint)
+    console.log('Full URL:', `${import.meta.env.VITE_API_BASE_URL || 'https://gym-management-system-backend-xb5m.onrender.com/api/v1'}${endpoint}`)
+    console.log('Query params:', params)
+    return api.get(endpoint, { params })
   },
 
   /**
@@ -60,5 +67,21 @@ export const subscriptionService = {
     console.log('subscriptionService.getAdminSubscriptionById called with:', subscriptionId)
     console.log('Endpoint:', API_ENDPOINTS.SUBSCRIPTIONS.ADMIN_DETAIL(subscriptionId))
     return api.get(API_ENDPOINTS.SUBSCRIPTIONS.ADMIN_DETAIL(subscriptionId))
+  },
+
+  /**
+   * Get all subscriptions (Admin only)
+   * @param {Object} params - Query parameters
+   * @param {number} params.page - Page number (default: 1)
+   * @param {number} params.limit - Items per page (default: 20)
+   * @returns {Promise<Object>} Paginated subscriptions data
+   */
+  getAllSubscriptions: (params = {}) => {
+    console.log('subscriptionService.getAllSubscriptions called with:', params)
+    const endpoint = API_ENDPOINTS.SUBSCRIPTIONS.ADMIN_LIST
+    console.log('Endpoint:', endpoint)
+    console.log('Full URL:', `${import.meta.env.VITE_API_BASE_URL || 'https://gym-management-system-backend-xb5m.onrender.com/api/v1'}${endpoint}`)
+    console.log('Query params:', params)
+    return api.get(endpoint, { params })
   },
 }

@@ -84,6 +84,7 @@ export const API_ENDPOINTS = {
     ACTIVE: (memberProfileId) => `/subscriptions/active/${memberProfileId}`,
     MEMBER: (memberProfileId) => `/subscriptions/member/${memberProfileId}`,
     ADMIN_DETAIL: (id) => `/admin/subscriptions/${id}`,
+    ADMIN_LIST: '/admin/subscriptions',
   },
   PAYMENTS: {
     INIT: '/payments/init',
