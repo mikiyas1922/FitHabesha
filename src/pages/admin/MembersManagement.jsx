@@ -268,7 +268,6 @@ export function MembersManagement() {
                 header: 'Trainer',
                 render: (row) => {
                   const trainerLabel = assignedTrainerName(row) || row.trainer
-                  const hasTrainer = Boolean(assignedTrainerId(row) || (trainerLabel && trainerLabel !== '—'))
                   return (
                     <div className="flex flex-col gap-2">
                       <span className="text-sm text-foreground">{trainerLabel && trainerLabel !== '—' ? trainerLabel : '—'}</span>
@@ -280,19 +279,17 @@ export function MembersManagement() {
                           title="Assign trainer to member"
                         >
                           <UserPlus className="size-3.5" />
-                          {hasTrainer ? 'Reassign' : 'Assign'}
+                          Assign
                         </button>
-                        {hasTrainer && (
-                          <button
-                            type="button"
-                            onClick={() => setUnassignTrainerTarget(row)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 transition-colors"
-                            title="Unassign trainer from member"
-                          >
-                            <UserMinus className="size-3.5" />
-                            Unassign
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => setUnassignTrainerTarget(row)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 transition-colors"
+                          title="Unassign trainer from member"
+                        >
+                          <UserMinus className="size-3.5" />
+                          Unassign
+                        </button>
                       </div>
                     </div>
                   )
