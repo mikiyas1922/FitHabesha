@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Search, Dumbbell, Target, Calendar, TrendingUp, Users, Loader2 } from 'lucide-react'
+import { Search, Dumbbell, Target, Calendar, TrendingUp, Users, Loader2, TrendingUp as TrendingUpIcon } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { trainerService } from '../../services/trainerService'
 import { getApiErrorMessage, unwrapResource } from '../../utils/apiHelpers'
+import { TrainerProgress } from './TrainerProgress'
 
 function memberProfileId(client) {
   return client?.member_profile_id || client?.id || null
@@ -26,6 +27,7 @@ export function MyClients() {
   const [selectedMealPlan, setSelectedMealPlan] = useState('')
   const [assignNotes, setAssignNotes] = useState('')
   const [loadingPlans, setLoadingPlans] = useState(false)
+  const [progressTarget, setProgressTarget] = useState(null)
 
   const loadRoster = useCallback(async () => {
     setLoading(true)
@@ -280,6 +282,9 @@ export function MyClients() {
                     <Button size="sm" variant="secondary" className="flex-1" onClick={() => openAssignPlanModal(client)}>
                       Assign Plan
                     </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setProgressTarget(client)}>
+                      <TrendingUpIcon className="size-4" />
+                    </Button>
                   </div>
                 </div>
               )
@@ -387,6 +392,17 @@ export function MyClients() {
               </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {progressTarget && (
+        <div className="fixed inset-0 z-50 bg-bg">
+          <TrainerProgress
+            memberProfileId={memberProfileId(progressTarget)}
+            memberName={`${progressTarget.first_name || ''} ${progressTarget.last_name || ''}`.trim() || progressTarget.email}
+            memberEmail={progressTarget.email}
+            onBack={() => setProgressTarget(null)}
+          />
         </div>
       )}
     </div>

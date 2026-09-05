@@ -365,37 +365,42 @@ export function AdminSubscriptions() {
                   {/* Subscription History */}
                   <div>
                     <h3 className="font-semibold text-foreground mb-3">Subscription History</h3>
-                    {memberSubscriptions.length === 0 ? (
-                      <p className="text-sm text-muted">No subscription history</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {memberSubscriptions.map((sub) => (
-                          <div
-                            key={sub.id}
-                            className="p-3 border border-border rounded-lg bg-surface"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium text-foreground">{sub.tier_name || 'Unknown Tier'}</p>
-                                <p className="text-xs text-muted">
-                                  {sub.start_date ? new Date(sub.start_date).toLocaleDateString() : 'N/A'} - {' '}
-                                  {sub.expiry_date ? new Date(sub.expiry_date).toLocaleDateString() : 'N/A'}
-                                </p>
+                    {(() => {
+                      const historySubscriptions = memberActiveSubscription
+                        ? memberSubscriptions.filter(sub => sub.id !== memberActiveSubscription.id)
+                        : memberSubscriptions
+                      return historySubscriptions.length === 0 ? (
+                        <p className="text-sm text-muted">No subscription history</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {historySubscriptions.map((sub) => (
+                            <div
+                              key={sub.id}
+                              className="p-3 border border-border rounded-lg bg-surface"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium text-foreground">{sub.tier_name || 'Unknown Tier'}</p>
+                                  <p className="text-xs text-muted">
+                                    {sub.start_date ? new Date(sub.start_date).toLocaleDateString() : 'N/A'} - {' '}
+                                    {sub.expiry_date ? new Date(sub.expiry_date).toLocaleDateString() : 'N/A'}
+                                  </p>
+                                </div>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  sub.status === 'active'
+                                    ? 'bg-green-100 text-green-700'
+                                    : sub.status === 'expired'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-gray-100 text-gray-700'
+                                }`}>
+                                  {sub.status?.toUpperCase()}
+                                </span>
                               </div>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                sub.status === 'active' 
-                                  ? 'bg-green-100 text-green-700'
-                                  : sub.status === 'expired'
-                                  ? 'bg-red-100 text-red-700'
-                                  : 'bg-gray-100 text-gray-700'
-                              }`}>
-                                {sub.status?.toUpperCase()}
-                              </span>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </div>
                 </div>
               )}

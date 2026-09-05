@@ -148,4 +148,14 @@ export const adminService = {
       throw wrapAdminError(error)
     }
   },
+
+  async deleteProgressLog(progressLogId) {
+    try {
+      const response = await api.delete(API_ENDPOINTS.ADMIN.PROGRESS_LOGS_DELETE(progressLogId))
+      // Backend returns { success: true, data: {...}, message }
+      return response.data || response
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
 }
