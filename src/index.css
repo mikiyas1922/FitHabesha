@@ -98,9 +98,6 @@
   --spacing-gap-large: clamp(32px, 5vw, 64px);
   --spacing-gap-medium: clamp(16px, 3vw, 32px);
   --radius-card: 16px;
-  --radius-control: 10px;
-  --shadow-soft: 0 18px 45px -24px rgba(10, 17, 40, 0.28);
-  --transition-ui: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 @layer base {
@@ -124,28 +121,6 @@
     color: var(--app-foreground);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color var(--transition-ui), color var(--transition-ui);
-  }
-
-  button, a, input, textarea, select {
-    transition: color var(--transition-ui), background-color var(--transition-ui), border-color var(--transition-ui), box-shadow var(--transition-ui), transform var(--transition-ui);
-  }
-
-  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
-    outline: 3px solid color-mix(in srgb, var(--app-primary) 45%, transparent);
-    outline-offset: 2px;
-  }
-
-  ::selection {
-    background: var(--app-primary);
-    color: #0A1128;
-  }
-
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-thumb { background: var(--app-border); border-radius: 999px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }

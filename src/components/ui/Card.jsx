@@ -6,7 +6,7 @@ export function Card({ children, className = '', padding = 'md' }) {
   }
 
   return (
-    <div className={`bg-surface rounded-[var(--radius-card)] border border-border/80 shadow-card ${paddings[padding]} ${className}`}>
+    <div className={`bg-surface rounded-xl border border-border shadow-sm ${paddings[padding]} ${className}`}>
       {children}
     </div>
   )
