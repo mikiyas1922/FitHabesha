@@ -1,0 +1,384 @@
+@import 'tailwindcss';
+
+/* Tailwind CSS v4 @custom-variant syntax */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* ==========================================================================
+     LIGHT MODE (Based on #0A1128, #1E293B, #00DF82 gradient)
+     Concept: Light Navy Base + Slate Surface + Vibrant Green Accents
+     ========================================================================== */
+  --app-bg: #F1F5F9;                     /* Clean light slate background */
+  --app-surface: #F8FAFC;                /* Light slate surface (light tint of #1E293B) */
+  --app-foreground: #0A1128;             /* Deep navy text */
+  --app-muted: #64748B;                   /* Muted body and subtitle text */
+  --app-border: #CBD5E1;                 /* Subtle card borders */
+  --app-input: #F1F5F9;                  /* Distinct inset input field background */
+  --app-hover: #E2E8F0;                  /* Soft hover highlight */
+  --app-subtle: #F1F5F9;                 /* Card interior subtle fills */
+
+  /* Sidebar Light Variant */
+  --app-sidebar: #0A1128;                /* Deep navy sidebar */
+  --app-sidebar-hover: #1E293B;
+  --app-sidebar-active: #162032;
+  --app-sidebar-text: #FFFFFF;
+  --app-sidebar-text-muted: #94A3B8;
+
+  /* Elevation, Shadows & Brand Glows */
+  --app-primary: #00DF82;                /* Vibrant green from gradient */
+  --app-primary-dark: #00B86A;
+  --app-primary-light: #33F5A8;
+  --app-accent-glow: rgba(0, 223, 130, 0.15);
+  --app-card-shadow: 0 10px 30px -10px rgba(10, 17, 40, 0.08), 0 4px 6px -2px rgba(10, 17, 40, 0.03);
+}
+
+.dark {
+  /* ==========================================================================
+     DARK MODE (Based on #0A1128, #1E293B, #00DF82 gradient)
+     Concept: Deep Navy Base + Elevated Slate Surface + Glowing Green Accents
+     ========================================================================== */
+  --app-bg: #0A1128;
+  --app-surface: #1E293B;
+  --app-foreground: #F8FAFC;
+  --app-muted: #94A3B8;
+  --app-border: #334155;
+  --app-input: #162032;
+  --app-hover: #334155;
+  --app-subtle: #0D1525;
+
+  /* Sidebar Dark Variant */
+  --app-sidebar: #0A1128;
+  --app-sidebar-hover: #1E293B;
+  --app-sidebar-active: #162032;
+  --app-sidebar-text: #FFFFFF;
+  --app-sidebar-text-muted: #94A3B8;
+
+  /* Elevation, Shadows & Brand Glows */
+  --app-primary: #00DF82;
+  --app-primary-dark: #00B86A;
+  --app-primary-light: #33F5A8;
+  --app-accent-glow: rgba(0, 223, 130, 0.25);
+  --app-card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================================
+   TAILWIND V4 THEME MAPPING
+   ============================================================================ */
+@theme {
+  --color-primary: var(--app-primary);
+  --color-primary-dark: var(--app-primary-dark);
+  --color-primary-light: var(--app-primary-light);
+  
+  --color-sidebar: var(--app-sidebar);
+  --color-sidebar-hover: var(--app-sidebar-hover);
+  --color-sidebar-active: var(--app-sidebar-active);
+  --color-sidebar-text: var(--app-sidebar-text);
+  --color-sidebar-text-muted: var(--app-sidebar-text-muted);
+  
+  --color-surface: var(--app-surface);
+  --color-bg: var(--app-bg);
+  --color-foreground: var(--app-foreground);
+  --color-muted: var(--app-muted);
+  --color-border: var(--app-border);
+  --color-input: var(--app-input);
+  --color-hover: var(--app-hover);
+  --color-subtle: var(--app-subtle);
+
+  /* Shadows mapped directly to theme tokens */
+  --shadow-glow: 0 0 20px var(--app-accent-glow);
+  --shadow-card: var(--app-card-shadow);
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  
+  /* Fluid Responsive Spacing System */
+  --spacing-sidebar-width: 260px;
+  --spacing-section-padding: clamp(24px, 5vw, 80px);
+  --spacing-section-padding-vertical: clamp(40px, 8vw, 120px);
+  --spacing-card-padding: clamp(20px, 3vw, 40px);
+  --spacing-gap-large: clamp(32px, 5vw, 64px);
+  --spacing-gap-medium: clamp(16px, 3vw, 32px);
+  --radius-card: 16px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+    font-size: 16px;
+  }
+
+  @media (max-width: 640px) {
+    html {
+      font-size: 14px;
+    }
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background-color: var(--app-bg);
+    color: var(--app-foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
+  }
+
+  @media (max-width: 768px) {
+    body {
+      padding-left: 0 !important;
+    }
+  }
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px var(--app-accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 40px var(--app-accent-glow), 0 0 60px var(--app-accent-glow);
+  }
+}
+
+@keyframes rotate3d {
+  0% {
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+  }
+  100% {
+    transform: perspective(1000px) rotateX(360deg) rotateY(360deg);
+  }
+}
+
+@keyframes bounce3d {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.1);
+  }
+}
+
+@keyframes slideIn3d {
+  from {
+    opacity: 0;
+    transform: perspective(1000px) translateZ(-100px) rotateX(10deg);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1000px) translateZ(0) rotateX(0deg);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    var(--app-subtle) 8%,
+    var(--app-hover) 18%,
+    var(--app-subtle) 33%
+  );
+  background-size: 1000px 100%;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-rotate-3d {
+  animation: rotate3d 10s linear infinite;
+}
+
+.animate-bounce-3d {
+  animation: bounce3d 2s ease-in-out infinite;
+}
+
+.animate-slide-in-3d {
+  animation: slideIn3d 0.6s ease-out;
+}
+
+/* 3D Transform Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Interactive 3D Effects */
+.hover-3d {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-3d:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(5deg) scale(1.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Button Ripple Effect */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ripple-effect:active::after {
+  animation: ripple 0.6s ease-out;
+}
+
+/* Glassmorphism Effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Neon Glow Effect */
+.neon-glow {
+  box-shadow: 0 0 10px var(--app-primary), 0 0 20px var(--app-primary), 0 0 30px var(--app-primary);
+}
+
+.neon-glow-text {
+  text-shadow: 0 0 10px var(--app-primary), 0 0 20px var(--app-primary), 0 0 30px var(--app-primary);
+}

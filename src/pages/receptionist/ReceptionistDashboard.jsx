@@ -1,0 +1,388 @@
+import { useEffect, useState } from 'react'
+import { Users, Calendar, LogIn, AlertTriangle, Plus, Search, DoorOpen, CreditCard, Loader2, Barcode } from 'lucide-react'
+import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Input } from '../../components/ui/Input'
+import { Badge } from '../../components/ui/Badge'
+import { Link } from 'react-router-dom'
+import { checkinService } from '../../services/checkinService'
+import { classesService } from '../../services/classesService'
+import { PaymentInitiationModal } from '../../components/PaymentInitiationModal'
+import { PaymentVerification } from '../../components/PaymentVerification'
+import { normalizeListResponse } from '../../utils/apiHelpers'
+
+const lockerStatus = {
+  total: 200,
+  occupied: 167,
+  available: 33,
+}
+
+export function ReceptionistDashboard() {
+  const [uniqueId, setUniqueId] = useState('')
+  const [overrideReason, setOverrideReason] = useState('')
+  const [lookup, setLookup] = useState(null)
+  const [checkinMessage, setCheckinMessage] = useState('')
+  const [checkinError, setCheckinError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [todayCheckins, setTodayCheckins] = useState([])
+  const [classes, setClasses] = useState([])
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [selectedMemberForPayment, setSelectedMemberForPayment] = useState(null)
+
+  // Real membership tiers from backend database
+  const membershipTiers = [
+    {
+      id: 'f3240ec6-18fd-4953-a105-6d7231b82949',
+      name: 'Basic Monthly',
+      description: 'Access to gym floor and basic equipment.',
+      price: 'ETB 50/month',
+      features: ['Gym floor access', 'Basic equipment'],
+      popular: false,
+      duration_months: 1,
+      includes_trainer: false,
+      includes_nutrition_plan: false,
+    },
+    {
+      id: 'a164a03d-bf07-4b41-a70a-f2f697f13dc0',
+      name: 'Basic 6-Month',
+      description: 'Access to gym floor (6-month commitment, save 20%).',
+      price: 'ETB 240/6 months',
+      features: ['Gym floor access', 'Basic equipment', '20% savings'],
+      popular: false,
+      duration_months: 6,
+      includes_trainer: false,
+      includes_nutrition_plan: false,
+    },
+    {
+      id: 'a69ca379-65ab-43ff-a156-683cccda86c4',
+      name: 'Basic Yearly',
+      description: 'Access to gym floor (1-year commitment, save 30%).',
+      price: 'ETB 420/year',
+      features: ['Gym floor access', 'Basic equipment', '30% savings'],
+      popular: false,
+      duration_months: 12,
+      includes_trainer: false,
+      includes_nutrition_plan: false,
+    },
+    {
+      id: '18a93582-c1e0-4d6e-bc35-6e3ff914964d',
+      name: 'Premium Monthly',
+      description: 'Unlimited classes + personal trainer access.',
+      price: 'ETB 80/month',
+      features: ['Unlimited classes', 'Personal trainer access', 'Nutrition plan'],
+      popular: true,
+      duration_months: 1,
+      includes_trainer: true,
+      includes_nutrition_plan: true,
+    },
+    {
+      id: '2ddd9d36-4724-41b2-86e1-0ee17e56cc94',
+      name: 'Premium 6-Month',
+      description: 'Unlimited classes + trainer (save 12%).',
+      price: 'ETB 420/6 months',
+      features: ['Unlimited classes', 'Personal trainer access', 'Nutrition plan', '12% savings'],
+      popular: false,
+      duration_months: 6,
+      includes_trainer: true,
+      includes_nutrition_plan: true,
+    },
+    {
+      id: '3cd193b1-d0ed-47aa-bf4b-ee6c6763bc94',
+      name: 'Premium Yearly',
+      description: 'Ultimate package (save 25%).',
+      price: 'ETB 720/year',
+      features: ['Unlimited classes', 'Personal trainer access', 'Nutrition plan', '25% savings'],
+      popular: false,
+      duration_months: 12,
+      includes_trainer: true,
+      includes_nutrition_plan: true,
+    },
+  ]
+
+  const today = new Date().toISOString().slice(0, 10)
+
+  useEffect(() => {
+    loadDashboard()
+  }, [])
+
+  const loadDashboard = async () => {
+    try {
+      const [checkinsResponse, classesResponse] = await Promise.all([
+        checkinService.getTodayCheckins(),
+        classesService.getClasses({ date: today, limit: 20 }),
+      ])
+      setTodayCheckins(checkinsResponse.data || [])
+      setClasses(normalizeListResponse(classesResponse))
+    } catch (err) {
+      setCheckinError(err.message || 'Unable to load dashboard data.')
+    }
+  }
+
+  useEffect(() => {
+    loadDashboard()
+  }, [])
+
+  const handleLookup = async () => {
+    if (!uniqueId.trim()) return
+    setBusy(true)
+    setCheckinError('')
+    setCheckinMessage('')
+    try {
+      const member = await checkinService.lookupMember(uniqueId.trim())
+      setLookup(member)
+    } catch (err) {
+      setLookup(null)
+      setCheckinError(err.message || 'Member not found.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleCheckIn = async (override = false) => {
+    if (!uniqueId.trim()) return
+    setBusy(true)
+    setCheckinError('')
+    setCheckinMessage('')
+    try {
+      const response = override
+        ? await checkinService.overrideCheckIn(uniqueId.trim(), overrideReason || 'Front desk override')
+        : await checkinService.checkIn(uniqueId.trim())
+      setCheckinMessage(response?.message || 'Check-in successful')
+      setOverrideReason('')
+      await loadDashboard()
+    } catch (err) {
+      setCheckinError(err.message || 'Check-in failed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleInitiatePayment = () => {
+    if (lookup?.id) {
+      setSelectedMemberForPayment(lookup)
+      setShowPaymentModal(true)
+    }
+  }
+
+  const handlePaymentSuccess = (result) => {
+    console.log('Payment successful:', result)
+    setCheckinMessage('Payment completed successfully')
+    handleLookup()
+  }
+
+  const handlePaymentVerified = (result) => {
+    console.log('Payment verified:', result)
+    setCheckinMessage('Payment verified successfully')
+    handleLookup()
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Welcome back, Receptionist!"
+        subtitle="Look up members by gym ID and record check-ins"
+        actions={
+          <Link to="/receptionist/walk-in">
+            <Button className="gap-2">
+              <Plus className="size-4" />
+              Walk-in Registration
+            </Button>
+          </Link>
+        }
+      />
+
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Member Check-in</CardTitle>
+          <CardDescription>Rapid barcode scanner input with member verification</CardDescription>
+        </CardHeader>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
+              <Input
+                value={uniqueId}
+                onChange={(e) => setUniqueId(e.target.value)}
+                placeholder="GYM-A3F9-7"
+                className="pl-10"
+              />
+            </div>
+            <Button onClick={handleLookup} disabled={busy} className="gap-2">
+              <Search className="size-4" />
+              Look up
+            </Button>
+            <Button onClick={() => handleCheckIn(false)} disabled={busy} className="gap-2">
+              <LogIn className="size-4" />
+              Check In
+            </Button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Input
+              value={overrideReason}
+              onChange={(e) => setOverrideReason(e.target.value)}
+              placeholder="Override reason (reception/admin only)"
+              className="flex-1"
+            />
+            <Button variant="secondary" onClick={() => handleCheckIn(true)} disabled={busy}>
+              Override check-in
+            </Button>
+          </div>
+          {lookup && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted">
+                {lookup.first_name} {lookup.last_name} · {lookup.unique_member_id} · subscription {lookup.subscription_status || '—'} · {lookup.is_active === false ? 'inactive' : 'active'}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm" onClick={handleInitiatePayment} className="gap-2">
+                  <CreditCard className="size-4" />
+                  Initiate Payment
+                </Button>
+              </div>
+            </div>
+          )}
+          {checkinMessage && (
+            <Alert variant="success" title="Success">
+              {checkinMessage}
+            </Alert>
+          )}
+          {checkinError && (
+            <Alert variant="error" title="Error">
+              {checkinError}
+            </Alert>
+          )}
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Today's Check-ins", value: String(todayCheckins.length), icon: LogIn },
+          { label: 'Classes Today', value: String(classes.length), icon: Calendar },
+          { label: 'Currently In Gym', value: String(todayCheckins.filter((item) => !item.checked_out_at).length), icon: Users },
+          { label: 'Equipment Issues', value: '—', icon: AlertTriangle },
+        ].map((stat) => {
+          const Icon = stat.icon
+          return (
+            <Card key={stat.label} padding="md" className="hover:-translate-y-1 transition-transform">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
+                <Icon className="size-4 text-primary" />
+              </div>
+              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+              <p className="text-xs text-muted mt-1">{stat.label}</p>
+            </Card>
+          )
+        })}
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        <Card padding="md" className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Recent Check-ins</CardTitle>
+            <CardDescription>Latest member check-ins today</CardDescription>
+          </CardHeader>
+          <div className="space-y-3">
+            {todayCheckins.length === 0 && <p className="text-sm text-muted">No check-ins recorded today.</p>}
+            {todayCheckins.slice(0, 8).map((checkIn) => (
+              <div key={checkIn.id} className="flex items-center gap-4 p-3 rounded-lg bg-surface">
+                <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                  {(checkIn.first_name?.[0] || '') + (checkIn.last_name?.[0] || '')}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground text-sm">
+                    {`${checkIn.first_name || ''} ${checkIn.last_name || ''}`.trim() || checkIn.unique_member_id}
+                  </p>
+                  <p className="text-xs text-muted">{checkIn.unique_member_id}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-foreground">
+                    {checkIn.checked_in_at ? new Date(checkIn.checked_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link to="/receptionist/checkins" className="mt-4 block">
+            <Button variant="ghost" size="sm" className="w-full gap-2">
+              <Search className="size-4" />
+              View all
+            </Button>
+          </Link>
+        </Card>
+
+        <Card padding="md">
+          <CardHeader>
+            <CardTitle>Locker Status</CardTitle>
+            <CardDescription>Current locker occupancy</CardDescription>
+          </CardHeader>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted">Total Lockers</span>
+              <span className="font-medium text-foreground">{lockerStatus.total}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Occupied</span>
+              <span className="font-medium text-foreground">{lockerStatus.occupied}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Available</span>
+              <span className="font-medium text-foreground">{lockerStatus.available}</span>
+            </div>
+          </div>
+          <Link to="/receptionist/lockers" className="mt-4 block">
+            <Button variant="secondary" size="sm" className="w-full gap-2">
+              <DoorOpen className="size-4" />
+              Manage Lockers
+            </Button>
+          </Link>
+        </Card>
+      </div>
+
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Upcoming Classes Today</CardTitle>
+          <CardDescription>Scheduled classes for today</CardDescription>
+        </CardHeader>
+        <div className="space-y-3">
+          {classes.length === 0 && <p className="text-sm text-muted">No classes scheduled for today.</p>}
+          {classes.map((classItem) => (
+            <div key={classItem.id} className="flex items-center gap-3 p-3 rounded-lg bg-surface">
+              <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+                <Calendar className="size-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-foreground text-sm">{classItem.name}</p>
+                <p className="text-xs text-muted">{classItem.trainer_name || 'TBD'}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-foreground">
+                  {classItem.start_time ? new Date(classItem.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                </p>
+                <Badge variant="info" className="text-xs">
+                  {classItem.current_bookings || 0}/{classItem.capacity}
+                </Badge>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Verify Payment Status</CardTitle>
+          <CardDescription>If a member completed a payment but their subscription hasn't been activated yet, enter the StarPay order ID to verify the payment status.</CardDescription>
+        </CardHeader>
+        <PaymentVerification onPaymentVerified={handlePaymentVerified} />
+      </Card>
+
+      <PaymentInitiationModal
+        open={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        memberProfileId={selectedMemberForPayment?.id}
+        membershipTiers={membershipTiers}
+        isAdmin={false}
+        onSuccess={handlePaymentSuccess}
+      />
+    </div>
+  )
+}
