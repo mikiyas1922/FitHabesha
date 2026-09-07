@@ -23,6 +23,7 @@ export const API_ENDPOINTS = {
     NOTIFICATIONS_CLEANUP: '/admin/notifications/cleanup',
     RATINGS_FLAGGED: '/admin/ratings/flagged',
     RATINGS_MODERATE: (id) => `/admin/ratings/${id}/moderate`,
+    PROGRESS_LOGS_DELETE: (id) => `/admin/progress-logs/${id}`,
   },
   PROGRESS: {
     LOG: '/progress',
