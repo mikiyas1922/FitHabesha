@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Bell, Search, Check, Trash2, Loader2 } from 'lucide-react'
+import { Bell, Search, Check, Trash2, Loader2, Menu } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { roleLabels } from '../../config/navigation'
 import { useAuth } from '../../contexts/AuthContext'
@@ -16,7 +16,7 @@ function openNotificationLink(navigate, link) {
   navigate(link)
 }
 
-export function Header({ role, title, subtitle, showSearch = true, actions }) {
+export function Header({ role, title, subtitle, showSearch = true, actions, onMobileMenuToggle }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const displayUser = getUserDisplay(user, role)
@@ -113,14 +113,24 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
   }, [showNotifications])
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface px-6">
-      <div>
-        {title && <h1 className="text-lg font-semibold text-foreground">{title}</h1>}
-        {subtitle ? (
-          <p className="text-xs text-muted">{subtitle}</p>
-        ) : (
-          <p className="text-xs text-muted">Fit Habesha {roleLabels[frontendRole]}</p>
-        )}
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-md px-6">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onMobileMenuToggle}
+          className="md:hidden p-2 rounded-lg hover:bg-hover hover:text-foreground transition-colors text-muted"
+          aria-label="Toggle menu"
+        >
+          <Menu className="size-5" />
+        </button>
+        <div>
+          {title && <h1 className="text-lg font-semibold text-foreground">{title}</h1>}
+          {subtitle ? (
+            <p className="text-xs text-muted">{subtitle}</p>
+          ) : (
+            <p className="text-xs text-muted">Fit Habesha {roleLabels[frontendRole]}</p>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

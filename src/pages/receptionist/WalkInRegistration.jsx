@@ -1,5 +1,9 @@
 import { User, Mail, Phone, Calendar, CreditCard, CheckCircle, Clock, Plus } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Input } from '../../components/ui/Input'
+import { Badge } from '../../components/ui/Badge'
 import { useState } from 'react'
 
 const pricingOptions = [
@@ -31,36 +35,37 @@ export function WalkInRegistration() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Walk-In Registration</h1>
-          <p className="text-sm text-muted">Register new walk-in visitors and issue day/week passes</p>
-        </div>
-        <div className="flex gap-3">
+      <PageHeader
+        title="Walk-In Registration"
+        subtitle="Register new walk-in visitors and issue day/week passes"
+        actions={
           <Button variant="secondary" className="gap-2">
             <Clock className="size-4" />
             View Today's Walk-ins
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Registration Form */}
-        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6">
-          <h3 className="font-semibold text-foreground mb-6">Visitor Information</h3>
+        <Card padding="md" className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Visitor Information</CardTitle>
+            <CardDescription>Guest contact details for registration</CardDescription>
+          </CardHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm text-muted mb-2">First Name *</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-                  <input
+                  <Input
                     type="text"
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
                     placeholder="Enter first name"
-                    className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="pl-10"
                     required
                   />
                 </div>
@@ -69,13 +74,13 @@ export function WalkInRegistration() {
                 <label className="block text-sm text-muted mb-2">Last Name *</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-                  <input
+                  <Input
                     type="text"
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
                     placeholder="Enter last name"
-                    className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="pl-10"
                     required
                   />
                 </div>
@@ -87,13 +92,13 @@ export function WalkInRegistration() {
                 <label className="block text-sm text-muted mb-2">Email Address *</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-                  <input
+                  <Input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="Enter email"
-                    className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="pl-10"
                     required
                   />
                 </div>
@@ -102,13 +107,13 @@ export function WalkInRegistration() {
                 <label className="block text-sm text-muted mb-2">Phone Number *</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-                  <input
+                  <Input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
                     placeholder="Enter phone number"
-                    className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="pl-10"
                     required
                   />
                 </div>
@@ -119,12 +124,12 @@ export function WalkInRegistration() {
               <label className="block text-sm text-muted mb-2">Date of Birth</label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-                <input
+                <Input
                   type="date"
                   name="dateOfBirth"
                   value={formData.dateOfBirth}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="pl-10"
                 />
               </div>
             </div>
@@ -134,26 +139,25 @@ export function WalkInRegistration() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-muted mb-2">Contact Name</label>
-                  <input
+                  <Input
                     type="text"
                     name="emergencyContact"
                     value={formData.emergencyContact}
                     onChange={handleInputChange}
                     placeholder="Emergency contact name"
-                    className="w-full px-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 <div>
                   <label className="block text-sm text-muted mb-2">Contact Phone</label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-                    <input
+                    <Input
                       type="tel"
                       name="emergencyPhone"
                       value={formData.emergencyPhone}
                       onChange={handleInputChange}
                       placeholder="Emergency contact phone"
-                      className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      className="pl-10"
                     />
                   </div>
                 </div>
@@ -172,11 +176,14 @@ export function WalkInRegistration() {
               </Button>
             </div>
           </form>
-        </div>
+        </Card>
 
-        {/* Pricing Options */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="font-semibold text-foreground mb-4">Select Pass Type</h3>
+        {/* Pricing Options - Day/Week Passes */}
+        <Card padding="md">
+          <CardHeader>
+            <CardTitle>Select Pass Type</CardTitle>
+            <CardDescription>Day and week pass options</CardDescription>
+          </CardHeader>
           <div className="space-y-3">
             {pricingOptions.map((plan) => (
               <button
@@ -209,7 +216,7 @@ export function WalkInRegistration() {
             <div className="mt-4 p-4 rounded-lg bg-primary/10 border border-primary/20">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted">Selected Plan</span>
-                <span className="font-medium text-foreground">{selectedPlan.name}</span>
+                <Badge variant="success">{selectedPlan.name}</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted">Total Amount</span>
@@ -217,12 +224,15 @@ export function WalkInRegistration() {
               </div>
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
-      {/* Recent Walk-ins */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="font-semibold text-foreground mb-4">Today's Walk-in Registrations</h3>
+      {/* Recent Walk-ins - Instant Pass Issue */}
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Today's Walk-in Registrations</CardTitle>
+          <CardDescription>Instant pass issue history</CardDescription>
+        </CardHeader>
         <div className="space-y-3">
           {[
             { name: 'John Smith', time: '10:45 AM', plan: 'Day Pass', amount: '$15' },
@@ -235,7 +245,7 @@ export function WalkInRegistration() {
               </div>
               <div className="flex-1">
                 <p className="font-medium text-foreground text-sm">{walkIn.name}</p>
-                <p className="text-xs text-muted">{walkIn.plan}</p>
+                <Badge variant="info" className="text-xs">{walkIn.plan}</Badge>
               </div>
               <div className="text-right">
                 <p className="text-sm text-foreground">{walkIn.time}</p>
@@ -244,7 +254,7 @@ export function WalkInRegistration() {
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   )
   }

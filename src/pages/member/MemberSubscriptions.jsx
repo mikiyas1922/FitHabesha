@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { DollarSign, AlertCircle, CheckCircle, Clock, CreditCard, Plus, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Badge, statusBadge } from '../../components/ui/Badge'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { memberService } from '../../services/memberService'
 import { subscriptionService } from '../../services/subscriptionService'
 import { PaymentInitiationModal } from '../../components/PaymentInitiationModal'
@@ -183,49 +188,42 @@ export function MemberSubscriptions() {
           <Loader2 className="size-8 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-          <p className="text-red-600 font-medium">Error loading subscriptions</p>
-          <p className="text-red-500 text-sm mt-1">{error}</p>
+        <Alert variant="error" title="Error loading subscriptions">
+          {error}
           <Button onClick={loadSubscriptionData} className="mt-3">Retry</Button>
-        </div>
+        </Alert>
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">My Subscriptions</h1>
-              <p className="text-sm text-muted">Manage your membership and billing</p>
-            </div>
-            <Button onClick={() => setShowPaymentModal(true)} className="gap-2">
-              <Plus className="size-4" />
-              New Subscription
-            </Button>
-          </div>
+          <PageHeader
+            title="My Subscriptions"
+            subtitle="Manage your membership and billing"
+            actions={
+              <Button onClick={() => setShowPaymentModal(true)} className="gap-2">
+                <Plus className="size-4" />
+                New Subscription
+              </Button>
+            }
+          />
 
           {subscriptions.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-6">
-              <p className="text-sm text-muted">No active subscription. Choose a membership plan to get started.</p>
-            </div>
+            <EmptyState
+              icon={<CreditCard className="size-12" />}
+              title="No active subscription"
+              description="Choose a membership plan to get started"
+              actionLabel="Browse Plans"
+              onAction={() => setShowPaymentModal(true)}
+            />
           ) : (
             <div className="space-y-4">
               {subscriptions.map((subscription) => (
-                <div key={subscription.id} className="rounded-xl border border-border bg-card p-6">
+                <Card key={subscription.id} padding="md" className="border-primary/30">
                   <div className="flex items-start justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold text-foreground">
-                          {subscription.tier_name || 'Unknown Tier'}
-                        </h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          subscription.status === 'active' 
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : subscription.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                            : subscription.status === 'expired'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
-                        }`}>
+                        <CardTitle>{subscription.tier_name || 'Unknown Tier'}</CardTitle>
+                        <Badge variant={subscription.status === 'active' ? 'success' : subscription.status === 'pending' ? 'warning' : 'danger'}>
                           {subscription.status?.toUpperCase()}
-                        </span>
+                        </Badge>
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
@@ -268,18 +266,18 @@ export function MemberSubscriptions() {
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
 
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold text-foreground mb-4">Verify Payment Status</h3>
-            <p className="text-sm text-muted mb-4">
-              If you completed a payment but your subscription hasn't been activated yet, enter your StarPay order ID to verify the payment status.
-            </p>
+          <Card padding="md">
+            <CardHeader>
+              <CardTitle>Verify Payment Status</CardTitle>
+              <CardDescription>If you completed a payment but your subscription hasn't been activated yet, enter your Chapa order ID to verify the payment status.</CardDescription>
+            </CardHeader>
             <PaymentVerification onPaymentVerified={handlePaymentVerified} />
-          </div>
+          </Card>
         </>
       )}
 

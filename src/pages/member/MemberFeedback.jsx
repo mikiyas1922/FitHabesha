@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Card, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Star, MessageSquare, Award, Loader2 } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input, Select } from '../../components/ui/Input'
-import { Badge } from '../../components/ui/Badge'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Badge, statusBadge } from '../../components/ui/Badge'
 import { bookingService } from '../../services/bookingService'
 import { classesService } from '../../services/classesService'
 import { memberService } from '../../services/memberService'
@@ -277,14 +280,14 @@ export function MemberFeedback() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Feedback</h2>
-        <p className="text-sm text-muted mt-1">Rate a trainer, class, or the facility. Each target can only be rated once.</p>
-      </div>
+      <PageHeader
+        title="Feedback"
+        subtitle="Rate a trainer, class, or the facility. Each target can only be rated once."
+      />
 
       {facilitySummary && (
-        <Card>
-          <div className="p-4 flex items-center justify-between gap-4">
+        <Card padding="md">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-foreground">Facility rating</p>
               <p className="text-xs text-muted">Based on member reviews</p>
@@ -299,31 +302,55 @@ export function MemberFeedback() {
         </Card>
       )}
 
-      <Card>
+      <Card padding="md">
         <CardHeader>
           <CardTitle>Submit a rating</CardTitle>
+          <CardDescription>Share your experience to help us improve</CardDescription>
         </CardHeader>
-        {loadError && <p className="text-sm text-red-600 mb-3">{loadError}</p>}
+        {loadError && <Alert variant="error" title="Error loading options">{loadError}</Alert>}
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Select
-              label="Type"
-              value={form.type}
-              onChange={(e) => handleTypeChange(e.target.value)}
-              options={RATING_TYPES}
-            />
-            <Select
-              label="Stars"
-              value={form.rating_stars}
-              onChange={(e) => setForm({ ...form, rating_stars: e.target.value })}
-              options={[
-                { value: '5', label: '5 - Excellent' },
-                { value: '4', label: '4 - Good' },
-                { value: '3', label: '3 - Average' },
-                { value: '2', label: '2 - Poor' },
-                { value: '1', label: '1 - Very Poor' },
-              ]}
-            />
+          {/* Category Pills */}
+          <div>
+            <p className="text-sm font-medium text-foreground mb-2">Rating Type</p>
+            <div className="flex gap-2 flex-wrap">
+              {RATING_TYPES.map((type) => (
+                <button
+                  key={type.value}
+                  type="button"
+                  onClick={() => handleTypeChange(type.value)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    form.type === type.value
+                      ? 'bg-primary text-foreground'
+                      : 'bg-surface text-muted hover:bg-hover'
+                  }`}
+                >
+                  {type.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Interactive 5-Star Selector */}
+          <div>
+            <p className="text-sm font-medium text-foreground mb-2">Rating</p>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setForm({ ...form, rating_stars: String(star) })}
+                  className="p-1 hover:scale-110 transition-transform"
+                >
+                  <Star
+                    className={`size-6 ${
+                      star <= Number(form.rating_stars)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-muted'
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
           </div>
 
           {form.type === 'trainer' && (
@@ -354,12 +381,26 @@ export function MemberFeedback() {
             />
           )}
 
-          <Select
-            label="Dimension"
-            value={form.rating_dimension}
-            onChange={(e) => setForm({ ...form, rating_dimension: e.target.value })}
-            options={DIMENSIONS[form.type] || []}
-          />
+          {/* Dimension Pills */}
+          <div>
+            <p className="text-sm font-medium text-foreground mb-2">Dimension</p>
+            <div className="flex gap-2 flex-wrap">
+              {(DIMENSIONS[form.type] || []).map((dim) => (
+                <button
+                  key={dim.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, rating_dimension: dim.value })}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    form.rating_dimension === dim.value
+                      ? 'bg-primary text-foreground'
+                      : 'bg-surface text-muted hover:bg-hover'
+                  }`}
+                >
+                  {dim.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <Input
             label="Comment"
@@ -377,8 +418,8 @@ export function MemberFeedback() {
             Submit anonymously
           </label>
 
-          {formError && <p className="text-sm text-red-600">{formError}</p>}
-          {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
+          {formError && <Alert variant="error" title="Error">{formError}</Alert>}
+          {successMessage && <Alert variant="success" title="Success">{successMessage}</Alert>}
 
           <Button type="submit" disabled={submitting || loading}>
             {submitting ? 'Submitting...' : 'Submit rating'}
@@ -386,27 +427,39 @@ export function MemberFeedback() {
         </form>
       </Card>
 
-      <Card>
+      <Card padding="md">
         <CardHeader>
           <CardTitle>Ratings submitted this session</CardTitle>
+          <CardDescription>Your recent feedback submissions</CardDescription>
         </CardHeader>
-        <div className="p-4">
+        <div>
           {history.length === 0 ? (
             <p className="text-sm text-muted">Submitted ratings will appear here after you send them.</p>
           ) : (
             <div className="space-y-3">
               {history.map((entry) => (
-                <div key={entry.id} className="rounded-lg border border-border p-4">
+                <Card key={entry.id} padding="sm">
                   <div className="flex items-center justify-between gap-4 mb-2">
-                    <Badge variant="default">{entry.rating_type}</Badge>
-                    <span className="text-sm font-medium text-primary">{entry.rating_stars}/5</span>
+                    <Badge variant="info">{entry.rating_type}</Badge>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`size-3 ${
+                            star <= entry.rating_stars
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-muted'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
                   {entry.rating_dimension && (
                     <p className="text-xs text-muted capitalize">{entry.rating_dimension}</p>
                   )}
                   {entry.comment && <p className="text-sm text-foreground mt-1">{entry.comment}</p>}
                   <p className="text-xs text-muted mt-2">{formatRatingDate(entry.created_at)}</p>
-                </div>
+                </Card>
               ))}
             </div>
           )}

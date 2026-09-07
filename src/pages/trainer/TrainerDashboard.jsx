@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Users, Calendar, TrendingUp, Clock, Plus, Search, Filter, Loader2, Star } from 'lucide-react'
+import { Users, Calendar, TrendingUp, Clock, Plus, Search, Filter, Loader2, Star, Dumbbell, Utensils } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Badge } from '../../components/ui/Badge'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { trainerService } from '../../services/trainerService'
@@ -131,65 +135,57 @@ export function TrainerDashboard() {
           <Loader2 className="size-8 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-          <p className="text-red-600 font-medium">Error loading dashboard</p>
-          <p className="text-red-500 text-sm mt-1">{error}</p>
+        <Alert variant="error" title="Error loading dashboard">
+          {error}
           <Button onClick={loadDashboardData} className="mt-3">Retry</Button>
-        </div>
+        </Alert>
       ) : (
         <>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Welcome back, {firstName}!</h1>
-              <p className="text-sm text-muted">Search clients, logs, custom workouts...</p>
-            </div>
-            <div className="flex gap-3">
-              <Link to="/trainer/workouts">
-                <Button className="gap-2">
-                  <Plus className="size-4" />
-                  Create Workout Plan
-                </Button>
-              </Link>
-              <Link to="/trainer/meals">
-                <Button variant="secondary" className="gap-2">
-                  <Plus className="size-4" />
-                  Create Meal Plan
-                </Button>
-              </Link>
-            </div>
-          </div>
+          <PageHeader
+            title={`Welcome back, ${firstName}!`}
+            subtitle="Search clients, logs, custom workouts..."
+            actions={
+              <div className="flex gap-3">
+                <Link to="/trainer/workouts">
+                  <Button className="gap-2">
+                    <Plus className="size-4" />
+                    Create Workout Plan
+                  </Button>
+                </Link>
+                <Link to="/trainer/meals">
+                  <Button variant="secondary" className="gap-2">
+                    <Plus className="size-4" />
+                    Create Meal Plan
+                  </Button>
+                </Link>
+              </div>
+            }
+          />
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {trainerStats.map((stat) => {
               const Icon = stat.icon
               return (
-                <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
+                <Card key={stat.label} padding="md" className="hover:-translate-y-1 transition-transform">
                   <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
                     <Icon className="size-4 text-primary" />
                   </div>
                   <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                   <p className="text-xs text-muted mt-1">{stat.label}</p>
                   <p className="text-xs text-muted mt-2">{stat.change}</p>
-                </div>
+                </Card>
               )
             })}
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Today's Session Schedule */}
-            <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Today's Session Schedule</h3>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Search className="size-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Filter className="size-4" />
-                  </Button>
-                </div>
-              </div>
+            <Card padding="md" className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Today's Session Schedule</CardTitle>
+                <CardDescription>Your training sessions for today</CardDescription>
+              </CardHeader>
               <div className="space-y-3">
                 {todaySchedule.length === 0 ? (
                   <p className="text-sm text-muted">No sessions scheduled for today</p>
@@ -205,22 +201,20 @@ export function TrainerDashboard() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-foreground">{session.duration}</p>
-                        <span className="text-xs text-muted">{session.sessionType}</span>
+                        <Badge variant="info" className="text-xs">{session.sessionType}</Badge>
                       </div>
                     </div>
                   ))
                 )}
               </div>
-            </div>
+            </Card>
 
-            {/* My Assigned Clients */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">My Assigned Clients</h3>
-                <Link to="/trainer/clients">
-                  <Button variant="ghost" size="sm">View All</Button>
-                </Link>
-              </div>
+            {/* My Assigned Clients - Athlete Roster Preview */}
+            <Card padding="md">
+              <CardHeader>
+                <CardTitle>My Assigned Clients</CardTitle>
+                <CardDescription>Athlete roster preview</CardDescription>
+              </CardHeader>
               <div className="space-y-3">
                 {assignedClients.length === 0 ? (
                   <p className="text-sm text-muted">No assigned clients</p>
@@ -229,7 +223,9 @@ export function TrainerDashboard() {
                     <div key={i} className="p-3 rounded-lg bg-surface">
                       <div className="flex items-center justify-between mb-2">
                         <p className="font-medium text-foreground text-sm">{client.name}</p>
-                        <span className="text-xs text-muted">{client.progress ? 'Active' : 'Inactive'}</span>
+                        <Badge variant={client.progress > 0 ? 'success' : 'warning'} className="text-xs">
+                          {client.progress > 0 ? 'Active' : 'Inactive'}
+                        </Badge>
                       </div>
                       <div className="h-1.5 bg-border rounded-full overflow-hidden">
                         <div 
@@ -242,13 +238,19 @@ export function TrainerDashboard() {
                   ))
                 )}
               </div>
-            </div>
+              <Link to="/trainer/clients" className="mt-4 block">
+                <Button variant="ghost" size="sm" className="w-full">View All Clients</Button>
+              </Link>
+            </Card>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Recent Client Activity */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Recent Athlete Logs</h3>
+            <Card padding="md">
+              <CardHeader>
+                <CardTitle>Recent Athlete Logs</CardTitle>
+                <CardDescription>Latest client activity</CardDescription>
+              </CardHeader>
               <div className="space-y-3">
                 {recentActivity.length === 0 ? (
                   <p className="text-sm text-muted">No recent activity</p>
@@ -267,11 +269,14 @@ export function TrainerDashboard() {
                   ))
                 )}
               </div>
-            </div>
+            </Card>
 
             {/* Upcoming Classes */}
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Upcoming Classes Today</h3>
+            <Card padding="md">
+              <CardHeader>
+                <CardTitle>Upcoming Classes Today</CardTitle>
+                <CardDescription>Your scheduled classes</CardDescription>
+              </CardHeader>
               <div className="space-y-3">
                 {upcomingClasses.length === 0 ? (
                   <p className="text-sm text-muted">No upcoming classes</p>
@@ -293,12 +298,15 @@ export function TrainerDashboard() {
                   ))
                 )}
               </div>
-            </div>
+            </Card>
           </div>
 
-          {/* Quick Actions */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold text-foreground mb-4">Quick Actions</h3>
+          {/* Quick Actions - Builder Links */}
+          <Card padding="md">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Builder links for plans and schedules</CardDescription>
+            </CardHeader>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Link to="/trainer/clients">
                 <Button variant="secondary" className="w-full justify-start gap-2">
@@ -314,18 +322,18 @@ export function TrainerDashboard() {
               </Link>
               <Link to="/trainer/workouts">
                 <Button variant="secondary" className="w-full justify-start gap-2">
-                  <Plus className="size-4" />
+                  <Dumbbell className="size-4" />
                   Create Workout
                 </Button>
               </Link>
               <Link to="/trainer/meals">
                 <Button variant="secondary" className="w-full justify-start gap-2">
-                  <Plus className="size-4" />
+                  <Utensils className="size-4" />
                   Create Meal Plan
                 </Button>
               </Link>
             </div>
-          </div>
+          </Card>
         </>
       )}
     </div>

@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Users, Calendar, LogIn, AlertTriangle, Plus, Search, DoorOpen, CreditCard, Loader2 } from 'lucide-react'
+import { Users, Calendar, LogIn, AlertTriangle, Plus, Search, DoorOpen, CreditCard, Loader2, Barcode } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Input } from '../../components/ui/Input'
+import { Badge } from '../../components/ui/Badge'
 import { Link } from 'react-router-dom'
 import { checkinService } from '../../services/checkinService'
 import { classesService } from '../../services/classesService'
@@ -175,64 +180,80 @@ export function ReceptionistDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Welcome back, Receptionist!</h1>
-          <p className="text-sm text-muted">Look up members by gym ID and record check-ins</p>
-        </div>
-        <Link to="/receptionist/walk-in">
-          <Button className="gap-2">
-            <Plus className="size-4" />
-            Walk-in Registration
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Welcome back, Receptionist!"
+        subtitle="Look up members by gym ID and record check-ins"
+        actions={
+          <Link to="/receptionist/walk-in">
+            <Button className="gap-2">
+              <Plus className="size-4" />
+              Walk-in Registration
+            </Button>
+          </Link>
+        }
+      />
 
-      <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-        <h3 className="font-semibold text-foreground">Member check-in</h3>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            value={uniqueId}
-            onChange={(e) => setUniqueId(e.target.value)}
-            placeholder="GYM-A3F9-7"
-            className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm"
-          />
-          <Button onClick={handleLookup} disabled={busy} className="gap-2">
-            <Search className="size-4" />
-            Look up
-          </Button>
-          <Button onClick={() => handleCheckIn(false)} disabled={busy} className="gap-2">
-            <LogIn className="size-4" />
-            Check In
-          </Button>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            value={overrideReason}
-            onChange={(e) => setOverrideReason(e.target.value)}
-            placeholder="Override reason (reception/admin only)"
-            className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm"
-          />
-          <Button variant="secondary" onClick={() => handleCheckIn(true)} disabled={busy}>
-            Override check-in
-          </Button>
-        </div>
-        {lookup && (
-          <div className="space-y-2">
-            <p className="text-sm text-muted">
-              {lookup.first_name} {lookup.last_name} · {lookup.unique_member_id} · subscription {lookup.subscription_status || '—'} · {lookup.is_active === false ? 'inactive' : 'active'}
-            </p>
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={handleInitiatePayment} className="gap-2">
-                <CreditCard className="size-4" />
-                Initiate Payment
-              </Button>
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Member Check-in</CardTitle>
+          <CardDescription>Rapid barcode scanner input with member verification</CardDescription>
+        </CardHeader>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
+              <Input
+                value={uniqueId}
+                onChange={(e) => setUniqueId(e.target.value)}
+                placeholder="GYM-A3F9-7"
+                className="pl-10"
+              />
             </div>
+            <Button onClick={handleLookup} disabled={busy} className="gap-2">
+              <Search className="size-4" />
+              Look up
+            </Button>
+            <Button onClick={() => handleCheckIn(false)} disabled={busy} className="gap-2">
+              <LogIn className="size-4" />
+              Check In
+            </Button>
           </div>
-        )}
-        {checkinMessage && <p className="text-sm text-green-700">{checkinMessage}</p>}
-        {checkinError && <p className="text-sm text-red-600">{checkinError}</p>}
-      </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Input
+              value={overrideReason}
+              onChange={(e) => setOverrideReason(e.target.value)}
+              placeholder="Override reason (reception/admin only)"
+              className="flex-1"
+            />
+            <Button variant="secondary" onClick={() => handleCheckIn(true)} disabled={busy}>
+              Override check-in
+            </Button>
+          </div>
+          {lookup && (
+            <div className="space-y-2">
+              <p className="text-sm text-muted">
+                {lookup.first_name} {lookup.last_name} · {lookup.unique_member_id} · subscription {lookup.subscription_status || '—'} · {lookup.is_active === false ? 'inactive' : 'active'}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm" onClick={handleInitiatePayment} className="gap-2">
+                  <CreditCard className="size-4" />
+                  Initiate Payment
+                </Button>
+              </div>
+            </div>
+          )}
+          {checkinMessage && (
+            <Alert variant="success" title="Success">
+              {checkinMessage}
+            </Alert>
+          )}
+          {checkinError && (
+            <Alert variant="error" title="Error">
+              {checkinError}
+            </Alert>
+          )}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
@@ -243,28 +264,23 @@ export function ReceptionistDashboard() {
         ].map((stat) => {
           const Icon = stat.icon
           return (
-            <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
+            <Card key={stat.label} padding="md" className="hover:-translate-y-1 transition-transform">
               <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
                 <Icon className="size-4 text-primary" />
               </div>
               <p className="text-2xl font-bold text-foreground">{stat.value}</p>
               <p className="text-xs text-muted mt-1">{stat.label}</p>
-            </div>
+            </Card>
           )
         })}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-foreground">Recent Check-ins</h3>
-            <Link to="/receptionist/checkins">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <Search className="size-4" />
-                View all
-              </Button>
-            </Link>
-          </div>
+        <Card padding="md" className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Recent Check-ins</CardTitle>
+            <CardDescription>Latest member check-ins today</CardDescription>
+          </CardHeader>
           <div className="space-y-3">
             {todayCheckins.length === 0 && <p className="text-sm text-muted">No check-ins recorded today.</p>}
             {todayCheckins.slice(0, 8).map((checkIn) => (
@@ -286,10 +302,19 @@ export function ReceptionistDashboard() {
               </div>
             ))}
           </div>
-        </div>
+          <Link to="/receptionist/checkins" className="mt-4 block">
+            <Button variant="ghost" size="sm" className="w-full gap-2">
+              <Search className="size-4" />
+              View all
+            </Button>
+          </Link>
+        </Card>
 
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="font-semibold text-foreground mb-4">Locker Status</h3>
+        <Card padding="md">
+          <CardHeader>
+            <CardTitle>Locker Status</CardTitle>
+            <CardDescription>Current locker occupancy</CardDescription>
+          </CardHeader>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted">Total Lockers</span>
@@ -304,19 +329,20 @@ export function ReceptionistDashboard() {
               <span className="font-medium text-foreground">{lockerStatus.available}</span>
             </div>
           </div>
-          <Link to="/receptionist/lockers" className="block mt-4">
+          <Link to="/receptionist/lockers" className="mt-4 block">
             <Button variant="secondary" size="sm" className="w-full gap-2">
               <DoorOpen className="size-4" />
               Manage Lockers
             </Button>
           </Link>
-        </div>
+        </Card>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-foreground">Upcoming Classes Today</h3>
-        </div>
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Upcoming Classes Today</CardTitle>
+          <CardDescription>Scheduled classes for today</CardDescription>
+        </CardHeader>
         <div className="space-y-3">
           {classes.length === 0 && <p className="text-sm text-muted">No classes scheduled for today.</p>}
           {classes.map((classItem) => (
@@ -332,25 +358,23 @@ export function ReceptionistDashboard() {
                 <p className="text-sm text-foreground">
                   {classItem.start_time ? new Date(classItem.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                 </p>
-                <span className="text-xs text-muted">
+                <Badge variant="info" className="text-xs">
                   {classItem.current_bookings || 0}/{classItem.capacity}
-                </span>
+                </Badge>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
 
-      {/* Payment Verification */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="font-semibold text-foreground mb-4">Verify Payment Status</h3>
-        <p className="text-sm text-muted mb-4">
-          If a member completed a payment but their subscription hasn't been activated yet, enter the StarPay order ID to verify the payment status.
-        </p>
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Verify Payment Status</CardTitle>
+          <CardDescription>If a member completed a payment but their subscription hasn't been activated yet, enter the StarPay order ID to verify the payment status.</CardDescription>
+        </CardHeader>
         <PaymentVerification onPaymentVerified={handlePaymentVerified} />
-      </div>
+      </Card>
 
-      {/* Payment Initiation Modal */}
       <PaymentInitiationModal
         open={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}

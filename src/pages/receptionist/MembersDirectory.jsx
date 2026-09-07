@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Search, UserMinus, UserPlus } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Input } from '../../components/ui/Input'
+import { Badge } from '../../components/ui/Badge'
 import { AssignTrainerModal, UnassignTrainerModal } from '../../components/staff/TrainerAssignmentModals'
 import { useMembersList } from '../../hooks/useMembersList'
 import { assignedTrainerId, assignedTrainerName } from '../../utils/apiHelpers'
@@ -34,23 +39,21 @@ export function MembersDirectory() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Members Directory</h1>
-        <p className="text-sm text-muted">
-          Live members from GET /members. Reception can assign or unassign a trainer without attaching plans.
-        </p>
-      </div>
+      <PageHeader
+        title="Members Directory"
+        subtitle="Live members from GET /members. Reception can assign or unassign a trainer without attaching plans."
+      />
 
-      <div className="rounded-xl border border-border bg-card p-4">
+      <Card padding="md">
         <div className="flex flex-wrap gap-4">
           <div className="relative flex-1 min-w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-            <input
+            <Input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email, or gym ID..."
-              className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="pl-10"
             />
           </div>
           <select
@@ -64,16 +67,18 @@ export function MembersDirectory() {
           </select>
           <Button onClick={handleSearch}>Search</Button>
         </div>
-      </div>
+      </Card>
 
       {assignmentMessage && (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+        <Alert variant="success" title="Success">
           {assignmentMessage}
-        </div>
+        </Alert>
       )}
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+        <Alert variant="error" title="Error">
+          {error}
+        </Alert>
       )}
 
       {loading ? (
@@ -84,30 +89,36 @@ export function MembersDirectory() {
             const trainerLabel = assignedTrainerName(member) || member.trainer
             const hasTrainer = Boolean(assignedTrainerId(member) || (trainerLabel && trainerLabel !== '—'))
             return (
-              <div key={member.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
-                <div>
-                  <p className="font-medium text-foreground">{member.name}</p>
-                  <p className="text-xs text-muted font-mono">{member.uniqueMemberId}</p>
-                  <p className="text-sm text-muted mt-2">{member.email}</p>
-                  <p className="text-sm text-muted">{member.phone}</p>
-                  <p className="text-xs mt-2 capitalize">{member.status}</p>
-                  <p className="text-xs text-muted mt-1">
-                    Trainer: {hasTrainer ? trainerLabel : 'None assigned'}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setAssignTarget(member)}>
-                    <UserPlus className="size-3.5" />
-                    {hasTrainer ? 'Reassign' : 'Assign'}
-                  </Button>
-                  {hasTrainer && (
-                    <Button size="sm" variant="ghost" className="gap-1.5 text-red-700" onClick={() => setUnassignTarget(member)}>
-                      <UserMinus className="size-3.5" />
-                      Unassign
+              <Card key={member.id} padding="md" className="hover:-translate-y-1 transition-transform">
+                <div className="space-y-3">
+                  <div>
+                    <p className="font-medium text-foreground">{member.name}</p>
+                    <p className="text-xs text-muted font-mono">{member.uniqueMemberId}</p>
+                    <p className="text-sm text-muted mt-2">{member.email}</p>
+                    <p className="text-sm text-muted">{member.phone}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant={member.status === 'active' ? 'success' : 'warning'} className="text-xs capitalize">
+                        {member.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted mt-1">
+                      Trainer: {hasTrainer ? trainerLabel : 'None assigned'}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setAssignTarget(member)}>
+                      <UserPlus className="size-3.5" />
+                      {hasTrainer ? 'Reassign' : 'Assign'}
                     </Button>
-                  )}
+                    {hasTrainer && (
+                      <Button size="sm" variant="ghost" className="gap-1.5 text-red-700" onClick={() => setUnassignTarget(member)}>
+                        <UserMinus className="size-3.5" />
+                        Unassign
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </Card>
             )
           })}
         </div>

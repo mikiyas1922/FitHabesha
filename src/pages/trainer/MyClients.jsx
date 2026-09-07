@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Search, Dumbbell, Target, Calendar, TrendingUp, Users, Loader2, TrendingUp as TrendingUpIcon } from 'lucide-react'
+import { Search, Dumbbell, Target, Calendar, TrendingUp, Users, Loader2, TrendingUp as TrendingUpIcon, X } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Input } from '../../components/ui/Input'
 import { trainerService } from '../../services/trainerService'
 import { getApiErrorMessage, unwrapResource } from '../../utils/apiHelpers'
 import { TrainerProgress } from './TrainerProgress'
@@ -166,36 +170,24 @@ export function MyClients() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-        <p className="text-red-600 font-medium">Error loading clients</p>
-        <p className="text-red-500 text-sm mt-1">{error}</p>
+      <Alert variant="error" title="Error loading clients">
+        {error}
         <Button onClick={loadRoster} className="mt-3">Retry</Button>
-      </div>
+      </Alert>
     )
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">My Clients</h1>
-        <p className="text-sm text-muted">
-          Assigned members for {trainer?.full_name || 'your roster'}
-          {trainer?.specialty ? ` · ${trainer.specialty}` : ''}
-        </p>
-      </div>
+      <PageHeader
+        title="My Clients"
+        subtitle={`Assigned members for ${trainer?.full_name || 'your roster'}${trainer?.specialty ? ` · ${trainer.specialty}` : ''}`}
+      />
 
       {actionMessage && (
-        <div
-          className={`rounded-xl border p-4 text-sm ${
-            actionTone === 'error'
-              ? 'border-red-200 bg-red-50 text-red-700'
-              : actionTone === 'success'
-                ? 'border-green-200 bg-green-50 text-green-800'
-                : 'border-border bg-card text-foreground'
-          }`}
-        >
+        <Alert variant={actionTone === 'error' ? 'error' : actionTone === 'success' ? 'success' : 'info'} title={actionTone === 'error' ? 'Error' : actionTone === 'success' ? 'Success' : 'Info'}>
           {actionMessage}
-        </div>
+        </Alert>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -206,36 +198,37 @@ export function MyClients() {
         ].map((stat) => {
           const Icon = stat.icon
           return (
-            <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
+            <Card key={stat.label} padding="md" className="hover:-translate-y-1 transition-transform">
               <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
                 <Icon className="size-4 text-primary" />
               </div>
               <p className="text-2xl font-bold text-foreground">{stat.value}</p>
               <p className="text-xs text-muted mt-1">{stat.label}</p>
-            </div>
+            </Card>
           )
         })}
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-semibold text-foreground">Active Clients</h3>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or ID..."
-              className="pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
-            />
-          </div>
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Active Clients</CardTitle>
+          <CardDescription>Client roster with attendance logging and plan assignment</CardDescription>
+        </CardHeader>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
+          <Input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or ID..."
+            className="pl-10"
+          />
         </div>
 
         {filtered.length === 0 ? (
-          <p className="text-sm text-muted">No assigned members yet.</p>
+          <p className="text-sm text-muted mt-4">No assigned members yet.</p>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {filtered.map((client) => {
               const profileId = memberProfileId(client)
               const name = `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email
@@ -247,7 +240,7 @@ export function MyClients() {
                 .toUpperCase()
 
               return (
-                <div key={profileId} className="p-4 rounded-xl border border-border bg-surface">
+                <Card key={profileId} padding="md" className="hover:-translate-y-1 transition-transform">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
                       {initials}
@@ -286,28 +279,29 @@ export function MyClients() {
                       <TrendingUpIcon className="size-4" />
                     </Button>
                   </div>
-                </div>
+                </Card>
               )
             })}
           </div>
         )}
-      </div>
+      </Card>
 
       {attendanceTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 space-y-4">
-            <h3 className="text-lg font-semibold">Record PT attendance</h3>
-            <p className="text-sm text-muted">
-              {attendanceTarget.first_name} {attendanceTarget.last_name} · {attendanceTarget.unique_member_id}
-            </p>
+          <Card padding="lg" className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle>Record PT Attendance</CardTitle>
+              <CardDescription>
+                {attendanceTarget.first_name} {attendanceTarget.last_name} · {attendanceTarget.unique_member_id}
+              </CardDescription>
+            </CardHeader>
             <p className="text-xs text-muted">
               Saves a personal training check-in for this member. Notes are optional.
             </p>
-            <textarea
+            <Input.Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="PT session notes"
-              className="w-full rounded-lg border border-border bg-surface p-3 text-sm"
               rows={3}
             />
             <div className="flex justify-end gap-2">
@@ -318,17 +312,19 @@ export function MyClients() {
                 {saving ? 'Saving...' : 'Save'}
               </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
       {assignPlanTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold">Assign Plan</h3>
-            <p className="text-sm text-muted">
-              {assignPlanTarget.first_name} {assignPlanTarget.last_name} · {assignPlanTarget.unique_member_id}
-            </p>
+          <Card padding="lg" className="max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle>Assign Plan</CardTitle>
+              <CardDescription>
+                {assignPlanTarget.first_name} {assignPlanTarget.last_name} · {assignPlanTarget.unique_member_id}
+              </CardDescription>
+            </CardHeader>
             
             {loadingPlans ? (
               <div className="flex items-center justify-center py-4">
@@ -371,11 +367,10 @@ export function MyClients() {
                   
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">Notes</label>
-                    <textarea
+                    <Input.Textarea
                       value={assignNotes}
                       onChange={(e) => setAssignNotes(e.target.value)}
                       placeholder="Optional notes for this assignment..."
-                      className="w-full rounded-lg border border-border bg-surface p-3 text-sm"
                       rows={2}
                     />
                   </div>
@@ -391,7 +386,7 @@ export function MyClients() {
                 {saving ? 'Assigning...' : 'Assign'}
               </Button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 

@@ -17,6 +17,10 @@ import {
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Badge, statusBadge } from '../../components/ui/Badge'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { memberService } from '../../services/memberService'
@@ -215,70 +219,68 @@ export function MemberDashboard() {
           <Loader2 className="size-8 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-          <p className="text-red-600 font-medium">Error loading dashboard</p>
-          <p className="text-red-500 text-sm mt-1">{error}</p>
+        <Alert variant="error" title="Error loading dashboard">
+          {error}
           <Button onClick={loadDashboardData} className="mt-3">Retry</Button>
-        </div>
+        </Alert>
       ) : (
         <>
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Welcome back, {firstName}!</h1>
-              <p className="text-sm text-muted">Track your fitness journey and stay motivated</p>
-            </div>
-            <Link to="/member/workouts">
-              <Button className="gap-2"><Play className="size-4" />Start Workout</Button>
-            </Link>
-          </div>
+          <PageHeader
+            title={`Welcome back, ${firstName}!`}
+            subtitle="Track your fitness journey and stay motivated"
+            actions={
+              <Link to="/member/workouts">
+                <Button className="gap-2"><Play className="size-4" />Start Workout</Button>
+              </Link>
+            }
+          />
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {memberStats.map((stat) => {
               const Icon = stat.icon
               return (
-                <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
+                <Card key={stat.label} padding="md" className="hover:-translate-y-1 transition-transform">
                   <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
                     <Icon className="size-4 text-primary" />
                   </div>
                   <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                   <p className="text-xs text-muted mt-1">{stat.label}</p>
                   <p className="text-xs text-muted mt-2">{stat.change}</p>
-                </div>
+                </Card>
               )
             })}
           </div>
 
           {/* Today's Workout + Weekly Progress */}
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Today's Scheduled Workout</h3>
-                <Link to="/member/workouts"><Button variant="ghost" size="sm">View All</Button></Link>
-              </div>
-              <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-2">
-                  <div>
-                    <p className="font-medium text-foreground text-lg">{todayWorkout.name}</p>
-                    <p className="text-sm text-muted">with {todayWorkout.trainer}</p>
+            <div className="lg:col-span-2">
+              <Card padding="md">
+                <CardHeader action={<Link to="/member/workouts"><Button variant="ghost" size="sm">View All</Button></Link>}>
+                  <CardTitle>Today's Scheduled Workout</CardTitle>
+                </CardHeader>
+                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-2">
+                    <div>
+                      <p className="font-medium text-foreground text-lg">{todayWorkout.name}</p>
+                      <p className="text-sm text-muted">with {todayWorkout.trainer}</p>
+                    </div>
+                    <Badge variant="info">{todayWorkout.status}</Badge>
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 w-fit">
-                    {todayWorkout.status}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-muted mb-4">
+                    <div className="flex items-center gap-2"><Clock className="size-4" /><span>{todayWorkout.time}</span></div>
+                    <div className="flex items-center gap-2"><Dumbbell className="size-4" /><span>{todayWorkout.exercises} exercises</span></div>
+                    <div className="flex items-center gap-2"><Target className="size-4" /><span>{todayWorkout.duration}</span></div>
+                  </div>
+                  <Button className="w-full sm:w-auto gap-2"><Play className="size-4" />Start Workout</Button>
                 </div>
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-muted mb-4">
-                  <div className="flex items-center gap-2"><Clock className="size-4" /><span>{todayWorkout.time}</span></div>
-                  <div className="flex items-center gap-2"><Dumbbell className="size-4" /><span>{todayWorkout.exercises} exercises</span></div>
-                  <div className="flex items-center gap-2"><Target className="size-4" /><span>{todayWorkout.duration}</span></div>
-                </div>
-                <Button className="w-full sm:w-auto gap-2"><Play className="size-4" />Start Workout</Button>
-              </div>
+              </Card>
             </div>
 
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Weekly Progress</h3>
-              <div className="space-y-3">
+            <Card padding="md">
+              <CardTitle>Weekly Progress</CardTitle>
+              <div className="space-y-3 mt-4">
                 {weeklyProgress.map((day) => (
                   <div key={day.day} className="flex items-center gap-3">
                     <span className="text-sm text-foreground w-8">{day.day}</span>
@@ -299,16 +301,12 @@ export function MemberDashboard() {
                   <div className="h-full bg-primary rounded-full transition-all" style={{ width: '60%' }} />
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* ── Body Composition Progress ─────────────────────────────────────── */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-semibold text-foreground">Body Composition</h3>
-                <p className="text-xs text-muted mt-0.5">Track weight, body fat, and muscle mass over time</p>
-              </div>
+          <Card padding="md">
+            <CardHeader action={
               <Button
                 size="sm"
                 variant={showLogForm ? 'ghost' : 'default'}
@@ -316,7 +314,10 @@ export function MemberDashboard() {
               >
                 {showLogForm ? 'Cancel' : <><Plus size={14} className="mr-1" />Log Entry</>}
               </Button>
-            </div>
+            }>
+              <CardTitle>Body Composition</CardTitle>
+              <CardDescription>Track weight, body fat, and muscle mass over time</CardDescription>
+            </CardHeader>
 
             {/* Metric cards */}
             {latestProgress ? (
@@ -326,14 +327,14 @@ export function MemberDashboard() {
                   { icon: Activity, label: 'Body Fat', field: 'body_fat_percentage', unit: '%', color: 'text-orange-500', bg: 'bg-orange-500/10' },
                   { icon: Dumbbell, label: 'Muscle Mass', field: 'muscle_mass_kg', unit: ' kg', color: 'text-green-500', bg: 'bg-green-500/10' },
                 ].map(({ icon: Icon, label, field, unit, color, bg }) => (
-                  <div key={field} className="rounded-lg border border-border p-4 flex items-start gap-3">
+                  <Card key={field} padding="sm" className="flex items-start gap-3">
                     <div className={`p-2 rounded-lg ${bg} ${color}`}><Icon size={16} /></div>
                     <div>
                       <p className="text-xs text-muted">{label}</p>
                       <p className="text-lg font-bold text-foreground leading-tight">{fmtNum(latestProgress[field], unit)}</p>
                       <Trend curr={latestProgress[field]} prev={prevProgress?.[field]} unit={unit} />
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             ) : !showLogForm && (
@@ -368,13 +369,13 @@ export function MemberDashboard() {
                 </Button>
               </form>
             )}
-          </div>
+          </Card>
 
           {/* Recent Activity + Upcoming Classes */}
           <div className="grid lg:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Recent Activity</h3>
-              <div className="space-y-3">
+            <Card padding="md">
+              <CardTitle>Recent Activity</CardTitle>
+              <div className="space-y-3 mt-4">
                 {recentActivity.length === 0 ? (
                   <p className="text-sm text-muted">No recent activity</p>
                 ) : (
@@ -391,13 +392,12 @@ export function MemberDashboard() {
                   ))
                 )}
               </div>
-            </div>
+            </Card>
 
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Upcoming Classes</h3>
-                <Link to="/member/classes"><Button variant="ghost" size="sm">View All</Button></Link>
-              </div>
+            <Card padding="md">
+              <CardHeader action={<Link to="/member/classes"><Button variant="ghost" size="sm">View All</Button></Link>}>
+                <CardTitle>Upcoming Classes</CardTitle>
+              </CardHeader>
               <div className="space-y-3">
                 {upcomingClasses.length === 0 ? (
                   <p className="text-sm text-muted">No upcoming classes</p>
@@ -413,25 +413,27 @@ export function MemberDashboard() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-foreground">{classItem.time}</p>
-                        <span className={`text-xs ${classItem.spots.includes('Fully') ? 'text-red-600' : 'text-green-600'}`}>{classItem.spots}</span>
+                        <Badge variant={classItem.spots.includes('Fully') ? 'danger' : 'success'} className="text-xs">
+                          {classItem.spots}
+                        </Badge>
                       </div>
                     </div>
                   ))
                 )}
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Quick Actions */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold text-foreground mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Card padding="md">
+            <CardTitle>Quick Actions</CardTitle>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
               <Link to="/member/workouts"><Button variant="secondary" className="w-full justify-start gap-2"><Dumbbell className="size-4" />View Workouts</Button></Link>
               <Link to="/member/meals"><Button variant="secondary" className="w-full justify-start gap-2"><Target className="size-4" />Meal Plans</Button></Link>
               <Link to="/member/classes"><Button variant="secondary" className="w-full justify-start gap-2"><Calendar className="size-4" />Book Classes</Button></Link>
               <Link to="/member/trainers"><Button variant="secondary" className="w-full justify-start gap-2"><Award className="size-4" />My Trainers</Button></Link>
             </div>
-          </div>
+          </Card>
         </>
       )}
     </div>

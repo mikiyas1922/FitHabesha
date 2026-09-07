@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Edit, Trash2, Loader2 } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Loader2, Calendar } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Badge, statusBadge } from '../../components/ui/Badge'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { ClassFormModal } from '../../components/ClassFormModal'
 import { classesService } from '../../services/classesService'
 import { normalizeListResponse } from '../../utils/apiHelpers'
@@ -121,40 +126,39 @@ export function AdminClasses() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-        <p className="text-red-600 font-medium">Error loading classes</p>
-        <p className="text-red-500 text-sm mt-1">{error}</p>
+      <Alert variant="error" title="Error loading classes">
+        {error}
         <Button onClick={fetchClasses} className="mt-3">Retry</Button>
-      </div>
+      </Alert>
     )
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Classes Management</h1>
-          <p className="text-sm text-muted">Manage gym classes and schedules</p>
-        </div>
-        <Button className="gap-2" onClick={() => setShowCreateModal(true)}>
-          <Plus className="size-4" />
-          Create Class
-        </Button>
-      </div>
+      <PageHeader
+        title="Classes Management"
+        subtitle="Manage gym classes and schedules"
+        actions={
+          <Button className="gap-2" onClick={() => setShowCreateModal(true)}>
+            <Plus className="size-4" />
+            Create Class
+          </Button>
+        }
+      />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-3 gap-4">
         {classStats.map((stat, i) => (
-          <div key={i} className="rounded-xl border border-border bg-card p-4">
+          <Card key={i} padding="md" className="hover:-translate-y-1 transition-transform">
             <p className="text-2xl font-bold text-foreground">{stat.value}</p>
             <p className="text-xs text-muted mt-1">{stat.label}</p>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <div className="flex gap-3">
+      <Card padding="md">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
             <input
@@ -165,31 +169,39 @@ export function AdminClasses() {
               className="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
-          <select 
-            value={selectedDiscipline}
-            onChange={(e) => setSelectedDiscipline(e.target.value)}
-            className="px-3 py-2 text-sm border border-border rounded-lg bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">All Disciplines</option>
-            <option value="yoga">Yoga</option>
-            <option value="pilates">Pilates</option>
-            <option value="hiit">HIIT</option>
-            <option value="spin">Spin</option>
-            <option value="strength">Strength</option>
-            <option value="dance">Dance</option>
-            <option value="other">Other</option>
-          </select>
-          <Button onClick={handleSearch}>Search</Button>
-          <Button variant="secondary" onClick={handleReset}>Reset</Button>
+          <div className="flex gap-2 flex-wrap">
+            {['', 'yoga', 'pilates', 'hiit', 'spin', 'strength', 'dance', 'other'].map((discipline) => (
+              <button
+                key={discipline || 'all'}
+                onClick={() => setSelectedDiscipline(discipline)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  selectedDiscipline === discipline
+                    ? 'bg-primary text-foreground'
+                    : 'bg-surface text-muted hover:bg-hover'
+                }`}
+              >
+                {discipline ? discipline.charAt(0).toUpperCase() + discipline.slice(1) : 'All'}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </Card>
 
       {/* Classes Table */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="font-semibold text-foreground mb-4">All Classes</h3>
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>All Classes</CardTitle>
+          <CardDescription>Manage class schedules and occupancy</CardDescription>
+        </CardHeader>
         
         {classes.length === 0 ? (
-          <p className="text-muted text-center py-8">No classes found</p>
+          <EmptyState
+            icon={<Calendar className="size-12" />}
+            title="No classes found"
+            description="Create a new class to get started"
+            actionLabel="Create Class"
+            onAction={() => setShowCreateModal(true)}
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -200,46 +212,59 @@ export function AdminClasses() {
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted">Category</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted">Schedule</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted">Duration</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted">Capacity</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted">Occupancy</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted">Status</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {classes.map((cls) => (
-                  <tr key={cls.id} className="border-b border-border hover:bg-surface/50">
-                    <td className="py-3 px-4 text-sm font-medium text-foreground">{cls.name}</td>
-                    <td className="py-3 px-4 text-sm text-muted">{cls.trainer_name || 'TBD'}</td>
-                    <td className="py-3 px-4 text-sm text-muted">{cls.category}</td>
-                    <td className="py-3 px-4 text-sm text-muted">{formatDateTime(cls.start_time)}</td>
-                    <td className="py-3 px-4 text-sm text-muted">{formatDuration(cls.start_time, cls.end_time)}</td>
-                    <td className="py-3 px-4 text-sm text-muted">{cls.current_bookings || 0}/{cls.capacity}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        cls.status === 'scheduled' ? 'bg-green-100 text-green-700' :
-                        cls.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                        'bg-surface text-muted'
-                      }`}>
-                        {cls.status || 'Unknown'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setEditingClass(cls)}>
-                          <Edit className="size-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(cls.id)} title="Cancel class">
-                          <Trash2 className="size-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {classes.map((cls) => {
+                  const occupancyPercent = cls.capacity > 0 ? (cls.current_bookings || 0) / cls.capacity * 100 : 0
+                  return (
+                    <tr key={cls.id} className="border-b border-border hover:bg-surface/50">
+                      <td className="py-3 px-4 text-sm font-medium text-foreground">{cls.name}</td>
+                      <td className="py-3 px-4 text-sm text-muted">{cls.trainer_name || 'TBD'}</td>
+                      <td className="py-3 px-4 text-sm text-muted">{cls.category}</td>
+                      <td className="py-3 px-4 text-sm text-muted">{formatDateTime(cls.start_time)}</td>
+                      <td className="py-3 px-4 text-sm text-muted">{formatDuration(cls.start_time, cls.end_time)}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 h-2 bg-surface rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full ${
+                                occupancyPercent >= 80 ? 'bg-red-500' :
+                                occupancyPercent >= 60 ? 'bg-yellow-500' :
+                                'bg-green-500'
+                              }`}
+                              style={{ width: `${occupancyPercent}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted">{cls.current_bookings || 0}/{cls.capacity}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge variant={cls.status === 'scheduled' ? 'success' : cls.status === 'cancelled' ? 'danger' : 'info'}>
+                          {cls.status || 'Unknown'}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => setEditingClass(cls)}>
+                            <Edit className="size-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(cls.id)} title="Cancel class">
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
         )}
-      </div>
+      </Card>
 
       <ClassFormModal
         open={showCreateModal}

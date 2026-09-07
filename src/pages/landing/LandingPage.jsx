@@ -434,9 +434,9 @@ export function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6">
             {steps.map((step) => (
               <div key={step.number} className="group">
-                <div className="relative rounded-2xl overflow-hidden aspect-[3/4] mb-4">
+                <div className="relative rounded-2xl overflow-hidden aspect-3/4 mb-4">
                   <img src={step.image} alt={step.title} className="size-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/20 to-transparent" />
+                  <div className="absolute inset-0 bg-liner-to-t from-dark via-dark/20 to-transparent" />
                   <span className="absolute bottom-4 left-4 text-6xl font-black text-white/20">{step.number}</span>
                 </div>
                 <div className={`rounded-xl p-5 ${step.highlight ? 'bg-primary' : 'bg-dark-card border border-white/10'}`}>
@@ -543,7 +543,7 @@ export function LandingPage() {
           <div className="grid md:grid-cols-3 gap-6">
             {coaches.map((coach) => (
               <div key={coach.name} className="rounded-2xl overflow-hidden border border-white/10 bg-dark-card group hover:border-primary/30 transition-colors">
-                <div className="aspect-[4/3] overflow-hidden">
+                <div className="aspect-4/3 overflow-hidden">
                   <img
                     src={coach.image}
                     alt={coach.name}

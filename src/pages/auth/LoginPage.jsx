@@ -43,7 +43,7 @@ export function LoginPage() {
     <div className="min-h-screen flex bg-bg">
       <div className="hidden lg:flex lg:w-1/2 bg-dark items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070')] bg-cover bg-center opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-br from-dark via-dark/95 to-dark/80" />
+        <div className="absolute inset-0 bg-linear-to-br from-dark via-dark/95 to-dark/80" />
         <div className="relative max-w-md">
           <BrandMark theme="dark" className="mb-8" />
           <h2 className="text-3xl font-bold text-foreground mb-4">Welcome back</h2>

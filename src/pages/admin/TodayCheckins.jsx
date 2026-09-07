@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { RefreshCw, Clock, User, Calendar } from 'lucide-react'
-import { Card } from '../../components/ui/Card'
+import { RefreshCw, Clock, User, Calendar, Loader2 } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
 import { Table } from '../../components/ui/Table'
 import { Badge } from '../../components/ui/Badge'
 import { AsyncState, EmptyState, ErrorState, LoadingState } from '../../components/ui/AsyncState'
@@ -83,27 +85,24 @@ export function TodayCheckins() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-foreground">Today's Check-ins</h2>
-          <p className="text-sm text-muted">
-            View all member check-ins recorded today from GET /checkin/today. {count} check-in
-            {count === 1 ? '' : 's'} recorded.
-          </p>
-        </div>
-        <Button 
-          className="gap-2" 
-          onClick={loadCheckins}
-          disabled={loading}
-        >
-          <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
-      </div>
+      <PageHeader
+        title="Today's Check-ins"
+        subtitle={`View all member check-ins recorded today from GET /checkin/today. ${count} check-in${count === 1 ? '' : 's'} recorded.`}
+        actions={
+          <Button 
+            className="gap-2" 
+            onClick={loadCheckins}
+            disabled={loading}
+          >
+            <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        }
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="p-4">
+        <Card padding="md" className="hover:-translate-y-1 transition-transform">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <User className="size-5" />
@@ -114,7 +113,7 @@ export function TodayCheckins() {
             </div>
           </div>
         </Card>
-        <Card className="p-4">
+        <Card padding="md" className="hover:-translate-y-1 transition-transform">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-lg bg-green-500/10 text-green-600 dark:text-green-400">
               <Clock className="size-5" />
@@ -127,7 +126,7 @@ export function TodayCheckins() {
             </div>
           </div>
         </Card>
-        <Card className="p-4">
+        <Card padding="md" className="hover:-translate-y-1 transition-transform">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
               <Calendar className="size-5" />
@@ -142,7 +141,11 @@ export function TodayCheckins() {
         </Card>
       </div>
 
-      <Card padding="sm">
+      <Card padding="md">
+        <CardHeader>
+          <CardTitle>Live Attendance Feed</CardTitle>
+          <CardDescription>Real-time check-ins with timestamps</CardDescription>
+        </CardHeader>
         <AsyncState
           loading={loading}
           error={displayError}
@@ -173,9 +176,9 @@ export function TodayCheckins() {
                 key: 'checkOutTime', 
                 header: 'Check-out Time',
                 render: (row) => (
-                  <span className={row.checkOutTime === '—' ? 'text-muted' : ''}>
+                  <Badge variant={row.checkOutTime === '—' ? 'warning' : 'success'} className="text-xs">
                     {row.checkOutTime}
-                  </span>
+                  </Badge>
                 )
               },
               { key: 'notes', header: 'Notes' },

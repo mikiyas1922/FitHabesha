@@ -14,6 +14,10 @@ import {
   Plus,
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
+import { Alert } from '../../components/ui/Alert'
+import { PageHeader } from '../../components/ui/PageHeader'
 import { useAuth } from '../../contexts/AuthContext'
 import { tokenStorage } from '../../services/apiClient'
 import { memberService } from '../../services/memberService'
@@ -338,6 +342,7 @@ export function ProfileSettings() {
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
+     
 
       {/* Alerts */}
       {error && (

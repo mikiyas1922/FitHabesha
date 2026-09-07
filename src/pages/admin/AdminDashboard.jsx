@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Users, DollarSign, Calendar, Star, TrendingUp, ArrowUpRight, ArrowDownRight, MessageSquare, MoreVertical, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { Badge, statusBadge } from '../../components/ui/Badge'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { adminService } from '../../services/adminService'
@@ -136,36 +140,35 @@ export function AdminDashboard() {
           <Loader2 className="size-8 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-          <p className="text-red-600 font-medium">Error loading dashboard</p>
-          <p className="text-red-500 text-sm mt-1">{error}</p>
+        <Alert variant="error" title="Error loading dashboard">
+          {error}
           <Button onClick={loadDashboardData} className="mt-3">Retry</Button>
-        </div>
+        </Alert>
       ) : (
         <>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Executive Console</h1>
-              <p className="text-sm text-muted">Search records, financials, audits...</p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="gap-2">
-                Export PDF
-              </Button>
-              <Link to="/admin/staff">
-                <Button className="gap-2">
-                  Manage Staff
+          <PageHeader
+            title="Executive Console"
+            subtitle="Search records, financials, audits..."
+            actions={
+              <div className="flex gap-3">
+                <Button variant="secondary" className="gap-2">
+                  Export PDF
                 </Button>
-              </Link>
-            </div>
-          </div>
+                <Link to="/admin/staff">
+                  <Button className="gap-2">
+                    Manage Staff
+                  </Button>
+                </Link>
+              </div>
+            }
+          />
 
-          {/* Stats Grid */}
+          {/* Executive Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {stats.map((stat) => {
               const Icon = stat.icon
               return (
-                <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
+                <Card key={stat.label} padding="md" className="hover:-translate-y-1 transition-transform">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
                       <Icon className="size-4 text-primary" />
@@ -179,23 +182,21 @@ export function AdminDashboard() {
                   </div>
                   <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                   <p className="text-xs text-muted mt-1">{stat.label}</p>
-                </div>
+                </Card>
               )
             })}
           </div>
 
           {/* Revenue Chart */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
-              <div>
-                <h3 className="font-semibold text-foreground">Revenue Trend (6 Months)</h3>
-                <p className="text-sm text-muted">Total: $289.4K</p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm">This Month</Button>
-                <Button variant="ghost" size="sm">Last 30 Days</Button>
-                <Button variant="ghost" size="sm">Custom</Button>
-              </div>
+          <Card padding="md">
+            <CardHeader>
+              <CardTitle>Revenue Trend (6 Months)</CardTitle>
+              <CardDescription>Total: $289.4K</CardDescription>
+            </CardHeader>
+            <div className="flex gap-2 mb-6">
+              <Button variant="ghost" size="sm">This Month</Button>
+              <Button variant="ghost" size="sm">Last 30 Days</Button>
+              <Button variant="ghost" size="sm">Custom</Button>
             </div>
             <div className="h-48 flex items-end gap-4">
               {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, i) => (
@@ -208,12 +209,15 @@ export function AdminDashboard() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* Top Trainers */}
-            <div className="lg:col-span-1 rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Top Performing Trainers</h3>
+            {/* Top Trainers Leaderboard */}
+            <Card padding="md">
+              <CardHeader>
+                <CardTitle>Top Performing Trainers</CardTitle>
+                <CardDescription>Coach leaderboard by earnings</CardDescription>
+              </CardHeader>
               <div className="space-y-4">
                 {topTrainers.length === 0 ? (
                   <p className="text-sm text-muted">No trainers available</p>
@@ -235,11 +239,14 @@ export function AdminDashboard() {
                   ))
                 )}
               </div>
-            </div>
+            </Card>
 
-            {/* Recent Check-ins */}
-            <div className="lg:col-span-1 rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Today's Checked-In Members</h3>
+            {/* Live Check-ins Feed */}
+            <Card padding="md">
+              <CardHeader>
+                <CardTitle>Today's Checked-In Members</CardTitle>
+                <CardDescription>Live attendance feed with timestamps</CardDescription>
+              </CardHeader>
               <div className="space-y-3">
                 {recentCheckIns.length === 0 ? (
                   <p className="text-sm text-muted">No check-ins today</p>
@@ -252,20 +259,20 @@ export function AdminDashboard() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-foreground">{checkIn.time}</p>
-                        <span className="text-xs text-green-600">{checkIn.status}</span>
+                        <Badge variant="success" className="text-xs">{checkIn.status}</Badge>
                       </div>
                     </div>
                   ))
                 )}
               </div>
-            </div>
+            </Card>
 
             {/* Live Feedback Feed */}
-            <div className="lg:col-span-1 rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Live Member Feedback Feed</h3>
-                <span className="text-xs text-red-600 font-medium">Attention Req.</span>
-              </div>
+            <Card padding="md">
+              <CardHeader>
+                <CardTitle>Live Member Feedback Feed</CardTitle>
+                <CardDescription>Attention required</CardDescription>
+              </CardHeader>
               <div className="space-y-3">
                 {feedbackFeed.length === 0 ? (
                   <p className="text-sm text-muted">No recent feedback</p>
@@ -274,7 +281,7 @@ export function AdminDashboard() {
                     <div key={feedback.name} className={`p-3 rounded-lg ${feedback.urgent ? 'bg-red-50 border border-red-200' : 'bg-surface'}`}>
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-medium text-foreground text-sm">{feedback.name}</p>
-                        {feedback.urgent && <span className="text-xs text-red-600 font-medium">Urgent</span>}
+                        {feedback.urgent && <Badge variant="danger" className="text-xs">Urgent</Badge>}
                       </div>
                       <p className="text-sm text-muted mt-1 line-clamp-2">{feedback.message}</p>
                       <p className="text-xs text-muted mt-2">{feedback.time}</p>
@@ -282,7 +289,7 @@ export function AdminDashboard() {
                   ))
                 )}
               </div>
-            </div>
+            </Card>
           </div>
         </>
       )}
