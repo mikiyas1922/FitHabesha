@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Users, DollarSign, Calendar, Star, TrendingUp, ArrowUpRight, ArrowDownRight, MessageSquare, MoreVertical, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { adminService } from '../../services/adminService'
@@ -133,156 +136,158 @@ export function AdminDashboard() {
     <div className="space-y-6">
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="size-8 animate-spin text-primary" />
+          <Loader2 className="size-8 animate-spin text-[var(--app-primary)]" />
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-          <p className="text-red-600 font-medium">Error loading dashboard</p>
-          <p className="text-red-500 text-sm mt-1">{error}</p>
-          <Button onClick={loadDashboardData} className="mt-3">Retry</Button>
-        </div>
+        <Alert variant="danger" title="Error loading dashboard" message={error} action={<Button onClick={loadDashboardData}>Retry</Button>} />
       ) : (
         <>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Executive Console</h1>
-              <p className="text-sm text-muted">Search records, financials, audits...</p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="gap-2">
-                Export PDF
-              </Button>
-              <Link to="/admin/staff">
-                <Button className="gap-2">
-                  Manage Staff
+          <PageHeader 
+            title="Executive Console" 
+            subtitle="Search records, financials, audits..."
+            action={
+              <div className="flex gap-3">
+                <Button variant="secondary" className="gap-2">
+                  Export PDF
                 </Button>
-              </Link>
-            </div>
-          </div>
+                <Link to="/admin/staff">
+                  <Button className="gap-2">
+                    Manage Staff
+                  </Button>
+                </Link>
+              </div>
+            }
+          />
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {stats.map((stat) => {
               const Icon = stat.icon
               return (
-                <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
+                <Card key={stat.label} padding="md" hover className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
-                      <Icon className="size-4 text-primary" />
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-[var(--app-primary)]/10 border border-[var(--app-primary)]/20">
+                      <Icon className="size-4 text-[var(--app-primary)]" />
                     </div>
                     <div className={`flex items-center gap-1 text-xs font-medium ${
-                      stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                      stat.trend === 'up' ? 'text-green-400' : 'text-red-400'
                     }`}>
                       {stat.trend === 'up' ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
                       {stat.change}
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-xs text-muted mt-1">{stat.label}</p>
-                </div>
+                  <p className="text-2xl font-bold text-[var(--app-foreground)]">{stat.value}</p>
+                  <p className="text-xs text-[var(--app-muted)] mt-1">{stat.label}</p>
+                </Card>
               )
             })}
           </div>
 
           {/* Revenue Chart */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
-              <div>
-                <h3 className="font-semibold text-foreground">Revenue Trend (6 Months)</h3>
-                <p className="text-sm text-muted">Total: $289.4K</p>
-              </div>
+          <Card padding="lg">
+            <CardHeader action={
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm">This Month</Button>
                 <Button variant="ghost" size="sm">Last 30 Days</Button>
                 <Button variant="ghost" size="sm">Custom</Button>
               </div>
-            </div>
-            <div className="h-48 flex items-end gap-4">
-              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, i) => (
-                <div key={month} className="flex-1 flex flex-col items-center gap-2">
-                  <div 
-                    className="w-full rounded-t bg-primary transition-all hover:bg-primary/80"
-                    style={{ height: `${40 + (i * 15)}%` }}
-                  />
-                  <span className="text-xs text-muted">{month}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+            }>
+              <CardTitle>Revenue Trend (6 Months)</CardTitle>
+              <p className="text-sm text-[var(--app-muted)]">Total: $289.4K</p>
+            </CardHeader>
+            <CardContent>
+              <div className="h-48 flex items-end gap-4">
+                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, i) => (
+                  <div key={month} className="flex-1 flex flex-col items-center gap-2">
+                    <div 
+                      className="w-full rounded-t bg-[var(--app-primary)] transition-all hover:bg-[var(--app-primary)]/80"
+                      style={{ height: `${40 + (i * 15)}%` }}
+                    />
+                    <span className="text-xs text-[var(--app-muted)]">{month}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Top Trainers */}
-            <div className="lg:col-span-1 rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Top Performing Trainers</h3>
-              <div className="space-y-4">
-                {topTrainers.length === 0 ? (
-                  <p className="text-sm text-muted">No trainers available</p>
-                ) : (
-                  topTrainers.map((trainer, i) => (
-                    <div key={trainer.name} className="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface/80 transition-colors">
-                      <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                        {trainer.name.charAt(0)}
+            <Card padding="lg">
+              <CardTitle className="mb-4">Top Performing Trainers</CardTitle>
+              <CardContent>
+                <div className="space-y-4">
+                  {topTrainers.length === 0 ? (
+                    <p className="text-sm text-[var(--app-muted)]">No trainers available</p>
+                  ) : (
+                    topTrainers.map((trainer, i) => (
+                      <div key={trainer.name} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--app-surface)] border border-[var(--app-border)] hover:border-[var(--app-primary)]/40 transition-all duration-200">
+                        <div className="flex size-10 items-center justify-center rounded-full bg-[var(--app-primary)]/10 text-[var(--app-primary)] font-semibold">
+                          {trainer.name.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-[var(--app-foreground)] text-sm">{trainer.name}</p>
+                          <p className="text-xs text-[var(--app-muted)] truncate">{trainer.specialty}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-[var(--app-foreground)] text-sm">{trainer.earnings}</p>
+                          <p className="text-xs text-[var(--app-muted)]">{trainer.sessions} sessions</p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground text-sm">{trainer.name}</p>
-                        <p className="text-xs text-muted truncate">{trainer.specialty}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-foreground text-sm">{trainer.earnings}</p>
-                        <p className="text-xs text-muted">{trainer.sessions} sessions</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Recent Check-ins */}
-            <div className="lg:col-span-1 rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Today's Checked-In Members</h3>
-              <div className="space-y-3">
-                {recentCheckIns.length === 0 ? (
-                  <p className="text-sm text-muted">No check-ins today</p>
-                ) : (
-                  recentCheckIns.map((checkIn) => (
-                    <div key={checkIn.id} className="flex items-center gap-3 p-3 rounded-lg bg-surface">
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground text-sm">{checkIn.name}</p>
-                        <p className="text-xs text-muted">{checkIn.id}</p>
+            <Card padding="lg">
+              <CardTitle className="mb-4">Today's Checked-In Members</CardTitle>
+              <CardContent>
+                <div className="space-y-3">
+                  {recentCheckIns.length === 0 ? (
+                    <p className="text-sm text-[var(--app-muted)]">No check-ins today</p>
+                  ) : (
+                    recentCheckIns.map((checkIn) => (
+                      <div key={checkIn.id} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--app-surface)] border border-[var(--app-border)]">
+                        <div className="flex-1">
+                          <p className="font-medium text-[var(--app-foreground)] text-sm">{checkIn.name}</p>
+                          <p className="text-xs text-[var(--app-muted)]">{checkIn.id}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-[var(--app-foreground)]">{checkIn.time}</p>
+                          <span className="text-xs text-[var(--app-primary)]">{checkIn.status}</span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-foreground">{checkIn.time}</p>
-                        <span className="text-xs text-green-600">{checkIn.status}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Live Feedback Feed */}
-            <div className="lg:col-span-1 rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Live Member Feedback Feed</h3>
-                <span className="text-xs text-red-600 font-medium">Attention Req.</span>
-              </div>
-              <div className="space-y-3">
-                {feedbackFeed.length === 0 ? (
-                  <p className="text-sm text-muted">No recent feedback</p>
-                ) : (
-                  feedbackFeed.map((feedback) => (
-                    <div key={feedback.name} className={`p-3 rounded-lg ${feedback.urgent ? 'bg-red-50 border border-red-200' : 'bg-surface'}`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="font-medium text-foreground text-sm">{feedback.name}</p>
-                        {feedback.urgent && <span className="text-xs text-red-600 font-medium">Urgent</span>}
+            <Card padding="lg">
+              <CardHeader action={<span className="text-xs text-red-400 font-medium">Attention Req.</span>}>
+                <CardTitle>Live Member Feedback Feed</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {feedbackFeed.length === 0 ? (
+                    <p className="text-sm text-[var(--app-muted)]">No recent feedback</p>
+                  ) : (
+                    feedbackFeed.map((feedback) => (
+                      <div key={feedback.name} className={`p-3 rounded-lg border ${feedback.urgent ? 'bg-red-500/10 border-red-500/30' : 'bg-[var(--app-surface)] border-[var(--app-border)]'}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-[var(--app-foreground)] text-sm">{feedback.name}</p>
+                          {feedback.urgent && <span className="text-xs text-red-400 font-medium">Urgent</span>}
+                        </div>
+                        <p className="text-sm text-[var(--app-muted)] mt-1 line-clamp-2">{feedback.message}</p>
+                        <p className="text-xs text-[var(--app-muted)] mt-2">{feedback.time}</p>
                       </div>
-                      <p className="text-sm text-muted mt-1 line-clamp-2">{feedback.message}</p>
-                      <p className="text-xs text-muted mt-2">{feedback.time}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </>
       )}

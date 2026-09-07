@@ -140,7 +140,7 @@ export function AssignTrainerModal({ member, onClose, onAssigned }) {
             type="button"
             onClick={handleSubmit}
             disabled={saving || loadingTrainers || !selectedTrainer}
-            className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center gap-2"
+            className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-[var(--app-foreground)] text-sm font-medium disabled:opacity-50 transition-colors flex items-center gap-2"
           >
             {saving ? (
               <>
@@ -217,7 +217,7 @@ export function UnassignTrainerModal({ member, onClose, onUnassigned }) {
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center gap-2"
+            className="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-[var(--app-foreground)] text-sm font-medium disabled:opacity-50 transition-colors flex items-center gap-2"
           >
             {saving ? (
               <>

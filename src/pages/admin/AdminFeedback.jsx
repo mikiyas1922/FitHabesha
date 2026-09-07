@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Star, MessageSquare, TrendingUp, AlertTriangle, Flag, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
 import { trainerService } from '../../services/trainerService'
 import { adminService } from '../../services/adminService'
 import { ratingService } from '../../services/ratingService'
@@ -144,153 +147,157 @@ export function AdminFeedback() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Trainer Feedback</h1>
-          <p className="text-sm text-muted">Moderate flagged ratings and review trainer feedback</p>
-        </div>
-        <select
-          value={selectedTrainerId || ''}
-          onChange={(e) => setSelectedTrainerId(e.target.value || null)}
-          className="px-3 py-2 text-sm border border-border rounded-lg bg-surface"
-          disabled={loadingTrainers}
-        >
-          <option value="">Select a trainer...</option>
-          {trainers.map((trainer) => (
-            <option key={trainer.id} value={trainer.id}>
-              {formatPersonName(trainer) || trainer.email || 'Trainer'}
-            </option>
-          ))}
-        </select>
-      </div>
+      <PageHeader 
+        title="Trainer Feedback" 
+        subtitle="Moderate flagged ratings and review trainer feedback"
+        action={
+          <select
+            value={selectedTrainerId || ''}
+            onChange={(e) => setSelectedTrainerId(e.target.value || null)}
+            className="px-3 py-2 text-sm border border-[var(--app-border)] rounded-[12px] bg-[var(--app-input)] text-[var(--app-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--app-primary)] focus:border-[var(--app-primary)]/40 transition-all duration-200"
+            disabled={loadingTrainers}
+          >
+            <option value="">Select a trainer...</option>
+            {trainers.map((trainer) => (
+              <option key={trainer.id} value={trainer.id}>
+                {formatPersonName(trainer) || trainer.email || 'Trainer'}
+              </option>
+            ))}
+          </select>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-6">
+        <Card padding="lg">
           <div className="flex items-center gap-2 mb-2">
-            <Star className="size-5 text-yellow-500" />
-            <h3 className="font-semibold text-foreground">Trainer ratings</h3>
+            <Star className="size-5 text-yellow-400" />
+            <h3 className="font-semibold text-[var(--app-foreground)]">Trainer ratings</h3>
           </div>
-          <p className="text-3xl font-bold text-foreground">
+          <p className="text-3xl font-bold text-[var(--app-foreground)]">
             {trainerRatings.reduce((total, item) => total + item.feedback.length, 0)}
           </p>
-          <p className="text-sm text-muted mt-1">Feedback across {trainers.length} trainers</p>
+          <p className="text-sm text-[var(--app-muted)] mt-1">Feedback across {trainers.length} trainers</p>
           <Button size="sm" variant="secondary" className="mt-4" onClick={() => setSelectedTrainerId(trainers[0]?.id || null)} disabled={!trainers.length}>
             View trainer feedback
           </Button>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-border bg-card p-6">
+        <Card padding="lg">
           <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="size-5 text-primary" />
-            <h3 className="font-semibold text-foreground">Facility rating</h3>
+            <MessageSquare className="size-5 text-[var(--app-primary)]" />
+            <h3 className="font-semibold text-[var(--app-foreground)]">Facility rating</h3>
           </div>
-          <p className="text-3xl font-bold text-foreground">
+          <p className="text-3xl font-bold text-[var(--app-foreground)]">
             {facilitySummary?.total_reviews ? `${Number(facilitySummary.average_rating).toFixed(1)} / 5` : '—'}
           </p>
-          <p className="text-sm text-muted mt-1">{facilitySummary?.total_reviews || 0} total reviews</p>
-          <p className="text-xs text-muted mt-4">Individual facility reviews are available only when returned as flagged.</p>
-        </div>
+          <p className="text-sm text-[var(--app-muted)] mt-1">{facilitySummary?.total_reviews || 0} total reviews</p>
+          <p className="text-xs text-[var(--app-muted)] mt-4">Individual facility reviews are available only when returned as flagged.</p>
+        </Card>
 
-        <div className="rounded-xl border border-border bg-card p-6">
+        <Card padding="lg">
           <div className="flex items-center gap-2 mb-2">
-            <Flag className="size-5 text-red-600" />
-            <h3 className="font-semibold text-foreground">Class ratings</h3>
+            <Flag className="size-5 text-red-400" />
+            <h3 className="font-semibold text-[var(--app-foreground)]">Class ratings</h3>
           </div>
-          <p className="text-3xl font-bold text-foreground">{classRatings.length}</p>
-          <p className="text-sm text-muted mt-1">Flagged class ratings</p>
-          <p className="text-xs text-muted mt-4">Class reviews are currently exposed through the flagged-ratings endpoint.</p>
-        </div>
+          <p className="text-3xl font-bold text-[var(--app-foreground)]">{classRatings.length}</p>
+          <p className="text-sm text-[var(--app-muted)] mt-1">Flagged class ratings</p>
+          <p className="text-xs text-[var(--app-muted)] mt-4">Class reviews are currently exposed through the flagged-ratings endpoint.</p>
+        </Card>
       </div>
 
       {facilityRatings.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="font-semibold text-foreground mb-4">Flagged facility feedback</h3>
-          <div className="space-y-3">
-            {facilityRatings.map((review) => (
-              <div key={review.id} className="rounded-lg border border-border bg-surface p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="font-medium text-foreground">{reviewName(review)}</p>
-                  <span className="font-semibold text-foreground">{review.rating_stars}/5</span>
+        <Card padding="lg">
+          <CardTitle className="mb-4">Flagged facility feedback</CardTitle>
+          <CardContent>
+            <div className="space-y-3">
+              {facilityRatings.map((review) => (
+                <div key={review.id} className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-medium text-[var(--app-foreground)]">{reviewName(review)}</p>
+                    <span className="font-semibold text-[var(--app-foreground)]">{review.rating_stars}/5</span>
+                  </div>
+                  {review.comment && <p className="text-sm text-[var(--app-muted)] mt-2">{review.comment}</p>}
                 </div>
-                {review.comment && <p className="text-sm text-muted mt-2">{review.comment}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="font-semibold text-foreground mb-4">Class ratings and feedback</h3>
-        {classRatings.length === 0 ? (
-          <p className="text-sm text-muted">No flagged class ratings are available.</p>
-        ) : (
-          <div className="space-y-3">
-            {classRatings.map((review) => (
-              <div key={review.id} className="rounded-lg border border-border bg-surface p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-foreground">{reviewName(review)}</p>
-                    <p className="text-xs text-muted">Class rating{review.class_name ? ` · ${review.class_name}` : ''}</p>
+      <Card padding="lg">
+        <CardTitle className="mb-4">Class ratings and feedback</CardTitle>
+        <CardContent>
+          {classRatings.length === 0 ? (
+            <p className="text-sm text-[var(--app-muted)]">No flagged class ratings are available.</p>
+          ) : (
+            <div className="space-y-3">
+              {classRatings.map((review) => (
+                <div key={review.id} className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-[var(--app-foreground)]">{reviewName(review)}</p>
+                      <p className="text-xs text-[var(--app-muted)]">Class rating{review.class_name ? ` · ${review.class_name}` : ''}</p>
+                    </div>
+                    <span className="font-semibold text-[var(--app-foreground)]">{review.rating_stars || 0}/5</span>
                   </div>
-                  <span className="font-semibold text-foreground">{review.rating_stars || 0}/5</span>
+                  {review.comment && <p className="text-sm text-[var(--app-muted)] mt-2">{review.comment}</p>}
                 </div>
-                {review.comment && <p className="text-sm text-muted mt-2">{review.comment}</p>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="space-y-4">
-        <h3 className="font-semibold text-foreground">Feedback by trainer</h3>
+        <h3 className="font-semibold text-[var(--app-foreground)]">Feedback by trainer</h3>
         {trainerRatings.length === 0 ? (
-          <div className="rounded-xl border border-border bg-card p-6">
-            <p className="text-sm text-muted">No trainers or trainer feedback are available.</p>
-          </div>
+          <Card padding="lg">
+            <p className="text-sm text-[var(--app-muted)]">No trainers or trainer feedback are available.</p>
+          </Card>
         ) : (
           trainerRatings.map(({ trainer, average: trainerAverage, feedback: trainerFeedback }) => (
-            <div key={trainer.id} className="rounded-xl border border-border bg-card p-6">
+            <Card key={trainer.id} padding="lg">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div>
-                  <h4 className="font-semibold text-foreground">{formatPersonName(trainer) || trainer.email || 'Trainer'}</h4>
-                  <p className="text-sm text-muted">{trainerFeedback.length} feedback items</p>
+                  <h4 className="font-semibold text-[var(--app-foreground)]">{formatPersonName(trainer) || trainer.email || 'Trainer'}</h4>
+                  <p className="text-sm text-[var(--app-muted)]">{trainerFeedback.length} feedback items</p>
                 </div>
-                <div className="text-sm font-medium text-foreground">
+                <div className="text-sm font-medium text-[var(--app-foreground)]">
                   {trainerAverage.total_reviews ? `${Number(trainerAverage.average_rating).toFixed(1)} / 5` : 'No ratings'}
                 </div>
               </div>
               {trainerFeedback.length === 0 ? (
-                <p className="text-sm text-muted">No feedback for this trainer.</p>
+                <p className="text-sm text-[var(--app-muted)]">No feedback for this trainer.</p>
               ) : (
                 <div className="space-y-3">
                   {trainerFeedback.map((review) => (
-                    <div key={review.id} className="rounded-lg border border-border bg-surface p-4">
+                    <div key={review.id} className="rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium text-foreground">{reviewName(review)}</p>
-                          <p className="text-xs text-muted">{review.rating_dimension || 'Overall'}</p>
+                          <p className="font-medium text-[var(--app-foreground)]">{reviewName(review)}</p>
+                          <p className="text-xs text-[var(--app-muted)]">{review.rating_dimension || 'Overall'}</p>
                         </div>
-                        <span className="font-semibold text-foreground">{review.rating_stars || 0}/5</span>
+                        <span className="font-semibold text-[var(--app-foreground)]">{review.rating_stars || 0}/5</span>
                       </div>
-                      {review.comment && <p className="text-sm text-muted mt-2">{review.comment}</p>}
+                      {review.comment && <p className="text-sm text-[var(--app-muted)] mt-2">{review.comment}</p>}
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           ))
         )}
       </div>
 
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+      <Card padding="lg" className="border-red-500/30 bg-red-500/5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="size-5 text-red-600" />
-            <h3 className="font-semibold text-foreground">Flagged ratings</h3>
-            <span className="text-xs text-red-600 font-medium">{flagged.length} unmoderated</span>
+            <AlertTriangle className="size-5 text-red-400" />
+            <h3 className="font-semibold text-[var(--app-foreground)]">Flagged ratings</h3>
+            <span className="text-xs text-red-400 font-medium">{flagged.length} unmoderated</span>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs text-muted" htmlFor="flag-threshold">Below</label>
+            <label className="text-xs text-[var(--app-muted)]" htmlFor="flag-threshold">Below</label>
             <select
               id="flag-threshold"
               value={threshold}
@@ -299,7 +306,7 @@ export function AdminFeedback() {
                 setThreshold(next)
                 loadFlagged(next)
               }}
-              className="px-2 py-1 text-sm border border-border rounded-lg bg-card"
+              className="px-2 py-1 text-sm border border-[var(--app-border)] rounded-[12px] bg-[var(--app-input)] text-[var(--app-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--app-primary)] focus:border-[var(--app-primary)]/40 transition-all duration-200"
             >
               {[1, 2, 3, 4, 5].map((value) => (
                 <option key={value} value={value}>{value} stars</option>
@@ -308,38 +315,38 @@ export function AdminFeedback() {
           </div>
         </div>
 
-        {flaggedError && <p className="text-sm text-red-600 mb-3">{flaggedError}</p>}
-        {moderationError && <p className="text-sm text-red-600 mb-3">{moderationError}</p>}
+        {flaggedError && <Alert variant="danger" message={flaggedError} className="mb-3" />}
+        {moderationError && <Alert variant="danger" message={moderationError} className="mb-3" />}
 
         {loadingFlagged ? (
           <div className="flex justify-center py-6">
-            <Loader2 className="size-6 animate-spin text-primary" />
+            <Loader2 className="size-6 animate-spin text-[var(--app-primary)]" />
           </div>
         ) : flagged.length === 0 ? (
-          <p className="text-sm text-muted">No unmoderated ratings below this threshold.</p>
+          <p className="text-sm text-[var(--app-muted)]">No unmoderated ratings below this threshold.</p>
         ) : (
           <div className="space-y-3">
             {flagged.map((review) => (
-              <div key={review.id} className="p-4 rounded-lg bg-card border border-red-100">
+              <div key={review.id} className="p-4 rounded-lg bg-[var(--app-surface)] border border-red-500/30">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-red-100">
-                    <Flag className="size-4 text-red-600" />
+                  <div className="flex size-8 items-center justify-center rounded-full bg-red-500/20">
+                    <Flag className="size-4 text-red-400" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-medium text-foreground">{reviewName(review)}</p>
-                        <p className="text-xs text-muted">
+                        <p className="font-medium text-[var(--app-foreground)]">{reviewName(review)}</p>
+                        <p className="text-xs text-[var(--app-muted)]">
                           {[review.rating_type, review.trainer_name, review.rating_dimension].filter(Boolean).join(' · ')}
                         </p>
                       </div>
-                      <span className="text-sm font-semibold text-foreground">{review.rating_stars}/5</span>
+                      <span className="text-sm font-semibold text-[var(--app-foreground)]">{review.rating_stars}/5</span>
                     </div>
-                    {review.comment && <p className="text-sm text-muted mt-2">{review.comment}</p>}
+                    {review.comment && <p className="text-sm text-[var(--app-muted)] mt-2">{review.comment}</p>}
                     {moderatingId === review.id ? (
                       <div className="mt-3 space-y-2">
                         <textarea
-                          className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm"
+                          className="w-full rounded-[12px] border border-[var(--app-border)] bg-[var(--app-input)] px-3 py-2 text-sm text-[var(--app-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--app-primary)] focus:border-[var(--app-primary)]/40 transition-all duration-200"
                           rows={2}
                           placeholder="Moderation notes"
                           value={moderationNotes}
@@ -363,24 +370,22 @@ export function AdminFeedback() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
-          {error}
-        </div>
+        <Alert variant="danger" message={error} />
       )}
 
       {loading && (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="size-8 animate-spin text-primary" />
+          <Loader2 className="size-8 animate-spin text-[var(--app-primary)]" />
         </div>
       )}
 
       {!loading && !selectedTrainerId && (
-        <div className="rounded-xl border border-border bg-card p-8 text-center">
-          <p className="text-muted">Select a trainer to view their rating summary and reviews</p>
-        </div>
+        <Card padding="lg">
+          <p className="text-[var(--app-muted)] text-center">Select a trainer to view their rating summary and reviews</p>
+        </Card>
       )}
 
       {!loading && selectedTrainerId && (
@@ -389,21 +394,21 @@ export function AdminFeedback() {
             {feedbackStats.map((stat) => {
               const Icon = stat.icon
               return (
-                <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
-                  <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                    <Icon className="size-4 text-primary" />
+                <Card key={stat.label} padding="md" hover className="p-4">
+                  <div className="flex size-9 items-center justify-center rounded-lg bg-[var(--app-primary)]/10 border border-[var(--app-primary)]/20 mb-3">
+                    <Icon className="size-4 text-[var(--app-primary)]" />
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-xs text-muted mt-1">{stat.label}</p>
-                  <p className="text-xs text-muted mt-2">{stat.change}</p>
-                </div>
+                  <p className="text-2xl font-bold text-[var(--app-foreground)]">{stat.value}</p>
+                  <p className="text-xs text-[var(--app-muted)] mt-1">{stat.label}</p>
+                  <p className="text-xs text-[var(--app-muted)] mt-2">{stat.change}</p>
+                </Card>
               )
             })}
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold text-foreground mb-4">Rating Distribution</h3>
-            <p className="text-sm text-muted mb-6">Avg: {average} Stars</p>
+          <Card padding="lg">
+            <CardTitle className="mb-4">Rating Distribution</CardTitle>
+            <p className="text-sm text-[var(--app-muted)] mb-6">Avg: {average} Stars</p>
             <div className="space-y-3">
               {trainerRatingDistribution.map((item) => (
                 <div key={item.stars} className="flex items-center gap-3">
@@ -412,44 +417,46 @@ export function AdminFeedback() {
                       <Star key={i} className="size-4 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-                  <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-[var(--app-border)] rounded-full overflow-hidden">
                     <div
                       className="h-full bg-yellow-400 rounded-full transition-all"
                       style={{ width: `${item.percentage}%` }}
                     />
                   </div>
-                  <span className="text-sm text-muted w-8 text-right">{item.count}</span>
+                  <span className="text-sm text-[var(--app-muted)] w-8 text-right">{item.count}</span>
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold text-foreground mb-6">All Reviews</h3>
-            {feedback.length === 0 ? (
-              <p className="text-sm text-muted text-center py-8">No feedback available for this trainer</p>
-            ) : (
-              <div className="space-y-4">
-                {feedback.map((review) => (
-                  <div key={review.id} className="p-4 rounded-lg border border-border bg-surface">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">{reviewName(review)}</p>
-                        {review.rating_type && <p className="text-sm text-muted mb-2">{review.rating_type}</p>}
-                        <div className="flex gap-1 mb-2">
-                          {[...Array(review.rating_stars || 0)].map((_, starIndex) => (
-                            <Star key={starIndex} className="size-4 fill-yellow-400 text-yellow-400" />
-                          ))}
+          <Card padding="lg">
+            <CardTitle className="mb-6">All Reviews</CardTitle>
+            <CardContent>
+              {feedback.length === 0 ? (
+                <p className="text-sm text-[var(--app-muted)] text-center py-8">No feedback available for this trainer</p>
+              ) : (
+                <div className="space-y-4">
+                  {feedback.map((review) => (
+                    <div key={review.id} className="p-4 rounded-lg border border-[var(--app-border)] bg-[var(--app-surface)]">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <p className="font-medium text-[var(--app-foreground)]">{reviewName(review)}</p>
+                          {review.rating_type && <p className="text-sm text-[var(--app-muted)] mb-2">{review.rating_type}</p>}
+                          <div className="flex gap-1 mb-2">
+                            {[...Array(review.rating_stars || 0)].map((_, starIndex) => (
+                              <Star key={starIndex} className="size-4 fill-yellow-400 text-yellow-400" />
+                            ))}
+                          </div>
+                          {review.comment && <p className="text-sm text-[var(--app-muted)]">&ldquo;{review.comment}&rdquo;</p>}
                         </div>
-                        {review.comment && <p className="text-sm text-muted">&ldquo;{review.comment}&rdquo;</p>}
+                        <p className="text-xs text-[var(--app-muted)]">{review.created_at ? new Date(review.created_at).toLocaleDateString() : '—'}</p>
                       </div>
-                      <p className="text-xs text-muted">{review.created_at ? new Date(review.created_at).toLocaleDateString() : '—'}</p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

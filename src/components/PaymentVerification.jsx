@@ -54,7 +54,7 @@ export function PaymentVerification({ onPaymentVerified }) {
       case 'FAILED':
         return <XCircle className="size-6 text-red-600" />
       default:
-        return <AlertCircle className="size-6 text-gray-600" />
+        return <AlertCircle className="size-6 text-[var(--app-muted)]" />
     }
   }
 
@@ -80,7 +80,7 @@ export function PaymentVerification({ onPaymentVerified }) {
       case 'FAILED':
         return 'text-red-700 dark:text-red-300'
       default:
-        return 'text-gray-700 dark:text-gray-300'
+        return 'text-[var(--app-foreground)] dark:text-gray-300'
     }
   }
 

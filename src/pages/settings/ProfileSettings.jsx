@@ -14,6 +14,10 @@ import {
   Plus,
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
+import { Alert } from '../../components/ui/Alert'
+import { PageHeader } from '../../components/ui/PageHeader'
 import { useAuth } from '../../contexts/AuthContext'
 import { tokenStorage } from '../../services/apiClient'
 import { memberService } from '../../services/memberService'
@@ -338,6 +342,24 @@ export function ProfileSettings() {
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
+      <PageHeader
+        title="Profile & Account Settings"
+        description={
+          formData.uniqueMemberId
+            ? `Member Barcode ID: ${formData.uniqueMemberId}`
+            : "Manage your personal account profile, contact information, and fitness telemetry."
+        }
+        actions={
+          <Button onClick={handleSave} disabled={saving} className="gap-2 font-bold shadow-sm">
+            {saving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
+            {saving ? "Saving Changes..." : "Save Changes"}
+          </Button>
+        }
+      />
 
       {/* Alerts */}
       {error && (
@@ -345,12 +367,14 @@ export function ProfileSettings() {
           <AlertCircle className="size-4 shrink-0" />
           <span>{error}</span>
         </div>
+        <Alert variant="error" message={error} onClose={() => setError(null)} />
       )}
 
       {successMsg && (
         <div className="p-4 text-sm text-green-700 bg-green-50 rounded-xl border border-green-200">
           {successMsg}
         </div>
+        <Alert variant="success" message={successMsg} onClose={() => setSuccessMsg("")} />
       )}
 
       <div className="grid lg:grid-cols-3 gap-6">

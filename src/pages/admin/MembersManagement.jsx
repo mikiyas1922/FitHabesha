@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Plus, Search, Trash2, RotateCcw, ChevronLeft, ChevronRight, UserPlus, UserMinus } from 'lucide-react'
-import { Card } from '../../components/ui/Card'
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Table } from '../../components/ui/Table'
 import { Badge, statusBadge } from '../../components/ui/Badge'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
 import { AsyncState, EmptyState, ErrorState, LoadingState } from '../../components/ui/AsyncState'
 import { StaffRegistrationModal } from '../../components/admin/StaffRegistrationModal'
 import { useAdminMembersList } from '../../hooks/useAdminMembersList'
@@ -162,67 +164,61 @@ export function MembersManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold text-foreground">Members</h2>
-          <p className="text-sm text-muted">
-            {filteredItems.length} member{filteredItems.length === 1 ? '' : 's'} found. Assign or unassign trainers
-            without attaching workout or meal plans.
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            {source === 'api' && (
-              <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/20">
-                Live from admin API
-              </span>
-            )}
-            {source === 'local' && (
-              <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300 ring-1 ring-inset ring-amber-500/20">
-                Saved locally — API list unavailable
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
-            <input
-              type="search"
-              placeholder="Search by ID, name, or email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => handleStatusFilterChange(e.target.value)}
-            className="rounded-lg border border-border bg-surface py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+      <PageHeader 
+        title="Members" 
+        subtitle={`${filteredItems.length} member${filteredItems.length === 1 ? '' : 's'} found. Assign or unassign trainers without attaching workout or meal plans.`}
+        action={
           <Button className="gap-2 shrink-0" onClick={() => setModalOpen(true)}>
             <Plus className="size-4" />
             Add Member
           </Button>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-2 mt-2">
+          {source === 'api' && (
+            <span className="inline-flex items-center rounded-full bg-[#00DF82]/10 px-2.5 py-0.5 text-xs font-medium text-[#00DF82] border border-[#00DF82]/30">
+              Live from admin API
+            </span>
+          )}
+          {source === 'local' && (
+            <span className="inline-flex items-center rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-400 border border-yellow-500/30">
+              Saved locally — API list unavailable
+            </span>
+          )}
         </div>
+      </PageHeader>
+
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--app-muted)]" />
+          <input
+            type="search"
+            placeholder="Search by ID, name, or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-[12px] border border-[var(--app-border)] bg-[var(--app-input)] py-2 pl-9 pr-3 text-sm text-[var(--app-foreground)] placeholder:text-[var(--app-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-primary)] focus:border-[var(--app-primary)]/40 transition-all duration-200"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => handleStatusFilterChange(e.target.value)}
+          className="rounded-[12px] border border-[var(--app-border)] bg-[var(--app-input)] py-2 px-3 text-sm text-[var(--app-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--app-primary)] focus:border-[var(--app-primary)]/40 transition-all duration-200"
+        >
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
       </div>
 
       {assignmentMessage && (
-        <Card className="p-4 border-green-200 dark:border-green-500/30 bg-green-50/50 dark:bg-green-500/5">
-          <p className="text-sm text-green-800 dark:text-green-300">{assignmentMessage}</p>
-        </Card>
+        <Alert variant="success" message={assignmentMessage} />
       )}
 
       {displayError && source === 'local' && filteredItems.length > 0 && (
-        <Card className="p-4 border-amber-200 dark:border-amber-500/30 bg-amber-50/50 dark:bg-amber-500/5">
-          <p className="text-sm text-muted">{displayError}</p>
-        </Card>
+        <Alert variant="warning" message={displayError} />
       )}
 
-      <Card padding="sm">
+      <Card padding="lg">
         <AsyncState
           loading={loading}
           error={source === 'local' && filteredItems.length > 0 ? null : displayError}
@@ -243,7 +239,7 @@ export function MembersManagement() {
               {
                 key: 'uniqueMemberId',
                 header: 'Member ID',
-                className: 'font-mono text-primary font-medium',
+                className: 'font-mono text-[var(--app-primary)] font-medium',
                 render: (row) => row.uniqueMemberId || row.unique_member_id || 'N/A',
               },
               {
@@ -270,12 +266,12 @@ export function MembersManagement() {
                   const trainerLabel = assignedTrainerName(row) || row.trainer
                   return (
                     <div className="flex flex-col gap-2">
-                      <span className="text-sm text-foreground">{trainerLabel && trainerLabel !== '—' ? trainerLabel : '—'}</span>
+                      <span className="text-sm text-[var(--app-foreground)]">{trainerLabel && trainerLabel !== '—' ? trainerLabel : '—'}</span>
                       <div className="flex flex-wrap gap-1.5">
                         <button
                           type="button"
                           onClick={() => setAssignTrainerTarget(row)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-500/30 dark:text-blue-400 dark:hover:bg-blue-500/10 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-blue-500/30 text-blue-500 hover:bg-blue-500/10 transition-all duration-200"
                           title="Assign trainer to member"
                         >
                           <UserPlus className="size-3.5" />
@@ -284,7 +280,7 @@ export function MembersManagement() {
                         <button
                           type="button"
                           onClick={() => setUnassignTrainerTarget(row)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-red-300 text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 transition-colors"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all duration-200"
                           title="Unassign trainer from member"
                         >
                           <UserMinus className="size-3.5" />
@@ -304,10 +300,10 @@ export function MembersManagement() {
                     <button
                       type="button"
                       onClick={() => (active ? handleDeactivate(row) : handleReactivate(row))}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border transition-colors ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border transition-all duration-200 ${
                         active
-                          ? 'border-red-300 text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10'
-                          : 'border-green-300 text-green-700 hover:bg-green-50 dark:border-green-500/30 dark:text-green-400 dark:hover:bg-green-500/10'
+                          ? 'border-red-500/30 text-red-500 hover:bg-red-500/10'
+                          : 'border-green-500/30 text-green-500 hover:bg-green-500/10'
                       }`}
                       title={active ? 'Deactivate member account' : 'Reactivate member account'}
                     >
@@ -325,7 +321,7 @@ export function MembersManagement() {
       {/* Pagination Controls */}
       {safePagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted">
+          <p className="text-sm text-[var(--app-muted)]">
             Showing {(safePagination.page - 1) * safePagination.limit + 1} to{' '}
             {Math.min(safePagination.page * safePagination.limit, safePagination.total)} of {safePagination.total}{' '}
             members
@@ -334,18 +330,18 @@ export function MembersManagement() {
             <button
               onClick={() => handlePageChange(safePagination.page - 1)}
               disabled={safePagination.page === 1}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-[var(--app-border)] text-[var(--app-foreground)] hover:bg-[var(--app-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               <ChevronLeft className="size-4" />
               Previous
             </button>
-            <span className="text-sm text-muted">
+            <span className="text-sm text-[var(--app-muted)]">
               Page {safePagination.page} of {safePagination.totalPages}
             </span>
             <button
               onClick={() => handlePageChange(safePagination.page + 1)}
               disabled={safePagination.page === safePagination.totalPages}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded border border-[var(--app-border)] text-[var(--app-foreground)] hover:bg-[var(--app-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               Next
               <ChevronRight className="size-4" />
@@ -357,19 +353,19 @@ export function MembersManagement() {
       {/* Confirmation Modal */}
       {actionTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <Card className="w-full max-w-md space-y-4">
+          <Card padding="lg" className="w-full max-w-md space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">
+              <h3 className="text-lg font-semibold text-[var(--app-foreground)]">
                 {actionType === 'deactivate' ? 'Deactivate' : 'Reactivate'} Member
               </h3>
-              <p className="text-sm text-muted mt-1">
+              <p className="text-sm text-[var(--app-muted)] mt-1">
                 Are you sure you want to {actionType === 'deactivate' ? 'deactivate' : 'reactivate'}{' '}
-                <strong>
+                <strong className="text-[var(--app-foreground)]">
                   {actionTarget.name || `${actionTarget.first_name || ''} ${actionTarget.last_name || ''}`}
                 </strong>
                 ?
               </p>
-              <p className="text-xs text-muted mt-2">
+              <p className="text-xs text-[var(--app-muted)] mt-2">
                 {actionType === 'deactivate'
                   ? 'This will soft-delete their user account. They will not be able to log in.'
                   : 'They will be able to log in and access their account again.'}
@@ -377,9 +373,7 @@ export function MembersManagement() {
             </div>
 
             {actionError && (
-              <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded text-sm text-red-700 dark:text-red-400">
-                {actionError}
-              </div>
+              <Alert variant="danger" message={actionError} />
             )}
 
             <div className="flex gap-3 justify-end">
@@ -390,7 +384,7 @@ export function MembersManagement() {
                   setActionType(null)
                 }}
                 disabled={actionLoading}
-                className="px-4 py-2 rounded border border-border text-sm font-medium hover:bg-muted disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded border border-[var(--app-border)] text-sm font-medium text-[var(--app-foreground)] hover:bg-[var(--app-hover)] disabled:opacity-50 transition-all duration-200"
               >
                 Cancel
               </button>
@@ -398,13 +392,13 @@ export function MembersManagement() {
                 type="button"
                 onClick={confirmAction}
                 disabled={actionLoading}
-                className={`px-4 py-2 rounded text-white text-sm font-medium disabled:opacity-50 transition-colors flex items-center gap-2 ${
+                className={`px-4 py-2 rounded text-[var(--app-foreground)] text-sm font-medium disabled:opacity-50 transition-all duration-200 flex items-center gap-2 ${
                   actionType === 'deactivate' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
                 }`}
               >
                 {actionLoading ? (
                   <>
-                    <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <div className="size-4 border-2 border-[var(--app-foreground)]/30 border-t-[var(--app-foreground)] rounded-full animate-spin" />
                     {actionType === 'deactivate' ? 'Deactivating...' : 'Reactivating...'}
                   </>
                 ) : actionType === 'deactivate' ? (

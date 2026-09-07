@@ -16,7 +16,7 @@ function openNotificationLink(navigate, link) {
   navigate(link)
 }
 
-export function Header({ role, title, subtitle, showSearch = true, actions }) {
+export function Header({ role, breadcrumb, showSearch = true, actions }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const displayUser = getUserDisplay(user, role)
@@ -113,24 +113,23 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
   }, [showNotifications])
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface px-6">
-      <div>
-        {title && <h1 className="text-lg font-semibold text-foreground">{title}</h1>}
-        {subtitle ? (
-          <p className="text-xs text-muted">{subtitle}</p>
-        ) : (
-          <p className="text-xs text-muted">Fit Habesha {roleLabels[frontendRole]}</p>
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-[var(--app-border)] bg-[var(--app-surface)] px-6">
+      <div className="flex items-center gap-4">
+        {breadcrumb && (
+          <nav className="flex items-center gap-2 text-sm">
+            {breadcrumb}
+          </nav>
         )}
       </div>
 
       <div className="flex items-center gap-3">
         {showSearch && (
           <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--app-muted)]" />
             <input
               type="search"
               placeholder="Search..."
-              className="w-56 rounded-lg border border-border bg-input py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              className="w-56 rounded-[12px] border border-[var(--app-border)] bg-[var(--app-input)] py-2 pl-9 pr-3 text-sm text-[var(--app-foreground)] placeholder:text-[var(--app-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--app-primary)] focus:border-[var(--app-primary)]/40 transition-all duration-200"
             />
           </div>
         )}
@@ -142,27 +141,27 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
         <div className="relative" ref={panelRef}>
           <button
             type="button"
-            className="relative flex size-9 items-center justify-center rounded-lg text-muted hover:bg-hover hover:text-foreground transition-colors"
+            className="relative flex size-9 items-center justify-center rounded-lg text-[var(--app-muted)] hover:bg-[var(--app-hover)] hover:text-[var(--app-foreground)] transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[var(--app-primary)] focus-visible:outline-none"
             aria-label="Notifications"
             onClick={() => setShowNotifications(!showNotifications)}
           >
             <Bell className="size-5" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-red-500 text-[10px] font-semibold text-white flex items-center justify-center">
+              <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-red-500 text-[10px] font-semibold text-[var(--app-foreground)] flex items-center justify-center">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 top-12 w-80 rounded-lg border border-border bg-card shadow-lg">
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <h3 className="font-semibold text-foreground">Notifications</h3>
+            <div className="absolute right-0 top-12 w-80 rounded-[16px] border border-[var(--app-border)] bg-[var(--app-surface)] shadow-lg animate-slide-down">
+              <div className="flex items-center justify-between p-4 border-b border-[var(--app-border)]">
+                <h3 className="font-semibold text-[var(--app-foreground)]">Notifications</h3>
                 {unreadCount > 0 && (
                   <button
                     type="button"
                     onClick={handleMarkAllAsRead}
-                    className="text-xs text-primary hover:underline"
+                    className="text-xs text-[var(--app-primary)] hover:underline transition-all duration-200"
                   >
                     Mark all as read
                   </button>
@@ -172,18 +171,18 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
               <div className="max-h-96 overflow-y-auto">
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="size-6 animate-spin text-muted" />
+                    <Loader2 className="size-6 animate-spin text-[var(--app-muted)]" />
                   </div>
                 ) : notifications.length === 0 ? (
-                  <div className="p-8 text-center text-muted text-sm">
+                  <div className="p-8 text-center text-[var(--app-muted)] text-sm">
                     No notifications
                   </div>
                 ) : (
                   notifications.map((notification) => (
                     <div
                       key={notification._id}
-                      className={`p-4 border-b border-border last:border-b-0 ${
-                        !notification.is_read ? 'bg-primary/5' : ''
+                      className={`p-4 border-b border-[var(--app-border)] last:border-b-0 transition-all duration-200 ${
+                        !notification.is_read ? 'bg-[var(--app-primary)]/5' : ''
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -192,11 +191,11 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
                           className="flex-1 text-left"
                           onClick={() => handleOpenNotification(notification)}
                         >
-                          <p className={`text-sm font-medium ${!notification.is_read ? 'text-foreground' : 'text-muted'}`}>
+                          <p className={`text-sm font-medium ${!notification.is_read ? 'text-[var(--app-foreground)]' : 'text-[var(--app-muted)]'}`}>
                             {notification.title}
                           </p>
-                          <p className="text-xs text-muted mt-1">{notification.message}</p>
-                          <p className="text-xs text-muted mt-2">
+                          <p className="text-xs text-[var(--app-muted)] mt-1">{notification.message}</p>
+                          <p className="text-xs text-[var(--app-muted)] mt-2">
                             {notification.created_at
                               ? new Date(notification.created_at).toLocaleString()
                               : ''}
@@ -207,7 +206,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
                             <button
                               type="button"
                               onClick={() => handleMarkAsRead(notification._id)}
-                              className="p-1 text-muted hover:text-primary"
+                              className="p-1 text-[var(--app-muted)] hover:text-[var(--app-primary)] transition-all duration-200"
                               title="Mark as read"
                             >
                               <Check className="size-4" />
@@ -216,7 +215,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
                           <button
                             type="button"
                             onClick={() => handleDeleteNotification(notification._id)}
-                            className="p-1 text-muted hover:text-red-600"
+                            className="p-1 text-[var(--app-muted)] hover:text-red-400 transition-all duration-200"
                             title="Delete"
                           >
                             <Trash2 className="size-4" />
@@ -233,7 +232,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
 
         <Link
           to={user ? getSettingsPath(user.role) : getSettingsPath(role)}
-          className="flex size-9 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold text-sm hover:ring-2 hover:ring-primary/40 transition-all"
+          className="flex size-8 items-center justify-center rounded-full bg-[var(--app-primary)]/20 text-[var(--app-primary)] font-semibold text-sm ring-2 ring-transparent hover:ring-[var(--app-primary)]/40 transition-all duration-200"
           title="Profile & settings"
         >
           {displayUser.initials}

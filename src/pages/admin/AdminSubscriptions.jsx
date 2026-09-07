@@ -391,7 +391,7 @@ export function AdminSubscriptions() {
                                     ? 'bg-green-100 text-green-700'
                                     : sub.status === 'expired'
                                     ? 'bg-red-100 text-red-700'
-                                    : 'bg-gray-100 text-gray-700'
+                                    : 'bg-[var(--app-muted)]/20 text-[var(--app-muted)]'
                                 }`}>
                                   {sub.status?.toUpperCase()}
                                 </span>
@@ -494,7 +494,7 @@ export function AdminSubscriptions() {
                                   ? 'bg-yellow-100 text-yellow-700'
                                   : subscription.status === 'cancelled'
                                   ? 'bg-red-100 text-red-700'
-                                  : 'bg-gray-100 text-gray-700'
+                                  : 'bg-[var(--app-muted)]/20 text-[var(--app-muted)]'
                               }`}>
                                 {subscription.status === 'active' && <CheckCircle className="size-3" />}
                                 {subscription.status === 'pending' && <Clock className="size-3" />}

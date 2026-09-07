@@ -332,6 +332,7 @@ export function LandingPage() {
 
       {/* Hero */}
       <section className="relative" style={{ paddingTop: '180px', paddingBottom: '96px', paddingLeft: '80px', paddingRight: '80px', gap: '64px', background: 'linear-gradient(0deg, #0B1224, #0B1224), radial-gradient(100% 80% at 50% 20%, rgba(0, 242, 153, 0.0823529) 0%, rgba(0, 0, 0, 0) 80%)' }}>
+      <section className="relative pt-28 sm:pt-36 lg:pt-44 pb-16 sm:pb-24 px-4 sm:px-8 lg:px-12 bg-gradient-to-b from-[#0A1128] via-[#0A1128] to-[#0D1836]">
         <div className="relative mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>

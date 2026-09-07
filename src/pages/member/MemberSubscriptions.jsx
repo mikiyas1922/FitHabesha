@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { DollarSign, AlertCircle, CheckCircle, Clock, CreditCard, Plus, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
+import { EmptyState } from '../../components/ui/EmptyState'
 import { memberService } from '../../services/memberService'
 import { subscriptionService } from '../../services/subscriptionService'
 import { PaymentInitiationModal } from '../../components/PaymentInitiationModal'
@@ -180,106 +184,108 @@ export function MemberSubscriptions() {
     <div className="space-y-6">
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="size-8 animate-spin text-primary" />
+          <Loader2 className="size-8 animate-spin text-[var(--app-primary)]" />
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-          <p className="text-red-600 font-medium">Error loading subscriptions</p>
-          <p className="text-red-500 text-sm mt-1">{error}</p>
-          <Button onClick={loadSubscriptionData} className="mt-3">Retry</Button>
-        </div>
+        <Alert variant="danger" title="Error loading subscriptions" message={error} action={<Button onClick={loadSubscriptionData}>Retry</Button>} />
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">My Subscriptions</h1>
-              <p className="text-sm text-muted">Manage your membership and billing</p>
-            </div>
-            <Button onClick={() => setShowPaymentModal(true)} className="gap-2">
-              <Plus className="size-4" />
-              New Subscription
-            </Button>
-          </div>
+          <PageHeader 
+            title="My Subscriptions" 
+            subtitle="Manage your membership and billing"
+            action={
+              <Button onClick={() => setShowPaymentModal(true)} className="gap-2">
+                <Plus className="size-4" />
+                New Subscription
+              </Button>
+            }
+          />
 
           {subscriptions.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card p-6">
-              <p className="text-sm text-muted">No active subscription. Choose a membership plan to get started.</p>
-            </div>
+            <Card padding="lg">
+              <EmptyState 
+                icon={<CreditCard className="size-12" />}
+                title="No active subscription"
+                description="Choose a membership plan to get started."
+              />
+            </Card>
           ) : (
             <div className="space-y-4">
               {subscriptions.map((subscription) => (
-                <div key={subscription.id} className="rounded-xl border border-border bg-card p-6">
+                <Card key={subscription.id} padding="lg">
                   <div className="flex items-start justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold text-foreground">
+                        <h3 className="text-lg font-semibold text-[var(--app-foreground)]">
                           {subscription.tier_name || 'Unknown Tier'}
                         </h3>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           subscription.status === 'active' 
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            ? 'bg-green-500/10 text-green-400 border border-green-500/30'
                             : subscription.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30'
                             : subscription.status === 'expired'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400'
+                            ? 'bg-red-500/10 text-red-400 border border-red-500/30'
+                            : 'bg-[var(--app-muted)]/10 text-[var(--app-muted)] border border-[var(--app-muted)]/30'
                         }`}>
                           {subscription.status?.toUpperCase()}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-muted">Price</p>
-                          <p className="font-medium text-foreground">
+                          <p className="text-[var(--app-muted)]">Price</p>
+                          <p className="font-medium text-[var(--app-foreground)]">
                             {subscription.price ? `ETB ${subscription.price.toLocaleString()}` : 'N/A'}
                           </p>
                         </div>
                         <div>
-                          <p className="text-muted">Duration</p>
-                          <p className="font-medium text-foreground">
+                          <p className="text-[var(--app-muted)]">Duration</p>
+                          <p className="font-medium text-[var(--app-foreground)]">
                             {subscription.duration_months ? `${subscription.duration_months} month${subscription.duration_months > 1 ? 's' : ''}` : 'N/A'}
                           </p>
                         </div>
                         <div>
-                          <p className="text-muted">Start Date</p>
-                          <p className="font-medium text-foreground">
+                          <p className="text-[var(--app-muted)]">Start Date</p>
+                          <p className="font-medium text-[var(--app-foreground)]">
                             {subscription.start_date ? new Date(subscription.start_date).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
                         <div>
-                          <p className="text-muted">End Date</p>
-                          <p className="font-medium text-foreground">
+                          <p className="text-[var(--app-muted)]">End Date</p>
+                          <p className="font-medium text-[var(--app-foreground)]">
                             {subscription.expiry_date ? new Date(subscription.expiry_date).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>
                       </div>
                       {subscription.frozen_until && (
-                        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <p className="text-sm text-blue-700 dark:text-blue-300">
+                        <div className="mt-2 p-2 bg-blue-500/10 rounded-[12px] border border-blue-500/30">
+                          <p className="text-sm text-blue-400">
                             <strong>Frozen until:</strong> {new Date(subscription.frozen_until).toLocaleDateString()}
                           </p>
                         </div>
                       )}
                     </div>
                     {subscription.auto_renew && (
-                      <div className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
+                      <div className="flex items-center gap-1 text-sm text-[var(--app-primary)]">
                         <CheckCircle className="size-4" />
                         <span>Auto-renew enabled</span>
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
 
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold text-foreground mb-4">Verify Payment Status</h3>
-            <p className="text-sm text-muted mb-4">
-              If you completed a payment but your subscription hasn't been activated yet, enter your StarPay order ID to verify the payment status.
-            </p>
-            <PaymentVerification onPaymentVerified={handlePaymentVerified} />
-          </div>
+          <Card padding="lg">
+            <CardTitle className="mb-4">Verify Payment Status</CardTitle>
+            <CardContent>
+              <p className="text-sm text-[var(--app-muted)] mb-4">
+                If you completed a payment but your subscription hasn't been activated yet, enter your StarPay order ID to verify the payment status.
+              </p>
+              <PaymentVerification onPaymentVerified={handlePaymentVerified} />
+            </CardContent>
+          </Card>
         </>
       )}
 

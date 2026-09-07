@@ -17,6 +17,9 @@ import {
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { memberService } from '../../services/memberService'
@@ -212,226 +215,265 @@ export function MemberDashboard() {
     <div className="space-y-6">
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="size-8 animate-spin text-primary" />
+          <Loader2 className="size-8 animate-spin text-[var(--app-primary)]" />
         </div>
       ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-          <p className="text-red-600 font-medium">Error loading dashboard</p>
-          <p className="text-red-500 text-sm mt-1">{error}</p>
-          <Button onClick={loadDashboardData} className="mt-3">Retry</Button>
-        </div>
+        <Alert variant="danger" title="Error loading dashboard" message={error} action={<Button onClick={loadDashboardData}>Retry</Button>} />
       ) : (
         <>
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Welcome back, {firstName}!</h1>
-              <p className="text-sm text-muted">Track your fitness journey and stay motivated</p>
-            </div>
-            <Link to="/member/workouts">
-              <Button className="gap-2"><Play className="size-4" />Start Workout</Button>
-            </Link>
-          </div>
+          <PageHeader 
+            title={`Welcome back, ${firstName}!`} 
+            subtitle="Track your fitness journey and stay motivated"
+            action={
+              <Link to="/member/workouts">
+                <Button className="gap-2"><Play className="size-4" />Start Workout</Button>
+              </Link>
+            }
+          />
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {memberStats.map((stat) => {
               const Icon = stat.icon
               return (
-                <div key={stat.label} className="rounded-xl border border-border bg-card p-4">
-                  <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 mb-3">
-                    <Icon className="size-4 text-primary" />
+                <Card key={stat.label} padding="md" hover className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-[var(--app-primary)]/10 border border-[var(--app-primary)]/20">
+                      <Icon className="size-5 text-[var(--app-primary)]" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-2xl font-bold text-[var(--app-foreground)]">{stat.value}</p>
+                      <p className="text-xs text-[var(--app-muted)] mt-1">{stat.label}</p>
+                      <p className="text-xs text-[var(--app-muted)] mt-2">{stat.change}</p>
+                    </div>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-xs text-muted mt-1">{stat.label}</p>
-                  <p className="text-xs text-muted mt-2">{stat.change}</p>
-                </div>
+                </Card>
               )
             })}
           </div>
 
           {/* Today's Workout + Weekly Progress */}
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Today's Scheduled Workout</h3>
-                <Link to="/member/workouts"><Button variant="ghost" size="sm">View All</Button></Link>
-              </div>
-              <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-2">
-                  <div>
-                    <p className="font-medium text-foreground text-lg">{todayWorkout.name}</p>
-                    <p className="text-sm text-muted">with {todayWorkout.trainer}</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 w-fit">
-                    {todayWorkout.status}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-muted mb-4">
-                  <div className="flex items-center gap-2"><Clock className="size-4" /><span>{todayWorkout.time}</span></div>
-                  <div className="flex items-center gap-2"><Dumbbell className="size-4" /><span>{todayWorkout.exercises} exercises</span></div>
-                  <div className="flex items-center gap-2"><Target className="size-4" /><span>{todayWorkout.duration}</span></div>
-                </div>
-                <Button className="w-full sm:w-auto gap-2"><Play className="size-4" />Start Workout</Button>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Weekly Progress</h3>
-              <div className="space-y-3">
-                {weeklyProgress.map((day) => (
-                  <div key={day.day} className="flex items-center gap-3">
-                    <span className="text-sm text-foreground w-8">{day.day}</span>
-                    <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${day.completed ? 'bg-primary' : 'bg-surface'}`}
-                        style={{ width: day.completed ? '100%' : '0%' }} />
+            <Card padding="lg" className="lg:col-span-2">
+              <CardHeader action={<Link to="/member/workouts"><Button variant="ghost" size="sm">View All</Button></Link>}>
+                <CardTitle>Today's Scheduled Workout</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 rounded-[12px] bg-[#00DF82]/5 border border-[#00DF82]/20">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-2">
+                    <div>
+                      <p className="font-medium text-[var(--app-foreground)] text-lg">{todayWorkout.name}</p>
+                      <p className="text-sm text-[var(--app-muted)]">with {todayWorkout.trainer}</p>
                     </div>
-                    <span className="text-xs text-muted w-12 text-right">{day.completed ? `${day.duration}m` : '-'}</span>
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/30 w-fit">
+                      {todayWorkout.status}
+                    </span>
                   </div>
-                ))}
-              </div>
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted">Weekly Goal</span>
-                  <span className="font-medium text-foreground">3/5 workouts</span>
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-[var(--app-muted)] mb-4">
+                    <div className="flex items-center gap-2"><Clock className="size-4" /><span>{todayWorkout.time}</span></div>
+                    <div className="flex items-center gap-2"><Dumbbell className="size-4" /><span>{todayWorkout.exercises} exercises</span></div>
+                    <div className="flex items-center gap-2"><Target className="size-4" /><span>{todayWorkout.duration}</span></div>
+                  </div>
+                  <Button className="w-full sm:w-auto gap-2"><Play className="size-4" />Start Workout</Button>
                 </div>
-                <div className="h-2 bg-border rounded-full overflow-hidden mt-2">
-                  <div className="h-full bg-primary rounded-full transition-all" style={{ width: '60%' }} />
+              </CardContent>
+            </Card>
+
+            <Card padding="lg">
+              <CardTitle className="mb-4">Weekly Progress</CardTitle>
+              <CardContent>
+                <div className="space-y-3">
+                  {weeklyProgress.map((day) => (
+                    <div key={day.day} className="flex items-center gap-3">
+                      <span className="text-sm text-[var(--app-foreground)] w-8">{day.day}</span>
+                      <div className="flex-1 h-2 bg-[var(--app-border)] rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${day.completed ? 'bg-[var(--app-primary)]' : 'bg-[var(--app-muted)]'}`}
+                          style={{ width: day.completed ? '100%' : '0%' }} />
+                      </div>
+                      <span className="text-xs text-[var(--app-muted)] w-12 text-right">{day.completed ? `${day.duration}m` : '-'}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </div>
+                <div className="mt-4 pt-4 border-t border-[var(--app-border)]">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-[var(--app-muted)]">Weekly Goal</span>
+                    <span className="font-medium text-[var(--app-foreground)]">3/5 workouts</span>
+                  </div>
+                  <div className="h-2 bg-[var(--app-border)] rounded-full overflow-hidden mt-2">
+                    <div className="h-full bg-[var(--app-primary)] rounded-full transition-all" style={{ width: '60%' }} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* ── Body Composition Progress ─────────────────────────────────────── */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-semibold text-foreground">Body Composition</h3>
-                <p className="text-xs text-muted mt-0.5">Track weight, body fat, and muscle mass over time</p>
-              </div>
-              <Button
-                size="sm"
-                variant={showLogForm ? 'ghost' : 'default'}
-                onClick={() => { setShowLogForm(v => !v); setProgressError(null); setProgressSuccess('') }}
-              >
-                {showLogForm ? 'Cancel' : <><Plus size={14} className="mr-1" />Log Entry</>}
-              </Button>
-            </div>
-
-            {/* Metric cards */}
-            {latestProgress ? (
-              <div className="grid sm:grid-cols-3 gap-4 mb-4">
-                {[
-                  { icon: Scale, label: 'Weight', field: 'weight_kg', unit: ' kg', color: 'text-blue-500', bg: 'bg-blue-500/10' },
-                  { icon: Activity, label: 'Body Fat', field: 'body_fat_percentage', unit: '%', color: 'text-orange-500', bg: 'bg-orange-500/10' },
-                  { icon: Dumbbell, label: 'Muscle Mass', field: 'muscle_mass_kg', unit: ' kg', color: 'text-green-500', bg: 'bg-green-500/10' },
-                ].map(({ icon: Icon, label, field, unit, color, bg }) => (
-                  <div key={field} className="rounded-lg border border-border p-4 flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${bg} ${color}`}><Icon size={16} /></div>
-                    <div>
-                      <p className="text-xs text-muted">{label}</p>
-                      <p className="text-lg font-bold text-foreground leading-tight">{fmtNum(latestProgress[field], unit)}</p>
-                      <Trend curr={latestProgress[field]} prev={prevProgress?.[field]} unit={unit} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : !showLogForm && (
-              <p className="text-sm text-muted mb-4">No body composition data yet. Log your first entry to start tracking.</p>
-            )}
-
-            {/* Inline log form */}
-            {showLogForm && (
-              <form onSubmit={handleProgressSubmit} className="border border-border rounded-lg p-4 space-y-4 bg-surface/50">
-                <p className="text-sm font-medium text-foreground">New measurement</p>
-                <div className="grid sm:grid-cols-3 gap-3">
-                  <Input label="Weight (kg)" type="number" step="0.1" min="0" placeholder="e.g. 82.5"
-                    value={progressForm.weight_kg}
-                    onChange={e => setProgressForm(f => ({ ...f, weight_kg: e.target.value }))} />
-                  <Input label="Body Fat (%)" type="number" step="0.1" min="0" max="100" placeholder="e.g. 15.2"
-                    value={progressForm.body_fat_percentage}
-                    onChange={e => setProgressForm(f => ({ ...f, body_fat_percentage: e.target.value }))} />
-                  <Input label="Muscle Mass (kg)" type="number" step="0.1" min="0" placeholder="e.g. 35"
-                    value={progressForm.muscle_mass_kg}
-                    onChange={e => setProgressForm(f => ({ ...f, muscle_mass_kg: e.target.value }))} />
-                </div>
-                <Input label="Notes" placeholder="e.g. Post-workout measurement"
-                  value={progressForm.notes}
-                  onChange={e => setProgressForm(f => ({ ...f, notes: e.target.value }))} />
-                {!assignmentId && (
-                  <p className="text-xs text-amber-600">⚠ No active trainer assignment detected. You need an assigned trainer to log progress.</p>
-                )}
-                {progressError && <p className="text-sm text-red-600">{progressError}</p>}
-                {progressSuccess && <p className="text-sm text-green-600">{progressSuccess}</p>}
-                <Button type="submit" disabled={progressSubmitting || !assignmentId}>
-                  {progressSubmitting ? <span className="flex items-center gap-2"><Loader2 size={13} className="animate-spin" />Saving…</span> : 'Save Entry'}
+          <Card padding="lg">
+            <CardHeader 
+              action={
+                <Button
+                  size="sm"
+                  variant={showLogForm ? 'ghost' : 'default'}
+                  onClick={() => { setShowLogForm(v => !v); setProgressError(null); setProgressSuccess('') }}
+                >
+                  {showLogForm ? 'Cancel' : <><Plus size={14} className="mr-1" />Log Entry</>}
                 </Button>
-              </form>
-            )}
-          </div>
+              }
+            >
+              <CardTitle>Body Composition</CardTitle>
+              <p className="text-xs text-[var(--app-muted)] mt-0.5">Track weight, body fat, and muscle mass over time</p>
+            </CardHeader>
+
+            <CardContent>
+              {/* Metric cards */}
+              {latestProgress ? (
+                <div className="grid sm:grid-cols-3 gap-4 mb-4">
+                  {[
+                    { icon: Scale, label: 'Weight', field: 'weight_kg', unit: ' kg', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
+                    { icon: Activity, label: 'Body Fat', field: 'body_fat_percentage', unit: '%', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
+                    { icon: Dumbbell, label: 'Muscle Mass', field: 'muscle_mass_kg', unit: ' kg', color: 'text-[var(--app-primary)]', bg: 'bg-[var(--app-primary)]/10', border: 'border-[var(--app-primary)]/30' },
+                  ].map(({ icon: Icon, label, field, unit, color, bg, border }) => (
+                    <div key={field} className="rounded-[12px] border border-[var(--app-border)] p-4 flex items-start gap-3 hover:border-[var(--app-primary)]/40 transition-all duration-200">
+                      <div className={`p-2 rounded-lg ${bg} ${color} border ${border}`}><Icon size={16} /></div>
+                      <div>
+                        <p className="text-xs text-[var(--app-muted)]">{label}</p>
+                        <p className="text-lg font-bold text-[var(--app-foreground)] leading-tight">{fmtNum(latestProgress[field], unit)}</p>
+                        <Trend curr={latestProgress[field]} prev={prevProgress?.[field]} unit={unit} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : !showLogForm && (
+                <p className="text-sm text-[var(--app-muted)] mb-4">No body composition data yet. Log your first entry to start tracking.</p>
+              )}
+
+              {/* Inline log form */}
+              {showLogForm && (
+                <form onSubmit={handleProgressSubmit} className="border border-[var(--app-border)] rounded-[12px] p-4 space-y-4 bg-[var(--app-surface)]">
+                  <p className="text-sm font-medium text-[var(--app-foreground)]">New measurement</p>
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    <Input label="Weight (kg)" type="number" step="0.1" min="0" placeholder="e.g. 82.5"
+                      value={progressForm.weight_kg}
+                      onChange={e => setProgressForm(f => ({ ...f, weight_kg: e.target.value }))} />
+                    <Input label="Body Fat (%)" type="number" step="0.1" min="0" max="100" placeholder="e.g. 15.2"
+                      value={progressForm.body_fat_percentage}
+                      onChange={e => setProgressForm(f => ({ ...f, body_fat_percentage: e.target.value }))} />
+                    <Input label="Muscle Mass (kg)" type="number" step="0.1" min="0" placeholder="e.g. 35"
+                      value={progressForm.muscle_mass_kg}
+                      onChange={e => setProgressForm(f => ({ ...f, muscle_mass_kg: e.target.value }))} />
+                  </div>
+                  <Input label="Notes" placeholder="e.g. Post-workout measurement"
+                    value={progressForm.notes}
+                    onChange={e => setProgressForm(f => ({ ...f, notes: e.target.value }))} />
+                  {!assignmentId && (
+                    <p className="text-xs text-amber-400">⚠ No active trainer assignment detected. You need an assigned trainer to log progress.</p>
+                  )}
+                  {progressError && <p className="text-sm text-red-400">{progressError}</p>}
+                  {progressSuccess && <p className="text-sm text-[var(--app-primary)]">{progressSuccess}</p>}
+                  <Button type="submit" disabled={progressSubmitting || !assignmentId}>
+                    {progressSubmitting ? <span className="flex items-center gap-2"><Loader2 size={13} className="animate-spin" />Saving…</span> : 'Save Entry'}
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Recent Activity + Upcoming Classes */}
           <div className="grid lg:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-border bg-card p-6">
-              <h3 className="font-semibold text-foreground mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                {recentActivity.length === 0 ? (
-                  <p className="text-sm text-muted">No recent activity</p>
-                ) : (
-                  recentActivity.map((activity, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-surface">
-                      <div className="flex size-8 items-center justify-center rounded-full bg-purple-100">
-                        <Award className="size-4 text-purple-600" />
+            <Card padding="lg">
+              <CardTitle className="mb-4">Recent Activity</CardTitle>
+              <CardContent>
+                <div className="space-y-3">
+                  {recentActivity.length === 0 ? (
+                    <p className="text-sm text-[var(--app-muted)]">No recent activity</p>
+                  ) : (
+                    recentActivity.map((activity, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-[var(--app-surface)] border border-[var(--app-border)]">
+                        <div className="flex size-8 items-center justify-center rounded-full bg-purple-500/10 border border-purple-500/30">
+                          <Award className="size-4 text-purple-400" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-[var(--app-foreground)]">{activity.activity}</p>
+                          <p className="text-xs text-[var(--app-muted)]">{activity.time}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-foreground">{activity.activity}</p>
-                        <p className="text-xs text-muted">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-            <div className="rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-foreground">Upcoming Classes</h3>
-                <Link to="/member/classes"><Button variant="ghost" size="sm">View All</Button></Link>
-              </div>
-              <div className="space-y-3">
-                {upcomingClasses.length === 0 ? (
-                  <p className="text-sm text-muted">No upcoming classes</p>
-                ) : (
-                  upcomingClasses.map((classItem, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-surface">
-                      <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
-                        <Calendar className="size-4 text-primary" />
+            <Card padding="lg">
+              <CardHeader action={<Link to="/member/classes"><Button variant="ghost" size="sm">View All</Button></Link>}>
+                <CardTitle>Upcoming Classes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {upcomingClasses.length === 0 ? (
+                    <p className="text-sm text-[var(--app-muted)]">No upcoming classes</p>
+                  ) : (
+                    upcomingClasses.map((classItem, i) => (
+                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--app-surface)] border border-[var(--app-border)]">
+                        <div className="flex size-8 items-center justify-center rounded-full bg-[var(--app-primary)]/10 border border-[var(--app-primary)]/30">
+                          <Calendar className="size-4 text-[var(--app-primary)]" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-[var(--app-foreground)] text-sm">{classItem.name}</p>
+                          <p className="text-xs text-[var(--app-muted)]">{classItem.instructor}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-[var(--app-foreground)]">{classItem.time}</p>
+                          <span className={`text-xs ${classItem.spots.includes('Fully') ? 'text-red-400' : 'text-[var(--app-primary)]'}`}>{classItem.spots}</span>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground text-sm">{classItem.name}</p>
-                        <p className="text-xs text-muted">{classItem.instructor}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-foreground">{classItem.time}</p>
-                        <span className={`text-xs ${classItem.spots.includes('Fully') ? 'text-red-600' : 'text-green-600'}`}>{classItem.spots}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Quick Actions */}
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="font-semibold text-foreground mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Link to="/member/workouts"><Button variant="secondary" className="w-full justify-start gap-2"><Dumbbell className="size-4" />View Workouts</Button></Link>
-              <Link to="/member/meals"><Button variant="secondary" className="w-full justify-start gap-2"><Target className="size-4" />Meal Plans</Button></Link>
-              <Link to="/member/classes"><Button variant="secondary" className="w-full justify-start gap-2"><Calendar className="size-4" />Book Classes</Button></Link>
-              <Link to="/member/trainers"><Button variant="secondary" className="w-full justify-start gap-2"><Award className="size-4" />My Trainers</Button></Link>
-            </div>
-          </div>
+          <Card padding="lg">
+            <CardTitle className="mb-4">Quick Actions</CardTitle>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Link to="/member/workouts">
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-[12px] border border-slate-700/50 bg-[#0A1128] hover:border-[#00DF82]/40 hover:bg-[#00DF82]/5 transition-all duration-200 cursor-pointer group">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-[#00DF82]/10 group-hover:bg-[#00DF82]/20 transition-all duration-200">
+                      <Dumbbell className="size-5 text-[#00DF82]" />
+                    </div>
+                    <span className="text-sm text-[#F8FAFC]">View Workouts</span>
+                  </div>
+                </Link>
+                <Link to="/member/meals">
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-[12px] border border-slate-700/50 bg-[#0A1128] hover:border-[#00DF82]/40 hover:bg-[#00DF82]/5 transition-all duration-200 cursor-pointer group">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-[#00DF82]/10 group-hover:bg-[#00DF82]/20 transition-all duration-200">
+                      <Target className="size-5 text-[#00DF82]" />
+                    </div>
+                    <span className="text-sm text-[#F8FAFC]">Meal Plans</span>
+                  </div>
+                </Link>
+                <Link to="/member/classes">
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-[12px] border border-slate-700/50 bg-[#0A1128] hover:border-[#00DF82]/40 hover:bg-[#00DF82]/5 transition-all duration-200 cursor-pointer group">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-[#00DF82]/10 group-hover:bg-[#00DF82]/20 transition-all duration-200">
+                      <Calendar className="size-5 text-[#00DF82]" />
+                    </div>
+                    <span className="text-sm text-[#F8FAFC]">Book Classes</span>
+                  </div>
+                </Link>
+                <Link to="/member/trainers">
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-[12px] border border-slate-700/50 bg-[#0A1128] hover:border-[#00DF82]/40 hover:bg-[#00DF82]/5 transition-all duration-200 cursor-pointer group">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-[#00DF82]/10 group-hover:bg-[#00DF82]/20 transition-all duration-200">
+                      <Award className="size-5 text-[#00DF82]" />
+                    </div>
+                    <span className="text-sm text-[#F8FAFC]">My Trainers</span>
+                  </div>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

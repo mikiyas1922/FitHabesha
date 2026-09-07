@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Card, CardHeader, CardTitle } from '../../components/ui/Card'
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input, Select } from '../../components/ui/Input'
 import { Badge } from '../../components/ui/Badge'
+import { PageHeader } from '../../components/ui/PageHeader'
+import { Alert } from '../../components/ui/Alert'
 import { bookingService } from '../../services/bookingService'
 import { classesService } from '../../services/classesService'
 import { memberService } from '../../services/memberService'
@@ -277,34 +279,35 @@ export function MemberFeedback() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Feedback</h2>
-        <p className="text-sm text-muted mt-1">Rate a trainer, class, or the facility. Each target can only be rated once.</p>
-      </div>
+      <PageHeader 
+        title="Feedback" 
+        subtitle="Rate a trainer, class, or the facility. Each target can only be rated once."
+      />
 
       {facilitySummary && (
-        <Card>
+        <Card padding="md">
           <div className="p-4 flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-foreground">Facility rating</p>
-              <p className="text-xs text-muted">Based on member reviews</p>
+              <p className="text-sm font-medium text-[var(--app-foreground)]">Facility rating</p>
+              <p className="text-xs text-[var(--app-muted)]">Based on member reviews</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-foreground">
+              <p className="text-lg font-bold text-[var(--app-foreground)]">
                 {facilitySummary.average_rating ? Number(facilitySummary.average_rating).toFixed(1) : '—'} / 5
               </p>
-              <p className="text-xs text-muted">{facilitySummary.total_reviews} reviews</p>
+              <p className="text-xs text-[var(--app-muted)]">{facilitySummary.total_reviews} reviews</p>
             </div>
           </div>
         </Card>
       )}
 
-      <Card>
+      <Card padding="lg">
         <CardHeader>
           <CardTitle>Submit a rating</CardTitle>
         </CardHeader>
-        {loadError && <p className="text-sm text-red-600 mb-3">{loadError}</p>}
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <CardContent>
+          {loadError && <Alert variant="danger" message={loadError} className="mb-3" />}
+          <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="grid sm:grid-cols-2 gap-4">
             <Select
               label="Type"
@@ -368,7 +371,7 @@ export function MemberFeedback() {
             onChange={(e) => setForm({ ...form, comment: e.target.value })}
           />
 
-          <label className="flex items-center gap-2 text-sm text-foreground">
+          <label className="flex items-center gap-2 text-sm text-[var(--app-foreground)]">
             <input
               type="checkbox"
               checked={form.is_anonymous}
@@ -377,40 +380,41 @@ export function MemberFeedback() {
             Submit anonymously
           </label>
 
-          {formError && <p className="text-sm text-red-600">{formError}</p>}
-          {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
+          {formError && <Alert variant="danger" message={formError} />}
+          {successMessage && <Alert variant="success" message={successMessage} />}
 
           <Button type="submit" disabled={submitting || loading}>
             {submitting ? 'Submitting...' : 'Submit rating'}
           </Button>
         </form>
+        </CardContent>
       </Card>
 
-      <Card>
+      <Card padding="lg">
         <CardHeader>
           <CardTitle>Ratings submitted this session</CardTitle>
         </CardHeader>
-        <div className="p-4">
+        <CardContent>
           {history.length === 0 ? (
-            <p className="text-sm text-muted">Submitted ratings will appear here after you send them.</p>
+            <p className="text-sm text-[var(--app-muted)]">Submitted ratings will appear here after you send them.</p>
           ) : (
             <div className="space-y-3">
               {history.map((entry) => (
-                <div key={entry.id} className="rounded-lg border border-border p-4">
+                <div key={entry.id} className="rounded-[12px] border border-[var(--app-border)] bg-[var(--app-surface)] p-4">
                   <div className="flex items-center justify-between gap-4 mb-2">
                     <Badge variant="default">{entry.rating_type}</Badge>
-                    <span className="text-sm font-medium text-primary">{entry.rating_stars}/5</span>
+                    <span className="text-sm font-medium text-[var(--app-primary)]">{entry.rating_stars}/5</span>
                   </div>
                   {entry.rating_dimension && (
-                    <p className="text-xs text-muted capitalize">{entry.rating_dimension}</p>
+                    <p className="text-xs text-[var(--app-muted)] capitalize">{entry.rating_dimension}</p>
                   )}
-                  {entry.comment && <p className="text-sm text-foreground mt-1">{entry.comment}</p>}
-                  <p className="text-xs text-muted mt-2">{formatRatingDate(entry.created_at)}</p>
+                  {entry.comment && <p className="text-sm text-[var(--app-foreground)] mt-1">{entry.comment}</p>}
+                  <p className="text-xs text-[var(--app-muted)] mt-2">{formatRatingDate(entry.created_at)}</p>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </CardContent>
       </Card>
     </div>
   )

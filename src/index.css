@@ -18,11 +18,11 @@
   --app-subtle: #F1F5F9;                 /* Card interior subtle fills */
 
   /* Sidebar Light Variant */
-  --app-sidebar: #0A1128;                /* Deep navy sidebar */
-  --app-sidebar-hover: #1E293B;
-  --app-sidebar-active: #162032;
-  --app-sidebar-text: #FFFFFF;
-  --app-sidebar-text-muted: #94A3B8;
+  --app-sidebar: #FFFFFF;                /* White sidebar in light mode */
+  --app-sidebar-hover: #F1F5F9;
+  --app-sidebar-active: #E2E8F0;
+  --app-sidebar-text: #0A1128;
+  --app-sidebar-text-muted: #64748B;
 
   /* Elevation, Shadows & Brand Glows */
   --app-primary: #00DF82;                /* Vibrant green from gradient */
@@ -90,8 +90,15 @@
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   
+  /* Corner Radius System */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  
   /* Fluid Responsive Spacing System */
   --spacing-sidebar-width: 260px;
+  --spacing-sidebar-collapsed: 64px;
   --spacing-section-padding: clamp(24px, 5vw, 80px);
   --spacing-section-padding-vertical: clamp(40px, 8vw, 120px);
   --spacing-card-padding: clamp(20px, 3vw, 40px);
@@ -122,5 +129,41 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Smooth transition defaults for all interactive elements */
+  button, a, input, select, textarea, [role="button"] {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Skeleton animation keyframe */
+  @keyframes skeleton-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .skeleton {
+    background-color: var(--app-hover);
+    animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Page fade-in animation */
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .page-enter {
+    animation: page-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
