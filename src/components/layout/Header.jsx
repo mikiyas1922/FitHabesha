@@ -113,7 +113,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions }) {
   }, [showNotifications])
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface px-6">
+    <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-4 border-b border-border/80 bg-surface/90 px-4 backdrop-blur-xl sm:px-6">
       <div>
         {title && <h1 className="text-lg font-semibold text-foreground">{title}</h1>}
         {subtitle ? (

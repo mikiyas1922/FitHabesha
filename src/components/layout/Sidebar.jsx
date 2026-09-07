@@ -64,15 +64,15 @@ export function Sidebar({ role }) {
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex flex-col bg-dark border-r border-border" style={{ width: '260px', padding: '24px' }}>
-      <div className="flex h-16 items-center gap-2.5 px-6 border-b border-border">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] flex-col border-r border-white/10 bg-sidebar p-4 lg:flex">
+      <div className="flex h-14 items-center gap-3 border-b border-white/10 px-3">
         <div className="flex size-8 items-center justify-center rounded-full bg-primary">
           <Dumbbell className="size-4 text-foreground" />
         </div>
         <p className="text-base font-bold text-foreground">Fit Habesha</p>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto px-1 py-5">
         {items.map((item) => {
           const Icon = iconMap[item.icon]
           return (
@@ -83,8 +83,8 @@ export function Sidebar({ role }) {
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-primary text-foreground'
-                    : 'text-muted hover:bg-sidebar-hover hover:text-foreground'
+                    ? 'bg-primary text-[#0A1128] shadow-glow'
+                    : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-sidebar-text'
                 }`
               }
             >
@@ -100,7 +100,7 @@ export function Sidebar({ role }) {
         })}
       </nav>
 
-      <div className="border-t border-border p-6">
+      <div className="border-t border-white/10 p-2 pt-4">
         <NavLink
           to={settingsPath}
           className="flex items-center gap-3 mb-3 rounded-lg px-2 py-2 hover:bg-sidebar-hover transition-colors"
