@@ -1,0 +1,33 @@
+const variants = {
+  primary: 'bg-primary text-dark hover:bg-primary-dark shadow-sm font-semibold',
+  secondary: 'bg-surface text-foreground border border-border hover:bg-hover',
+  ghost: 'text-muted hover:bg-hover hover:text-foreground',
+  danger: 'bg-red-500 text-foreground hover:bg-red-600',
+  dark: 'bg-dark text-foreground hover:bg-dark/90 shadow-sm',
+  outline: 'bg-transparent text-foreground border-2 border-border hover:bg-hover hover:border-foreground/20',
+}
+
+const sizes = {
+  xs: 'px-2 py-1 text-xs',
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-6 py-3 text-base',
+  icon: 'p-2',
+}
+
+export function Button({
+  variant = 'primary',
+  size = 'md',
+  className = '',
+  children,
+  ...props
+}) {
+  return (
+    <button
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] active:shadow-sm ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
