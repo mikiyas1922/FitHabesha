@@ -227,15 +227,15 @@ function HeroDashboard() {
 function FeatureCard({ icon: Icon, title, description, highlight = false, className = '' }) {
   return (
     <div
-      className={`rounded-2xl border p-6 flex flex-col ${
+      className={`rounded-2xl border p-6 flex flex-col backdrop-blur-sm ${
         highlight
-          ? 'bg-primary border-primary text-dark'
-          : 'bg-dark-card border-white/10 text-white hover:border-primary/30'
-      } transition-colors ${className}`}
+          ? 'bg-gradient-to-br from-primary to-primary-dark border-primary text-dark shadow-xl shadow-primary/30'
+          : 'bg-gradient-to-br from-dark-card to-dark-card/80 border-white/10 text-white hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20'
+      } transition-all duration-500 hover:scale-105 hover:-translate-y-1 ${className}`}
     >
       <div
         className={`flex size-11 items-center justify-center rounded-xl mb-4 ${
-          highlight ? 'bg-dark/15 text-dark' : 'bg-primary/10 text-primary'
+          highlight ? 'bg-dark/20 text-dark shadow-lg' : 'bg-gradient-to-br from-primary/20 to-primary/10 text-primary shadow-lg shadow-primary/20'
         }`}
       >
         <Icon className="size-5" />
@@ -246,7 +246,7 @@ function FeatureCard({ icon: Icon, title, description, highlight = false, classN
       </p>
       <a
         href="#"
-        className={`mt-4 text-sm font-semibold inline-flex items-center gap-1 ${
+        className={`mt-4 text-sm font-semibold inline-flex items-center gap-1 transition-all duration-300 hover:translate-x-1 ${
           highlight ? 'text-dark hover:text-dark/70' : 'text-primary hover:text-primary-light'
         }`}
       >
@@ -331,43 +331,48 @@ export function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative px-4 md:px-6 lg:px-20 pt-24 md:pt-32 lg:pt-44 pb-12 md:pb-16 lg:pb-24" style={{ background: 'linear-gradient(0deg, #0B1224, #0B1224), radial-gradient(100% 80% at 50% 20%, rgba(0, 242, 153, 0.0823529) 0%, rgba(0, 0, 0, 0) 80%)' }}>
-        <div className="relative mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
-            <div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight leading-[1.05] uppercase text-white">
-                Be Strong.
-                <br />
-                Be <span className="text-primary">Ethiopian.</span>
-              </h1>
-              <p className="mt-4 md:mt-6 max-w-lg text-sm md:text-base text-muted leading-relaxed">
-                Engineered for Ethiopian athletes. Transform your fitness journey with cutting-edge
-                technology, personalized training, and a community dedicated to your success.
-              </p>
-              <div className="mt-6 md:mt-8 flex flex-wrap gap-3 md:gap-4">
-                <Link to="/register">
-                  <Button size="lg" className="text-dark font-bold px-6 md:px-8">Start Now</Button>
-                </Link>
-                <Link to="/login">
-                  <Button size="lg" variant="secondary" className="border-primary/40 text-white bg-transparent hover:bg-primary/10 px-6 md:px-8">
-                    View Plans
-                  </Button>
-                </Link>
-              </div>
-              <div className="mt-8 md:mt-10 flex flex-wrap gap-6 md:gap-8">
-                {[
-                  { value: '1,200+', label: 'Active Members' },
-                  { value: facilityAverage, label: 'Average Rating' },
-                  { value: '24', label: 'Expert Trainers' },
-                ].map((s) => (
-                  <div key={s.label}>
-                    <p className="text-lg md:text-xl font-bold text-primary">{s.value}</p>
-                    <p className="text-xs text-muted mt-0.5">{s.label}</p>
-                  </div>
-                ))}
-              </div>
+      <section className="relative px-4 md:px-6 lg:px-20 pt-24 md:pt-32 lg:pt-44 pb-12 md:pb-16 lg:pb-24 overflow-hidden">
+        {/* Video Background */}
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'center' }}
+          >
+            <source src="/hero-video.mp4" type="video/mp4" />
+          </video>
+          {/* Lighter overlay to show more of the video */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl z-10">
+          <div className="max-w-2xl text-center lg:text-left">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold tracking-tight leading-[1.05] uppercase text-white">
+              Be Strong.
+              <br />
+              Be <span className="text-primary">Ethiopian.</span>
+            </h1>
+
+            {/* Description - Under slogan, smaller */}
+            <p className="mt-3 md:mt-4 max-w-md text-xs md:text-sm text-muted leading-relaxed">
+              Engineered for Ethiopian athletes. Transform your fitness journey with cutting-edge
+              technology, personalized training, and a community dedicated to your success.
+            </p>
+
+            {/* Buttons - Under description, smaller */}
+            <div className="mt-4 md:mt-5 flex flex-wrap gap-2 md:gap-3 justify-center lg:justify-start">
+              <Link to="/register">
+                <Button size="sm" className="text-dark font-bold px-3 md:px-4 text-xs md:text-sm">Start Now</Button>
+              </Link>
+              <Link to="/login">
+                <Button size="sm" variant="secondary" className="border-primary/40 text-white bg-transparent hover:bg-primary/10 px-3 md:px-4 text-xs md:text-sm">
+                  View Plans
+                </Button>
+              </Link>
             </div>
-            <HeroDashboard />
           </div>
         </div>
       </section>
@@ -460,14 +465,14 @@ export function LandingPage() {
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl p-5 md:p-8 flex flex-col ${
+                className={`relative rounded-2xl p-5 md:p-8 flex flex-col backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:-translate-y-1 ${
                   plan.popular
-                    ? 'bg-primary text-dark ring-2 ring-primary md:scale-105'
-                    : 'bg-dark-card border border-white/10'
+                    ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-xl shadow-primary/40 md:scale-105'
+                    : 'bg-gradient-to-br from-dark-card to-dark-card/80 border border-white/10 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20'
                 }`}
               >
                 {plan.badge && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-dark px-3 py-1 text-xs font-bold text-primary uppercase tracking-wide">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-dark to-dark/90 px-3 py-1 text-xs font-bold text-primary uppercase tracking-wide shadow-lg">
                     {plan.badge}
                   </span>
                 )}
