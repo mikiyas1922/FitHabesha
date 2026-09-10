@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Search, Dumbbell, Target, Calendar, TrendingUp, Users, Loader2, TrendingUp as TrendingUpIcon, X } from 'lucide-react'
+import { Search, Dumbbell, Target, Calendar, TrendingUp, Users, Loader2, X } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { Alert } from '../../components/ui/Alert'
-import { Input } from '../../components/ui/Input'
+import { Input, Textarea } from '../../components/ui/Input'
 import { trainerService } from '../../services/trainerService'
 import { getApiErrorMessage, unwrapResource } from '../../utils/apiHelpers'
 import { TrainerProgress } from './TrainerProgress'
@@ -276,7 +276,7 @@ export function MyClients() {
                       Assign Plan
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setProgressTarget(client)}>
-                      <TrendingUpIcon className="size-4" />
+                      <TrendingUp className="size-4" />
                     </Button>
                   </div>
                 </Card>
@@ -298,7 +298,7 @@ export function MyClients() {
             <p className="text-xs text-muted">
               Saves a personal training check-in for this member. Notes are optional.
             </p>
-            <Input.Textarea
+            <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="PT session notes"
@@ -367,7 +367,7 @@ export function MyClients() {
                   
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">Notes</label>
-                    <Input.Textarea
+                    <Textarea
                       value={assignNotes}
                       onChange={(e) => setAssignNotes(e.target.value)}
                       placeholder="Optional notes for this assignment..."
