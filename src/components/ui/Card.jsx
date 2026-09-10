@@ -6,7 +6,7 @@ export function Card({ children, className = '', padding = 'md' }) {
   }
 
   return (
-    <div className={`bg-gradient-to-br from-surface to-surface/80 rounded-2xl border border-border/50 shadow-xl hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 hover:scale-[1.01] transition-all duration-500 backdrop-blur-sm ${paddings[padding]} ${className}`}>
+    <div className={`bg-surface rounded-2xl border border-border/70 shadow-card transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 ${paddings[padding]} ${className}`}>
       {children}
     </div>
   )

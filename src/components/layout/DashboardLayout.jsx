@@ -16,7 +16,7 @@ export function DashboardLayout({ role, title }) {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className={`min-h-screen bg-bg ${role === 'member' ? 'member-app' : ''}`}>
       <Sidebar 
         role={role} 
         isMinimized={isSidebarMinimized} 
@@ -33,7 +33,7 @@ export function DashboardLayout({ role, title }) {
           showSearch={role === 'admin' || role === 'trainer'}
           onMobileMenuToggle={handleMobileMenuToggle}
         />
-        <main className="p-4 md:p-6 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+        <main className="min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6 lg:px-8 max-w-[1440px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
           <Outlet />
         </main>
       </div>

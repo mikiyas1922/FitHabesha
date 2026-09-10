@@ -7,7 +7,7 @@ export function PageHeader({
   className = '',
 }) {
   return (
-    <div className={`mb-8 ${className}`}>
+    <div className={`mb-7 rounded-2xl border border-border/70 bg-surface/45 p-5 shadow-sm sm:p-6 ${className}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-foreground mb-2">

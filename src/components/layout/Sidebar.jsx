@@ -77,7 +77,7 @@ export function Sidebar({ role, isMinimized, onToggle, isMobileOpen, onMobileClo
       
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-gradient-to-b from-dark to-dark/95 border-r border-border/50 transition-all duration-500 backdrop-blur-xl pointer-events-auto ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-sidebar border-r border-white/10 transition-all duration-300 backdrop-blur-xl pointer-events-auto ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0`}
         style={{ width: isMinimized ? '80px' : '260px', padding: isMinimized ? '16px 12px' : '24px' }}

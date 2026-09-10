@@ -221,3 +221,32 @@
 .animate-pulse-slow {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* Member workspace refinements: use the existing brand palette with calmer rhythm. */
+.member-app main {
+  animation-duration: 420ms;
+}
+
+.member-app button,
+.member-app a,
+.member-app input,
+.member-app select,
+.member-app textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.member-app ::selection {
+  background: var(--app-primary);
+  color: var(--app-foreground);
+}
+
+@media (max-width: 640px) {
+  .member-app main {
+    padding-top: 1.25rem;
+    padding-bottom: 2rem;
+  }
+
+  .member-app .grid {
+    min-width: 0;
+  }
+}

@@ -113,7 +113,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions, onMo
   }, [showNotifications])
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-surface/80 backdrop-blur-md px-6">
+    <header className="sticky top-0 z-20 flex h-[4.5rem] items-center justify-between border-b border-border/70 bg-bg/85 backdrop-blur-xl px-4 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         <button
           type="button"
