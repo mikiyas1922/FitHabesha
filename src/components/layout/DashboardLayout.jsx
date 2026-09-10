@@ -25,7 +25,7 @@ export function DashboardLayout({ role, title }) {
         onMobileClose={handleMobileMenuClose}
       />
       <div 
-        className={`transition-all duration-300 ${isSidebarMinimized ? 'md:pl-[80px]' : 'md:pl-[260px]'}`}
+        className={`transition-all duration-300 relative z-10 ${isSidebarMinimized ? 'md:pl-[80px]' : 'md:pl-[260px]'}`}
       >
         <Header 
           role={role} 

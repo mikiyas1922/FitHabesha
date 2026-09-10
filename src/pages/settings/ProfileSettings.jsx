@@ -311,6 +311,7 @@ export function ProfileSettings() {
 
   if (loading) {
     return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
       <div className="flex flex-col items-center justify-center min-h-400px gap-3">
         <Loader2 className="size-8 animate-spin text-primary" />
         <p className="text-sm text-muted">Loading profile details...</p>

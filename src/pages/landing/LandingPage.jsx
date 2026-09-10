@@ -189,6 +189,12 @@ function Logo({ className = '' }) {
 
 function HeroDashboard() {
   return (
+    <div className="relative rounded-2xl border border-white/10 bg-dark-card p-5 shadow-2xl">
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="rounded-xl bg-[#1a1a1a] border border-white/5 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Flame className="size-4 text-primary" />
+            <span className="text-xs text-muted uppercase tracking-wide">Calories</span>
     <div className="relative rounded-xl md:rounded-2xl border border-white/10 bg-dark-card p-4 md:p-5 shadow-2xl">
       <div className="grid grid-cols-2 gap-2 md:gap-3 mb-3 md:mb-4">
         <div className="rounded-lg md:rounded-xl bg-[#1a1a1a] border border-white/5 p-3 md:p-4">
@@ -196,25 +202,37 @@ function HeroDashboard() {
             <Flame className="size-3 md:size-4 text-primary" />
             <span className="text-[10px] md:text-xs text-muted uppercase tracking-wide">Calories</span>
           </div>
+          <p className="text-2xl font-bold text-white">3,420</p>
           <p className="text-xl md:text-2xl font-bold text-white">3,420</p>
         </div>
+        <div className="rounded-xl bg-[#1a1a1a] border border-white/5 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Target className="size-4 text-primary" />
+            <span className="text-xs text-muted uppercase tracking-wide">Protein</span>
         <div className="rounded-lg md:rounded-xl bg-[#1a1a1a] border border-white/5 p-3 md:p-4">
           <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
             <Target className="size-3 md:size-4 text-primary" />
             <span className="text-[10px] md:text-xs text-muted uppercase tracking-wide">Protein</span>
           </div>
+          <p className="text-2xl font-bold text-white">5.2<span className="text-sm text-muted">g</span></p>
           <p className="text-xl md:text-2xl font-bold text-white">5.2<span className="text-xs md:text-sm text-muted">g</span></p>
         </div>
       </div>
+      <div className="rounded-xl bg-primary p-4 flex items-center gap-3">
+        <div className="flex size-10 items-center justify-center rounded-full bg-dark/20">
+          <Trophy className="size-5 text-dark" />
       <div className="rounded-lg md:rounded-xl bg-primary p-3 md:p-4 flex items-center gap-2 md:gap-3">
         <div className="flex size-8 md:size-10 items-center justify-center rounded-full bg-dark/20">
           <Trophy className="size-4 md:size-5 text-dark" />
         </div>
         <div>
+          <p className="text-sm font-bold text-dark">Goal Achieved!</p>
+          <p className="text-xs text-dark/70">Weekly workout target completed</p>
           <p className="text-xs md:text-sm font-bold text-dark">Goal Achieved!</p>
           <p className="text-[10px] md:text-xs text-dark/70">Weekly workout target completed</p>
         </div>
       </div>
+      <div className="mt-4 flex items-end gap-1 h-16">
       <div className="mt-3 md:mt-4 flex items-end gap-0.5 md:gap-1 h-12 md:h-16">
         {[35, 55, 40, 70, 50, 85, 60, 75, 45, 90, 65, 80].map((h, i) => (
           <div key={i} className="flex-1 rounded-t bg-primary/60" style={{ height: `${h}%` }} />
@@ -227,14 +245,19 @@ function HeroDashboard() {
 function FeatureCard({ icon: Icon, title, description, highlight = false, className = '' }) {
   return (
     <div
+      className={`rounded-2xl border p-6 flex flex-col ${
       className={`rounded-2xl border p-6 flex flex-col backdrop-blur-sm ${
         highlight
+          ? 'bg-primary border-primary text-dark'
+          : 'bg-dark-card border-white/10 text-white hover:border-primary/30'
+      } transition-colors ${className}`}
           ? 'bg-gradient-to-br from-primary to-primary-dark border-primary text-dark shadow-xl shadow-primary/30'
           : 'bg-gradient-to-br from-dark-card to-dark-card/80 border-white/10 text-white hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20'
       } transition-all duration-500 hover:scale-105 hover:-translate-y-1 ${className}`}
     >
       <div
         className={`flex size-11 items-center justify-center rounded-xl mb-4 ${
+          highlight ? 'bg-dark/15 text-dark' : 'bg-primary/10 text-primary'
           highlight ? 'bg-dark/20 text-dark shadow-lg' : 'bg-gradient-to-br from-primary/20 to-primary/10 text-primary shadow-lg shadow-primary/20'
         }`}
       >
@@ -246,6 +269,7 @@ function FeatureCard({ icon: Icon, title, description, highlight = false, classN
       </p>
       <a
         href="#"
+        className={`mt-4 text-sm font-semibold inline-flex items-center gap-1 ${
         className={`mt-4 text-sm font-semibold inline-flex items-center gap-1 transition-all duration-300 hover:translate-x-1 ${
           highlight ? 'text-dark hover:text-dark/70' : 'text-primary hover:text-primary-light'
         }`}
@@ -286,36 +310,45 @@ export function LandingPage() {
     <div className="min-h-screen bg-dark text-white">
       {/* Nav */}
       <nav className="fixed top-0 z-50 w-full border-b border-white/10 bg-dark/95 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
           <Link to="/"><Logo /></Link>
 
+          <div className="hidden items-center gap-7 lg:flex">
           <div className="hidden items-center gap-5 md:gap-7 lg:flex">
             {navLinks.map((link) => (
+              <a key={link.href} href={link.href} className="text-sm text-muted hover:text-white transition-colors">
               <a key={link.href} href={link.href} className="text-xs md:text-sm text-muted hover:text-white transition-colors">
                 {link.label}
               </a>
             ))}
           </div>
 
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="hidden sm:block text-sm text-muted hover:text-white transition-colors">
           <div className="flex items-center gap-2 md:gap-3">
             <Link to="/login" className="hidden sm:block text-xs md:text-sm text-muted hover:text-white transition-colors">
               Sign In
             </Link>
             <Link to="/register" className="hidden sm:block">
+              <Button size="sm" className="text-dark font-bold px-5">Get Started</Button>
               <Button size="sm" className="text-dark font-bold px-4 md:px-5">Get Started</Button>
             </Link>
             <button
               type="button"
+              className="lg:hidden flex size-9 items-center justify-center rounded-lg border border-white/10 text-muted"
               className="lg:hidden flex size-8 md:size-9 items-center justify-center rounded-lg border border-white/10 text-muted"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle menu"
             >
+              {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
               {mobileMenuOpen ? <X className="size-4 md:size-5" /> : <Menu className="size-4 md:size-5" />}
             </button>
           </div>
         </div>
 
         {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-white/10 px-6 py-4 space-y-3">
           <div className="lg:hidden border-t border-white/10 px-4 md:px-6 py-4 space-y-3">
             {navLinks.map((link) => (
               <a key={link.href} href={link.href} className="block text-sm text-muted py-1" onClick={() => setMobileMenuOpen(false)}>
@@ -331,6 +364,41 @@ export function LandingPage() {
       </nav>
 
       {/* Hero */}
+      <section className="relative" style={{ paddingTop: '180px', paddingBottom: '96px', paddingLeft: '80px', paddingRight: '80px', gap: '64px', background: 'linear-gradient(0deg, #0B1224, #0B1224), radial-gradient(100% 80% at 50% 20%, rgba(0, 242, 153, 0.0823529) 0%, rgba(0, 0, 0, 0) 80%)' }}>
+        <div className="relative mx-auto max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] uppercase text-white">
+                Be Strong.
+                <br />
+                Be <span className="text-primary">Ethiopian.</span>
+              </h1>
+              <p className="mt-6 max-w-lg text-muted leading-relaxed">
+                Engineered for Ethiopian athletes. Transform your fitness journey with cutting-edge
+                technology, personalized training, and a community dedicated to your success.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link to="/register">
+                  <Button size="lg" className="text-dark font-bold px-8">Start Now</Button>
+                </Link>
+                <Link to="/login">
+                  <Button size="lg" variant="secondary" className="border-primary/40 text-white bg-transparent hover:bg-primary/10 px-8">
+                    View Plans
+                  </Button>
+                </Link>
+              </div>
+              <div className="mt-10 flex flex-wrap gap-8">
+                {[
+                  { value: '1,200+', label: 'Active Members' },
+                  { value: facilityAverage, label: 'Average Rating' },
+                  { value: '24', label: 'Expert Trainers' },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <p className="text-xl font-bold text-primary">{s.value}</p>
+                    <p className="text-xs text-muted mt-0.5">{s.label}</p>
+                  </div>
+                ))}
+              </div>
       <section className="relative px-4 md:px-6 lg:px-20 pt-24 md:pt-32 lg:pt-44 pb-12 md:pb-16 lg:pb-24 overflow-hidden">
         {/* Video Background */}
         <div className="absolute inset-0 z-0">
@@ -373,12 +441,14 @@ export function LandingPage() {
                 </Button>
               </Link>
             </div>
+            <HeroDashboard />
           </div>
         </div>
       </section>
 
       {/* Stats ribbon */}
       <section className="border-y border-white/10 bg-dark-card/60">
+        <div className="mx-auto max-w-7xl px-6 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
         <div className="mx-auto max-w-7xl px-4 md:px-6 py-6 md:py-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {[
             { value: '1,200+', label: 'Active Members' },
@@ -387,6 +457,8 @@ export function LandingPage() {
             { value: '98%', label: 'Retention Rate' },
           ].map((s) => (
             <div key={s.label} className="text-center">
+              <p className="text-2xl md:text-3xl font-bold text-primary">{s.value}</p>
+              <p className="text-sm text-muted mt-1">{s.label}</p>
               <p className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">{s.value}</p>
               <p className="text-xs md:text-sm text-muted mt-1">{s.label}</p>
             </div>
@@ -395,25 +467,31 @@ export function LandingPage() {
       </section>
 
       {/* Features */}
+      <section id="features" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '64px', backgroundColor: '#060A16' }}>
       <section id="features" className="px-4 md:px-6 lg:px-20 py-16 md:py-20 lg:py-32" style={{ backgroundColor: '#060A16' }}>
         <div className="mx-auto max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-8 mb-12 items-end">
+            <h2 className="text-3xl md:text-4xl font-bold leading-tight text-white">
           <div className="grid lg:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-12 items-end">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-white">
               Engineered For
               <br />
               <span className="text-primary">Peak Performance</span>
             </h2>
+            <p className="text-muted leading-relaxed lg:pb-1">
             <p className="text-sm md:text-base text-muted leading-relaxed lg:pb-1">
               Powerful tools designed to elevate every aspect of your fitness experience — from
               personalized workouts to real-time progress tracking.
             </p>
           </div>
 
+          <div className="grid md:grid-cols-3 gap-4 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {featuresRow1.map((f) => (
               <FeatureCard key={f.title} {...f} />
             ))}
           </div>
+          <div className="grid md:grid-cols-3 gap-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FeatureCard
               icon={Calendar}
@@ -430,20 +508,30 @@ export function LandingPage() {
       </section>
 
       {/* How it works */}
+      <section id="how-it-works" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '80px', backgroundColor: '#0B1224' }}>
       <section id="how-it-works" className="px-4 md:px-6 lg:px-20 py-16 md:py-20 lg:py-32" style={{ backgroundColor: '#0B1224' }}>
         <div className="mx-auto max-w-7xl">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Three Steps to Peak Performance</h2>
+            <p className="mt-3 text-muted">Get started in three simple steps.</p>
           <div className="text-center mb-10 md:mb-14">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Three Steps to Peak Performance</h2>
             <p className="mt-3 text-sm md:text-base text-muted">Get started in three simple steps.</p>
           </div>
+          <div className="grid md:grid-cols-3 gap-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {steps.map((step) => (
               <div key={step.number} className="group">
+                <div className="relative rounded-2xl overflow-hidden aspect-[3/4] mb-4">
                 <div className="relative rounded-2xl overflow-hidden aspect-3/4 mb-4">
                   <img src={step.image} alt={step.title} className="size-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/20 to-transparent" />
+                  <span className="absolute bottom-4 left-4 text-6xl font-black text-white/20">{step.number}</span>
                   <div className="absolute inset-0 bg-liner-to-t from-dark via-dark/20 to-transparent" />
                   <span className="absolute bottom-4 left-4 text-4xl md:text-6xl font-black text-white/20">{step.number}</span>
                 </div>
+                <div className={`rounded-xl p-5 ${step.highlight ? 'bg-primary' : 'bg-dark-card border border-white/10'}`}>
+                  <h3 className={`font-bold text-lg mb-1 ${step.highlight ? 'text-dark' : 'text-white'}`}>{step.title}</h3>
                 <div className={`rounded-xl p-4 md:p-5 ${step.highlight ? 'bg-primary' : 'bg-dark-card border border-white/10'}`}>
                   <h3 className={`font-bold text-base md:text-lg mb-1 ${step.highlight ? 'text-dark' : 'text-white'}`}>{step.title}</h3>
                   <p className={`text-sm leading-relaxed ${step.highlight ? 'text-dark/70' : 'text-muted'}`}>{step.description}</p>
@@ -455,34 +543,49 @@ export function LandingPage() {
       </section>
 
       {/* Pricing */}
+      <section id="pricing" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '80px', backgroundColor: '#060A16' }}>
       <section id="pricing" className="px-4 md:px-6 lg:px-20 py-16 md:py-20 lg:py-32" style={{ backgroundColor: '#060A16' }}>
         <div className="mx-auto max-w-7xl">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Invest In Your Performance</h2>
+            <p className="mt-3 text-muted">Choose the plan that fits your fitness goals.</p>
           <div className="text-center mb-10 md:mb-14">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Invest In Your Performance</h2>
             <p className="mt-3 text-sm md:text-base text-muted">Choose the plan that fits your fitness goals.</p>
           </div>
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
             {plans.map((plan) => (
               <div
                 key={plan.name}
+                className={`relative rounded-2xl p-8 flex flex-col ${
                 className={`relative rounded-2xl p-5 md:p-8 flex flex-col backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:-translate-y-1 ${
                   plan.popular
+                    ? 'bg-primary text-dark ring-2 ring-primary md:scale-105'
+                    : 'bg-dark-card border border-white/10'
                     ? 'bg-gradient-to-br from-primary to-primary-dark text-dark shadow-xl shadow-primary/40 md:scale-105'
                     : 'bg-gradient-to-br from-dark-card to-dark-card/80 border border-white/10 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20'
                 }`}
               >
                 {plan.badge && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-dark px-3 py-1 text-xs font-bold text-primary uppercase tracking-wide">
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-dark to-dark/90 px-3 py-1 text-xs font-bold text-primary uppercase tracking-wide shadow-lg">
                     {plan.badge}
                   </span>
                 )}
+                <h3 className={`text-lg font-bold ${plan.popular ? 'text-dark' : 'text-white'}`}>{plan.name}</h3>
+                <div className="mt-3 mb-6">
+                  <span className={`text-4xl font-extrabold ${plan.popular ? 'text-dark' : 'text-white'}`}>{plan.price}</span>
                 <h3 className={`text-base md:text-lg font-bold ${plan.popular ? 'text-dark' : 'text-white'}`}>{plan.name}</h3>
                 <div className="mt-3 mb-4 md:mb-6">
                   <span className={`text-3xl md:text-4xl font-extrabold ${plan.popular ? 'text-dark' : 'text-white'}`}>{plan.price}</span>
                   <span className={plan.popular ? 'text-dark/60' : 'text-muted'}>{plan.period}</span>
                 </div>
+                <ul className="space-y-3 mb-8 flex-1">
                 <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-1">
                   {plan.features.map((f) => (
+                    <li key={f} className={`flex items-center gap-2 text-sm ${plan.popular ? 'text-dark/80' : 'text-muted'}`}>
+                      <Check className={`size-4 shrink-0 ${plan.popular ? 'text-dark' : 'text-primary'}`} />
                     <li key={f} className={`flex items-center gap-2 text-xs md:text-sm ${plan.popular ? 'text-dark/80' : 'text-muted'}`}>
                       <Check className={`size-3 md:size-4 shrink-0 ${plan.popular ? 'text-dark' : 'text-primary'}`} />
                       {f}
@@ -504,31 +607,42 @@ export function LandingPage() {
       </section>
 
       {/* Testimonials */}
+      <section id="testimonials" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '80px', backgroundColor: '#0B1224' }}>
       <section id="testimonials" className="px-4 md:px-6 lg:px-20 py-16 md:py-20 lg:py-32" style={{ backgroundColor: '#0B1224' }}>
         <div className="mx-auto max-w-7xl">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">What Our Athletes Say</h2>
+            <p className="mt-3 text-muted">Real stories from real members who transformed their lives.</p>
           <div className="text-center mb-10 md:mb-14">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">What Our Athletes Say</h2>
             <p className="mt-3 text-sm md:text-base text-muted">Real stories from real members who transformed their lives.</p>
           </div>
+          <div className="grid md:grid-cols-3 gap-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {testimonials.map((item) => (
               <div
                 key={item.name}
+                className={`rounded-2xl p-6 ${
                 className={`rounded-2xl p-4 md:p-6 ${
                   item.highlight
                     ? 'bg-primary text-dark'
                     : 'bg-dark-card border border-white/10'
                 }`}
               >
+                <div className="flex gap-1 mb-4">
                 <div className="flex gap-1 mb-3 md:mb-4">
                   {[...Array(item.rating)].map((_, i) => (
+                    <Star key={i} className={`size-4 fill-current ${item.highlight ? 'text-dark' : 'text-primary'}`} />
                     <Star key={i} className={`size-3 md:size-4 fill-current ${item.highlight ? 'text-dark' : 'text-primary'}`} />
                   ))}
                 </div>
+                <p className={`text-sm leading-relaxed mb-5 ${item.highlight ? 'text-dark/80' : 'text-muted'}`}>
                 <p className={`text-xs md:text-sm leading-relaxed mb-4 md:mb-5 ${item.highlight ? 'text-dark/80' : 'text-muted'}`}>
                   &ldquo;{item.text}&rdquo;
                 </p>
                 <div>
+                  <p className={`font-bold ${item.highlight ? 'text-dark' : 'text-white'}`}>{item.name}</p>
+                  <p className={`text-sm ${item.highlight ? 'text-dark/60' : 'text-muted'}`}>{item.role}</p>
                   <p className={`font-bold text-sm md:text-base ${item.highlight ? 'text-dark' : 'text-white'}`}>{item.name}</p>
                   <p className={`text-xs md:text-sm ${item.highlight ? 'text-dark/60' : 'text-muted'}`}>{item.role}</p>
                 </div>
@@ -539,15 +653,21 @@ export function LandingPage() {
       </section>
 
       {/* Coaches */}
+      <section id="coaches" style={{ paddingTop: '120px', paddingBottom: '120px', paddingLeft: '80px', paddingRight: '80px', gap: '80px', backgroundColor: '#060A16' }}>
       <section id="coaches" className="px-4 md:px-6 lg:px-20 py-16 md:py-20 lg:py-32" style={{ backgroundColor: '#060A16' }}>
         <div className="mx-auto max-w-7xl">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">Match With Premium Trainers</h2>
+            <p className="mt-3 text-muted">Connect with expert coaches tailored to your specific goals.</p>
           <div className="text-center mb-10 md:mb-14">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">Match With Premium Trainers</h2>
             <p className="mt-3 text-sm md:text-base text-muted">Connect with expert coaches tailored to your specific goals.</p>
           </div>
+          <div className="grid md:grid-cols-3 gap-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {coaches.map((coach) => (
               <div key={coach.name} className="rounded-2xl overflow-hidden border border-white/10 bg-dark-card group hover:border-primary/30 transition-colors">
+                <div className="aspect-[4/3] overflow-hidden">
                 <div className="aspect-4/3 overflow-hidden">
                   <img
                     src={coach.image}
@@ -555,17 +675,23 @@ export function LandingPage() {
                     className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
+                <div className="p-5">
                 <div className="p-4 md:p-5">
                   <div className="flex items-start justify-between">
                     <div>
+                      <h3 className="font-bold text-white">{coach.name}</h3>
+                      <p className="text-sm text-primary mt-0.5">{coach.specialty}</p>
                       <h3 className="font-bold text-sm md:text-base text-white">{coach.name}</h3>
                       <p className="text-xs md:text-sm text-primary mt-0.5">{coach.specialty}</p>
                     </div>
                     <div className="flex items-center gap-1">
+                      <Star className="size-3.5 fill-primary text-primary" />
+                      <span className="text-sm font-semibold">{coach.rating}</span>
                       <Star className="size-3 md:size-3.5 fill-primary text-primary" />
                       <span className="text-xs md:text-sm font-semibold">{coach.rating}</span>
                     </div>
                   </div>
+                  <p className="mt-3 text-sm font-semibold text-muted">{coach.price}</p>
                   <p className="mt-2 md:mt-3 text-xs md:text-sm font-semibold text-muted">{coach.price}</p>
                 </div>
               </div>
@@ -575,22 +701,29 @@ export function LandingPage() {
       </section>
 
       {/* CTA Banner */}
+      <section style={{ paddingTop: '96px', paddingBottom: '96px', paddingLeft: '80px', paddingRight: '80px', gap: '32px', borderTop: '1px solid #1F2E45', borderBottom: '1px solid #1F2E45', background: 'linear-gradient(0deg, #121B2E, #121B2E), linear-gradient(135deg, rgba(0, 242, 153, 0.0627451) 25%, rgba(0, 0, 0, 0) 75%)' }}>
       <section className="px-4 md:px-6 lg:px-20 py-12 md:py-16" style={{ borderTop: '1px solid #1F2E45', borderBottom: '1px solid #1F2E45', background: 'linear-gradient(0deg, #121B2E, #121B2E), linear-gradient(135deg, rgba(0, 242, 153, 0.0627451) 25%, rgba(0, 0, 0, 0) 75%)' }}>
         <div className="mx-auto max-w-7xl">
+          <div className="rounded-3xl bg-primary px-8 py-14 text-center">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-dark mb-3">
           <div className="rounded-2xl md:rounded-3xl bg-primary px-6 md:px-8 py-10 md:py-14 text-center">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-dark mb-2 md:mb-3">
               Start Your Transformation Today
             </h2>
+            <p className="text-dark/70 max-w-lg mx-auto mb-8">
             <p className="text-dark/70 max-w-lg mx-auto mb-6 md:mb-8 text-sm md:text-base">
               Join thousands of members who have already achieved their fitness goals with Fit Habesha.
             </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
               <Link to="/register">
+                <Button size="lg" variant="dark" className="px-10 font-bold">Get Started</Button>
                 <Button size="lg" variant="dark" className="px-8 md:px-10 font-bold">Get Started</Button>
               </Link>
               <Link to="/login">
                 <Button
                   size="lg"
+                  className="px-10 font-bold bg-transparent border-2 border-dark text-dark hover:bg-dark/10"
                   className="px-8 md:px-10 font-bold bg-transparent border-2 border-dark text-dark hover:bg-dark/10"
                 >
                   Talk to a Coach
@@ -602,21 +735,27 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
+      <footer id="about" style={{ paddingTop: '80px', paddingBottom: '40px', paddingLeft: '80px', paddingRight: '80px', gap: '64px', backgroundColor: '#0A1128' }}>
       <footer id="about" className="px-4 md:px-6 lg:px-20 py-12 md:py-16" style={{ backgroundColor: '#0A1128' }}>
         <div className="mx-auto max-w-7xl">
+          <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="grid gap-8 md:gap-10 grid-cols-1 md:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <Logo />
+              <p className="mt-4 max-w-xs text-sm text-muted leading-relaxed">
               <p className="mt-4 max-w-xs text-xs md:text-sm text-muted leading-relaxed">
                 Ethiopia&apos;s premier fitness platform. Built for athletes who demand peak performance.
               </p>
             </div>
 
             <div>
+              <h4 className="text-xs font-bold tracking-widest text-white uppercase mb-4">Platform</h4>
+              <ul className="space-y-2.5">
               <h4 className="text-xs font-bold tracking-widest text-white uppercase mb-3 md:mb-4">Platform</h4>
               <ul className="space-y-2 md:space-y-2.5">
                 {footerLinks.platform.map((link) => (
                   <li key={link.label}>
+                    <a href={link.href} className="text-sm text-muted hover:text-primary transition-colors">{link.label}</a>
                     <a href={link.href} className="text-xs md:text-sm text-muted hover:text-primary transition-colors">{link.label}</a>
                   </li>
                 ))}
@@ -624,10 +763,13 @@ export function LandingPage() {
             </div>
 
             <div>
+              <h4 className="text-xs font-bold tracking-widest text-white uppercase mb-4">Company</h4>
+              <ul className="space-y-2.5">
               <h4 className="text-xs font-bold tracking-widest text-white uppercase mb-3 md:mb-4">Company</h4>
               <ul className="space-y-2 md:space-y-2.5">
                 {footerLinks.company.map((link) => (
                   <li key={link.label}>
+                    <a href={link.href} className="text-sm text-muted hover:text-primary transition-colors">{link.label}</a>
                     <a href={link.href} className="text-xs md:text-sm text-muted hover:text-primary transition-colors">{link.label}</a>
                   </li>
                 ))}
@@ -635,10 +777,13 @@ export function LandingPage() {
             </div>
 
             <div id="contact">
+              <h4 className="text-xs font-bold tracking-widest text-white uppercase mb-4">Resources</h4>
+              <ul className="space-y-2.5">
               <h4 className="text-xs font-bold tracking-widest text-white uppercase mb-3 md:mb-4">Resources</h4>
               <ul className="space-y-2 md:space-y-2.5">
                 {footerLinks.resources.map((link) => (
                   <li key={link.label}>
+                    <a href={link.href} className="text-sm text-muted hover:text-primary transition-colors">{link.label}</a>
                     <a href={link.href} className="text-xs md:text-sm text-muted hover:text-primary transition-colors">{link.label}</a>
                   </li>
                 ))}
@@ -646,6 +791,8 @@ export function LandingPage() {
             </div>
           </div>
 
+          <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-8">
+            <p className="text-sm text-muted">© 2024 FitHabesha Inc. All rights reserved.</p>
           <div className="mt-8 md:mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-6 md:pt-8">
             <p className="text-xs md:text-sm text-muted">© 2024 FitHabesha Inc. All rights reserved.</p>
             <div className="flex items-center gap-3">
