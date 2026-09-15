@@ -331,47 +331,6 @@ export function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative" style={{ paddingTop: '180px', paddingBottom: '96px', paddingLeft: '80px', paddingRight: '80px', gap: '64px', background: 'linear-gradient(0deg, #0B1224, #0B1224), radial-gradient(100% 80% at 50% 20%, rgba(0, 242, 153, 0.0823529) 0%, rgba(0, 0, 0, 0) 80%)' }}>
-        <div className="relative mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] uppercase text-white">
-                Be Strong.
-                <br />
-                Be <span className="text-primary">Ethiopian.</span>
-              </h1>
-              <p className="mt-6 max-w-lg text-muted leading-relaxed">
-                Engineered for Ethiopian athletes. Transform your fitness journey with cutting-edge
-                technology, personalized training, and a community dedicated to your success.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Link to="/register">
-                  <Button size="lg" className="text-dark font-bold px-8">Start Now</Button>
-                </Link>
-                <Link to="/login">
-                  <Button size="lg" variant="secondary" className="border-primary/40 text-white bg-transparent hover:bg-primary/10 px-8">
-                    View Plans
-                  </Button>
-                </Link>
-              </div>
-              <div className="mt-10 flex flex-wrap gap-8">
-                {[
-                  { value: '1,200+', label: 'Active Members' },
-                  { value: facilityAverage, label: 'Average Rating' },
-                  { value: '24', label: 'Expert Trainers' },
-                ].map((s) => (
-                  <div key={s.label}>
-                    <p className="text-xl font-bold text-primary">{s.value}</p>
-                    <p className="text-xs text-muted mt-0.5">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Hero */}
       <section className="relative px-4 md:px-6 lg:px-20 pt-24 md:pt-32 lg:pt-44 pb-12 md:pb-16 lg:pb-24 overflow-hidden">
         {/* Video Background */}
         <div className="absolute inset-0 z-0">
