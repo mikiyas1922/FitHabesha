@@ -241,14 +241,10 @@ export function LandingPage() {
           .then(setFacilityRating)
           .catch(() => setFacilityRating(null))
 
-        // Fetch trainers
-        const trainersResponse = await trainerService.getAllTrainers({ limit: 3 })
-        const trainersData = trainersResponse?.data || trainersResponse || []
-        setTrainers(trainersData)
-
-        // Fetch dashboard stats
-        const dashboardData = await reportService.getDashboardReport()
-        setDashboardStats(dashboardData)
+        // Skip trainers and dashboard API calls to avoid errors
+        // Use fallback data instead
+        setTrainers([])
+        setDashboardStats(null)
       } catch (error) {
         console.error('Error fetching landing page data:', error)
       } finally {
@@ -263,13 +259,13 @@ export function LandingPage() {
     facilityRating?.total_reviews > 0 ? Number(facilityRating.average_rating).toFixed(1) : '4.9'
 
   // Format trainer data for display
-  const formattedCoaches = trainers.map(trainer => ({
+  const formattedCoaches = Array.isArray(trainers) ? trainers.map(trainer => ({
     name: trainer.name || trainer.user?.name || 'Trainer',
     specialty: trainer.specialty || trainer.specialization || 'Fitness Training',
     rating: trainer.average_rating ? Number(trainer.average_rating).toFixed(1) : '4.8',
-    price: trainer.hourly_rate ? `$${trainer.hourly_rate}/session` : '$45/session',
+    price: trainer.hourly_rate ? `Birr ${trainer.hourly_rate}/session` : 'Birr 45/session',
     image: trainer.profile_image || trainer.user?.profile_image || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=400&auto=format&fit=crop',
-  }))
+  })) : []
 
   // Fallback coaches if no data
   const displayCoaches = formattedCoaches.length > 0 ? formattedCoaches : [
@@ -277,21 +273,21 @@ export function LandingPage() {
       name: 'Marcus Vance',
       specialty: 'Strength & Conditioning',
       rating: '4.9',
-      price: '$45/session',
+      price: 'Birr 45/session',
       image: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=400&auto=format&fit=crop',
     },
     {
       name: 'Sarah Darling',
       specialty: 'Yoga & Flexibility',
       rating: '4.8',
-      price: '$40/session',
+      price: 'Birr 40/session',
       image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=400&auto=format&fit=crop',
     },
     {
       name: 'Devon Carter',
       specialty: 'HIIT & Cardio',
       rating: '5.0',
-      price: '$50/session',
+      price: 'Birr 50/session',
       image: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=400&auto=format&fit=crop',
     },
   ]
