@@ -16,6 +16,8 @@ import {
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { ratingService } from '../../services/ratingService'
+import { trainerService } from '../../services/trainerService'
+import { reportService } from '../../services/reportService'
 
 const navLinks = [
   { label: 'Features', href: '#features' },
@@ -103,29 +105,6 @@ const steps = [
   },
 ]
 
-const plans = [
-  {
-    name: 'Basic',
-    price: '$29',
-    period: '/month',
-    features: ['Gym floor access', 'Basic workout tracking', 'Mobile app', 'Locker room'],
-  },
-  {
-    name: 'Premium',
-    price: '$59',
-    period: '/month',
-    popular: true,
-    badge: 'BEST VALUE',
-    features: ['All Basic features', '4 trainer sessions/month', 'Nutrition planning', 'Class priority', 'Progress analytics'],
-  },
-  {
-    name: 'VIP Elite',
-    price: '$99',
-    period: '/month',
-    features: ['All Premium features', 'Unlimited sessions', 'Custom meal plans', '24/7 support', 'Spa access'],
-  },
-]
-
 const testimonials = [
   {
     name: 'Sara Bekele',
@@ -147,30 +126,6 @@ const testimonials = [
     text: 'From booking to progress tracking, everything is seamless. I\'ve never felt more supported in my journey.',
     rating: 5,
     highlight: false,
-  },
-]
-
-const coaches = [
-  {
-    name: 'Marcus Vance',
-    specialty: 'Strength & Conditioning',
-    rating: '4.9',
-    price: '$45/session',
-    image: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=400&auto=format&fit=crop',
-  },
-  {
-    name: 'Sarah Darling',
-    specialty: 'Yoga & Flexibility',
-    rating: '4.8',
-    price: '$40/session',
-    image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=400&auto=format&fit=crop',
-  },
-  {
-    name: 'Devon Carter',
-    specialty: 'HIIT & Cardio',
-    rating: '5.0',
-    price: '$50/session',
-    image: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=400&auto=format&fit=crop',
   },
 ]
 
@@ -271,16 +226,130 @@ function SocialIcon({ children, label, href }) {
 export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [facilityRating, setFacilityRating] = useState(null)
+  const [trainers, setTrainers] = useState([])
+  const [dashboardStats, setDashboardStats] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    ratingService
-      .getFacilityRating()
-      .then(setFacilityRating)
-      .catch(() => setFacilityRating(null))
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch facility rating
+        ratingService
+          .getFacilityRating()
+          .then(setFacilityRating)
+          .catch(() => setFacilityRating(null))
+
+        // Fetch trainers
+        const trainersResponse = await trainerService.getAllTrainers({ limit: 3 })
+        const trainersData = trainersResponse?.data || trainersResponse || []
+        setTrainers(trainersData)
+
+        // Fetch dashboard stats
+        const dashboardData = await reportService.getDashboardReport()
+        setDashboardStats(dashboardData)
+      } catch (error) {
+        console.error('Error fetching landing page data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
   const facilityAverage =
     facilityRating?.total_reviews > 0 ? Number(facilityRating.average_rating).toFixed(1) : '4.9'
+
+  // Format trainer data for display
+  const formattedCoaches = trainers.map(trainer => ({
+    name: trainer.name || trainer.user?.name || 'Trainer',
+    specialty: trainer.specialty || trainer.specialization || 'Fitness Training',
+    rating: trainer.average_rating ? Number(trainer.average_rating).toFixed(1) : '4.8',
+    price: trainer.hourly_rate ? `$${trainer.hourly_rate}/session` : '$45/session',
+    image: trainer.profile_image || trainer.user?.profile_image || 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=400&auto=format&fit=crop',
+  }))
+
+  // Fallback coaches if no data
+  const displayCoaches = formattedCoaches.length > 0 ? formattedCoaches : [
+    {
+      name: 'Marcus Vance',
+      specialty: 'Strength & Conditioning',
+      rating: '4.9',
+      price: '$45/session',
+      image: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=400&auto=format&fit=crop',
+    },
+    {
+      name: 'Sarah Darling',
+      specialty: 'Yoga & Flexibility',
+      rating: '4.8',
+      price: '$40/session',
+      image: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=400&auto=format&fit=crop',
+    },
+    {
+      name: 'Devon Carter',
+      specialty: 'HIIT & Cardio',
+      rating: '5.0',
+      price: '$50/session',
+      image: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=400&auto=format&fit=crop',
+    },
+  ]
+
+  // Dashboard stats with fallbacks
+  const memberCount = dashboardStats?.total_members || dashboardStats?.active_members || '1,200+'
+  const trainerCount = dashboardStats?.total_trainers || trainers.length || '24'
+  const retentionRate = dashboardStats?.retention_rate || '98%'
+
+  // Use membership tier data from your table as static data
+  const membershipTiers = [
+    {
+      name: 'Basic Monthly',
+      price: '50',
+      period: '/month',
+      features: ['Gym floor access', 'Basic workout tracking', 'Mobile app', 'Locker room'],
+      popular: false,
+    },
+    {
+      name: 'Basic 6-Month',
+      price: '240',
+      period: '/6 months',
+      features: ['Gym floor access', 'Basic workout tracking', 'Mobile app', 'Locker room', 'Class priority'],
+      popular: false,
+    },
+    {
+      name: 'Basic Yearly',
+      price: '420',
+      period: '/year',
+      features: ['Gym floor access', 'Basic workout tracking', 'Mobile app', 'Locker room', 'Class priority', 'Progress analytics'],
+      popular: false,
+    },
+    {
+      name: 'Premium Monthly',
+      price: '80',
+      period: '/month',
+      features: ['Gym floor access', 'Basic workout tracking', 'Mobile app', 'Trainer sessions', 'Nutrition planning'],
+      popular: true,
+      badge: 'BEST VALUE',
+    },
+    {
+      name: 'Premium 6-Month',
+      price: '420',
+      period: '/6 months',
+      features: ['Gym floor access', 'Basic workout tracking', 'Mobile app', 'Trainer sessions', 'Nutrition planning', 'Class priority'],
+      popular: false,
+    },
+    {
+      name: 'Premium Yearly',
+      price: '720',
+      period: '/year',
+      features: ['Gym floor access', 'Basic workout tracking', 'Mobile app', 'Trainer sessions', 'Nutrition planning', 'Class priority', 'Progress analytics'],
+      popular: false,
+    },
+  ]
+
+  // Use static membership tier data
+  const displayPlans = membershipTiers
 
   return (
     <div className="min-h-screen bg-dark text-white">
@@ -332,21 +401,25 @@ export function LandingPage() {
 
       {/* Hero */}
       <section className="relative px-4 md:px-6 lg:px-20 pt-24 md:pt-32 lg:pt-44 pb-12 md:pb-16 lg:pb-24 overflow-hidden">
-        {/* Video Background */}
+        {/* Animated Image Background */}
         <div className="absolute inset-0 z-0">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-            style={{ objectPosition: 'center' }}
-          >
-            <source src="/hero-video.mp4" type="video/mp4" />
-          </video>
-          {/* Lighter overlay to show more of the video */}
-          <div className="absolute inset-0 bg-linear-to-b from-black/40 via-black/30 to-black/60" />
+          <div
+            className="w-full h-full bg-cover bg-center"
+            style={{
+              backgroundImage: 'url(https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1920&auto=format&fit=crop)',
+              animation: 'slowZoom 20s ease-in-out infinite alternate'
+            }}
+          />
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-linear-to-b from-black/50 via-black/40 to-black/70" />
         </div>
+
+        <style>{`
+          @keyframes slowZoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+          }
+        `}</style>
 
         <div className="relative mx-auto max-w-7xl z-10">
           <div className="max-w-2xl text-center lg:text-left">
@@ -382,10 +455,10 @@ export function LandingPage() {
       <section className="border-y border-white/10 bg-dark-card/60">
         <div className="mx-auto max-w-7xl px-4 md:px-6 py-6 md:py-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {[
-            { value: '1,200+', label: 'Active Members' },
-            { value: '24', label: 'Expert Trainers' },
+            { value: loading ? '...' : memberCount, label: 'Active Members' },
+            { value: loading ? '...' : trainerCount, label: 'Expert Trainers' },
             { value: `${facilityAverage} / 5`, label: 'Average Rating' },
-            { value: '98%', label: 'Retention Rate' },
+            { value: loading ? '...' : retentionRate, label: 'Retention Rate' },
           ].map((s) => (
             <div key={s.label} className="text-center">
               <p className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">{s.value}</p>
@@ -463,43 +536,53 @@ export function LandingPage() {
             <p className="mt-3 text-sm md:text-base text-muted">Choose the plan that fits your fitness goals.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
-            {plans.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative rounded-2xl p-5 md:p-8 flex flex-col backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:-translate-y-1 ${
-                  plan.popular
-                    ? 'bg-linear-to-br from-primary to-primary-dark text-dark shadow-xl shadow-primary/40 md:scale-105'
-                    : 'bg-linear-to-br from-dark-card to-dark-card/80 border border-white/10 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20'
-                }`}
-              >
-                {plan.badge && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-linear-to-r from-dark to-dark/90 px-3 py-1 text-xs font-bold text-primary uppercase tracking-wide shadow-lg">
-                    {plan.badge}
-                  </span>
-                )}
-                <h3 className={`text-base md:text-lg font-bold ${plan.popular ? 'text-dark' : 'text-white'}`}>{plan.name}</h3>
-                <div className="mt-3 mb-4 md:mb-6">
-                  <span className={`text-3xl md:text-4xl font-extrabold ${plan.popular ? 'text-dark' : 'text-white'}`}>{plan.price}</span>
-                  <span className={plan.popular ? 'text-dark/60' : 'text-muted'}>{plan.period}</span>
+            {loading ? (
+              // Loading state
+              [1, 2, 3].map((i) => (
+                <div key={i} className="rounded-2xl p-5 md:p-8 flex flex-col animate-pulse">
+                  <div className="h-6 bg-dark-card/50 rounded w-3/4 mb-3" />
+                  <div className="h-8 bg-dark-card/50 rounded w-1/2 mb-4" />
+                  <div className="space-y-2 flex-1">
+                    {[1, 2, 3, 4].map((j) => (
+                      <div key={j} className="h-4 bg-dark-card/50 rounded" />
+                    ))}
+                  </div>
+                  <div className="h-10 bg-dark-card/50 rounded mt-4" />
                 </div>
-                <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className={`flex items-center gap-2 text-xs md:text-sm ${plan.popular ? 'text-dark/80' : 'text-muted'}`}>
-                      <Check className={`size-3 md:size-4 shrink-0 ${plan.popular ? 'text-dark' : 'text-primary'}`} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link to="/register">
-                  <Button
-                    className={`w-full font-bold ${plan.popular ? 'bg-dark text-white hover:bg-dark/90' : 'text-dark'}`}
-                    variant={plan.popular ? 'dark' : 'primary'}
-                  >
-                    Select Plan
-                  </Button>
-                </Link>
-              </div>
-            ))}
+              ))
+            ) : (
+              // Real data
+              displayPlans.map((plan) => (
+                <div
+                  key={plan.name}
+                  className="relative rounded-2xl p-5 md:p-8 flex flex-col backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:-translate-y-1 bg-linear-to-br from-dark-card to-dark-card/80 border border-white/10 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20"
+                >
+                  {plan.badge && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-linear-to-r from-primary to-primary-dark px-3 py-1 text-xs font-bold text-dark uppercase tracking-wide shadow-lg">
+                      {plan.badge}
+                    </span>
+                  )}
+                  <h3 className="text-base md:text-lg font-bold text-white">{plan.name}</h3>
+                  <div className="mt-3 mb-4 md:mb-6">
+                    <span className="text-3xl md:text-4xl font-extrabold text-white">Birr {plan.price}</span>
+                    <span className="text-muted">{plan.period}</span>
+                  </div>
+                  <ul className="space-y-2 md:space-y-3 mb-6 md:mb-8 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-xs md:text-sm text-muted">
+                        <Check className="size-3 md:size-4 shrink-0 text-primary" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/register">
+                    <Button className="w-full font-bold text-dark" variant="primary">
+                      Select Plan
+                    </Button>
+                  </Link>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -547,30 +630,45 @@ export function LandingPage() {
             <p className="mt-3 text-sm md:text-base text-muted">Connect with expert coaches tailored to your specific goals.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {coaches.map((coach) => (
-              <div key={coach.name} className="rounded-2xl overflow-hidden border border-white/10 bg-dark-card group hover:border-primary/30 transition-colors">
-                <div className="aspect-4/3 overflow-hidden">
-                  <img
-                    src={coach.image}
-                    alt={coach.name}
-                    className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-4 md:p-5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-bold text-sm md:text-base text-white">{coach.name}</h3>
-                      <p className="text-xs md:text-sm text-primary mt-0.5">{coach.specialty}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="size-3 md:size-3.5 fill-primary text-primary" />
-                      <span className="text-xs md:text-sm font-semibold">{coach.rating}</span>
-                    </div>
+            {loading ? (
+              // Loading state
+              [1, 2, 3].map((i) => (
+                <div key={i} className="rounded-2xl overflow-hidden border border-white/10 bg-dark-card animate-pulse">
+                  <div className="aspect-4/3 bg-dark-card/50" />
+                  <div className="p-4 md:p-5 space-y-3">
+                    <div className="h-4 bg-dark-card/50 rounded w-3/4" />
+                    <div className="h-3 bg-dark-card/50 rounded w-1/2" />
+                    <div className="h-3 bg-dark-card/50 rounded w-1/4" />
                   </div>
-                  <p className="mt-2 md:mt-3 text-xs md:text-sm font-semibold text-muted">{coach.price}</p>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              // Real data
+              displayCoaches.map((coach) => (
+                <div key={coach.name} className="rounded-2xl overflow-hidden border border-white/10 bg-dark-card group hover:border-primary/30 transition-colors">
+                  <div className="aspect-4/3 overflow-hidden">
+                    <img
+                      src={coach.image}
+                      alt={coach.name}
+                      className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-4 md:p-5">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-bold text-sm md:text-base text-white">{coach.name}</h3>
+                        <p className="text-xs md:text-sm text-primary mt-0.5">{coach.specialty}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Star className="size-3 md:size-3.5 fill-primary text-primary" />
+                        <span className="text-xs md:text-sm font-semibold">{coach.rating}</span>
+                      </div>
+                    </div>
+                    <p className="mt-2 md:mt-3 text-xs md:text-sm font-semibold text-muted">{coach.price}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>

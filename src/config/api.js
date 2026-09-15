@@ -150,4 +150,11 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `/notifications/${id}`,
     USER_NOTIFICATIONS: (userId) => `/notifications/user/${userId}`,
   },
+  PLANS: {
+    LIST: '/plans',
+    DETAIL: (id) => `/plans/${id}`,
+    CREATE: '/plans',
+    UPDATE: (id) => `/plans/${id}`,
+    DELETE: (id) => `/plans/${id}`,
+  },
 }
