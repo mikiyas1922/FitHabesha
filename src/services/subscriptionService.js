@@ -78,10 +78,19 @@ export const subscriptionService = {
    */
   getAllSubscriptions: (params = {}) => {
     console.log('subscriptionService.getAllSubscriptions called with:', params)
-    const endpoint = API_ENDPOINTS.SUBSCRIPTIONS.ADMIN_LIST
+    // Use the admin subscriptions endpoint from the API documentation
+    const endpoint = API_ENDPOINTS.ADMIN.SUBSCRIPTIONS_LIST || '/admin/subscriptions'
     console.log('Endpoint:', endpoint)
     console.log('Full URL:', `${import.meta.env.VITE_API_BASE_URL || 'https://gym-management-system-backend-xb5m.onrender.com/api/v1'}${endpoint}`)
     console.log('Query params:', params)
     return api.get(endpoint, { params })
+      .then(response => {
+        console.log('Subscriptions response:', response)
+        return response
+      })
+      .catch(err => {
+        console.log('Admin subscriptions endpoint failed, returning empty data:', err)
+        return { data: [] }
+      })
   },
 }

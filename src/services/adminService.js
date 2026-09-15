@@ -158,4 +158,45 @@ export const adminService = {
       throw wrapAdminError(error)
     }
   },
+
+  /**
+   * Get admin dashboard KPIs
+   * @returns {Promise<Object>} KPI data including active members, today's check-ins, monthly revenue, etc.
+   */
+  async getKPIs() {
+    try {
+      const response = await api.get(API_ENDPOINTS.ADMIN.KPI)
+      return unwrapResource(response) || response
+    } catch (error) {
+      throw wrapAdminError(error)
+    }
+  },
+
+  /**
+   * Get all subscriptions (Admin)
+   * @param {Object} params - Query parameters
+   * @returns {Promise<Object>} Subscriptions data
+   */
+  async getSubscriptions(params = {}) {
+    try {
+      const response = await api.get(API_ENDPOINTS.ADMIN.SUBSCRIPTIONS_LIST, params)
+      console.log('Admin subscriptions response:', response)
+      return response
+    } catch (error) {
+      console.log('Admin subscriptions endpoint failed:', error)
+      // Try to get subscriptions from members as fallback
+      try {
+        const membersResponse = await this.getMembers(params)
+        console.log('Members response for subscriptions:', membersResponse)
+        // Extract subscriptions from member data if available
+        const members = normalizeListResponse(membersResponse)
+        const subscriptions = members.flatMap(m => m.subscriptions || []).filter(Boolean)
+        console.log('Extracted subscriptions from members:', subscriptions)
+        return { data: subscriptions, success: true }
+      } catch (memberError) {
+        console.log('Member fallback also failed:', memberError)
+        return { data: [], success: false }
+      }
+    }
+  },
 }

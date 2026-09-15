@@ -55,16 +55,16 @@ export function MemberWorkouts() {
   }, [user?.trainer_id])
 
   const workoutStats = [
-    { label: 'Available Workouts', value: String(workouts.length), icon: Dumbbell },
-    { label: 'Total Exercises', value: String(workouts.reduce((sum, w) => sum + (w.exercises?.length || 0), 0)), icon: CheckCircle },
+    { label: 'Available Workouts', value: String(Array.isArray(workouts) ? workouts.length : 0), icon: Dumbbell },
+    { label: 'Total Exercises', value: String(Array.isArray(workouts) ? workouts.reduce((sum, w) => sum + (w.exercises?.length || 0), 0) : 0), icon: CheckCircle },
   ]
 
-  const filteredWorkouts = workouts.filter(w => {
+  const filteredWorkouts = Array.isArray(workouts) ? workouts.filter(w => {
     const matchesSearch = w.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                        w.description?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesDifficulty = !selectedDifficulty || w.difficulty === selectedDifficulty
     return matchesSearch && matchesDifficulty
-  })
+  }) : []
 
   const difficultyOptions = ['beginner', 'intermediate', 'advanced']
 
@@ -154,7 +154,7 @@ export function MemberWorkouts() {
           />
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
-            {filteredWorkouts.map((workout) => (
+            {Array.isArray(filteredWorkouts) && filteredWorkouts.map((workout) => (
               <Card key={workout._id} padding="md" className="hover:border-primary/30 transition-colors">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
