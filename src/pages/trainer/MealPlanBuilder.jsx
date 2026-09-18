@@ -54,7 +54,7 @@ export function MealPlanBuilder() {
       setLoadingPlans(true)
       setError(null)
       const items = await trainerService.getTrainerMealPlans(trainerId)
-      setMealPlans(items)
+      setMealPlans(Array.isArray(items) ? items : [])
     } catch (err) {
       setError(err.message || 'Failed to load meal plans')
       setMealPlans([])

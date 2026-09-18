@@ -57,7 +57,10 @@ export const templatesService = {
   listMealPlans: async (filters = {}) => {
     const response = await templatesService.getMealPlans(filters)
     // Backend returns { success: true, data: [...], message: "..." }
-    return response.data || []
+    // Handle both direct array and wrapped response formats
+    if (Array.isArray(response)) return response
+    if (Array.isArray(response?.data)) return response.data
+    return []
   },
 
   getMealPlanById: async (id) => {

@@ -115,7 +115,11 @@ export const trainerService = {
 
   /** GET /templates/meal?trainer_id={trainerId} */
   getTrainerMealPlans: async (trainerId) => {
-    const payload = unwrapResource(await api.get(API_ENDPOINTS.TEMPLATES.MEAL_LIST, { trainer_id: trainerId }))
+    const response = await api.get(API_ENDPOINTS.TEMPLATES.MEAL_LIST, { trainer_id: trainerId })
+    // Handle different response formats
+    if (Array.isArray(response)) return response
+    if (Array.isArray(response?.data)) return response.data
+    const payload = unwrapResource(response)
     return asArray(payload)
   },
 

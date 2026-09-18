@@ -53,8 +53,8 @@ export function MemberMeals() {
 
   const mealStats = [
     { label: 'Available Plans', value: String(mealPlans.length), icon: Apple },
-    { label: 'Total Items', value: String(mealPlans.reduce((sum, p) => sum + (p.items?.length || 0), 0)), icon: Target },
-    { label: 'Avg Calories', value: mealPlans.length > 0 ? String(Math.round(mealPlans.reduce((sum, p) => sum + (p.calories_target || 0), 0) / mealPlans.length)) : '—', icon: TrendingUp },
+    { label: 'Total Items', value: String(Array.isArray(mealPlans) ? mealPlans.reduce((sum, p) => sum + (p.items?.length || 0), 0) : 0), icon: Target },
+    { label: 'Avg Calories', value: Array.isArray(mealPlans) && mealPlans.length > 0 ? String(Math.round(mealPlans.reduce((sum, p) => sum + (p.calories_target || 0), 0) / mealPlans.length)) : '—', icon: TrendingUp },
   ]
 
   return (

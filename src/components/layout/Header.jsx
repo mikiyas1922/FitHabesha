@@ -193,7 +193,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions, onMo
                     <div
                       key={notification._id}
                       className={`p-4 border-b border-border last:border-b-0 ${
-                        !notification.is_read ? 'bg-primary/10' : ''
+                        !notification.is_read ? 'bg-green-50 dark:bg-green-900/30' : ''
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -206,7 +206,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions, onMo
                             {notification.title}
                           </p>
                           <p className={`text-xs ${!notification.is_read ? 'text-foreground' : 'text-muted'} mt-1`}>{notification.message}</p>
-                          <p className="text-xs text-muted mt-2">
+                          <p className={`text-xs ${!notification.is_read ? 'text-foreground' : 'text-muted'} mt-2`}>
                             {notification.created_at
                               ? new Date(notification.created_at).toLocaleString()
                               : ''}

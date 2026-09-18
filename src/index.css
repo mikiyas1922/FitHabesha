@@ -33,13 +33,24 @@
 }
 
 /* Notification text visibility fix */
-.bg-primary\/10 {
-  /* Ensure text remains readable on primary backgrounds */
-  color-scheme: light;
+.bg-green-50 .text-foreground,
+.dark .bg-green-900\/30 .text-foreground {
+  color: #0A1128 !important;
 }
 
-.dark .bg-primary\/10 {
-  color-scheme: dark;
+.dark .bg-green-50 .text-foreground,
+.bg-green-900\/30 .text-foreground {
+  color: #F8FAFC !important;
+}
+
+.bg-green-50 .text-muted,
+.dark .bg-green-900\/30 .text-muted {
+  color: #1E293B !important;
+}
+
+.dark .bg-green-50 .text-muted,
+.bg-green-900\/30 .text-muted {
+  color: #CBD5E1 !important;
 }
 
 .dark {
