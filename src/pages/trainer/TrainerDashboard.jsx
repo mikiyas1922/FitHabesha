@@ -142,7 +142,7 @@ export function TrainerDashboard() {
       ) : (
         <>
           <PageHeader
-            title={`Welcome back, ${firstName}!`}
+            title={`${firstName}'s Dashboard`}
             subtitle="Search clients, logs, custom workouts..."
             actions={
               <div className="flex gap-3">

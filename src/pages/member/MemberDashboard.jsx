@@ -227,7 +227,7 @@ export function MemberDashboard() {
         <>
           {/* Header */}
           <PageHeader
-            title={`Welcome back, ${firstName}!`}
+            title={`${firstName}'s Dashboard`}
             subtitle="Track your fitness journey and stay motivated"
             actions={
               <Link to="/member/workouts">

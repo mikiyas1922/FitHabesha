@@ -181,7 +181,7 @@ export function ReceptionistDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Welcome back, Receptionist!"
+        title="Receptionist Dashboard"
         subtitle="Look up members by gym ID and record check-ins"
         actions={
           <Link to="/receptionist/walk-in">

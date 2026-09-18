@@ -109,8 +109,20 @@ export const trainerService = {
 
   /** GET /templates/workout?trainer_id={trainerId} */
   getTrainerTemplates: async (trainerId) => {
-    const payload = unwrapResource(await api.get(API_ENDPOINTS.TEMPLATES.WORKOUT_LIST, { trainer_id: trainerId }))
-    return asArray(payload)
+    try {
+      const response = await api.get(API_ENDPOINTS.TEMPLATES.WORKOUT_LIST, { trainer_id: trainerId })
+      // Handle different response formats
+      if (Array.isArray(response)) return response
+      if (Array.isArray(response?.data)) return response.data
+      const payload = unwrapResource(response)
+      return asArray(payload)
+    } catch (err) {
+      if (err?.status === 404) {
+        console.log('Workout templates endpoint not found, returning empty array')
+        return []
+      }
+      throw err
+    }
   },
 
   /** GET /templates/meal?trainer_id={trainerId} */

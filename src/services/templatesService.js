@@ -11,7 +11,15 @@ export const templatesService = {
       ...(filters.difficulty && { difficulty: filters.difficulty }),
       ...(filters.include_public !== undefined && { include_public: filters.include_public }),
     }
-    return api.get(API_ENDPOINTS.TEMPLATES.WORKOUT_LIST, params)
+    try {
+      return await api.get(API_ENDPOINTS.TEMPLATES.WORKOUT_LIST, params)
+    } catch (err) {
+      if (err?.status === 404) {
+        console.log('Workout templates endpoint not found, returning empty data')
+        return { data: [] }
+      }
+      throw err
+    }
   },
 
   listWorkoutTemplates: async (filters = {}) => {
@@ -51,7 +59,15 @@ export const templatesService = {
       ...(filters.trainer_id && { trainer_id: filters.trainer_id }),
       ...(filters.goal_type && { goal_type: filters.goal_type }),
     }
-    return api.get(API_ENDPOINTS.TEMPLATES.MEAL_LIST, params)
+    try {
+      return await api.get(API_ENDPOINTS.TEMPLATES.MEAL_LIST, params)
+    } catch (err) {
+      if (err?.status === 404) {
+        console.log('Meal plans endpoint not found, returning empty data')
+        return { data: [] }
+      }
+      throw err
+    }
   },
 
   listMealPlans: async (filters = {}) => {
