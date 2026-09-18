@@ -242,7 +242,7 @@ export function SubscriptionManagementModal({ open, onClose, subscriptionData, m
                       key={tier.id}
                       className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
                         formData.membership_tier_id === tier.id
-                          ? 'border-primary bg-primary/5'
+                          ? 'border-primary bg-primary/10'
                           : 'border-border bg-surface hover:border-primary/30'
                       }`}
                       onClick={() => setFormData(prev => ({ ...prev, membership_tier_id: tier.id }))}

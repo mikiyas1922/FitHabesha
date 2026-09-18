@@ -85,7 +85,7 @@ export function MemberHealthStep({ formData, setFormData }) {
               type="button"
               onClick={() => setFormData({ ...formData, gender })}
               className={`p-3 rounded-lg border-2 text-center transition-all capitalize ${
-                formData.gender === gender ? 'border-primary bg-primary/5' : 'border-border'
+                formData.gender === gender ? 'border-primary bg-primary/10' : 'border-border'
               }`}
             >
               <span className="font-medium text-foreground">{gender}</span>
@@ -103,7 +103,7 @@ export function MemberHealthStep({ formData, setFormData }) {
               type="button"
               onClick={() => setFormData({ ...formData, fitnessGoal: goal.value })}
               className={`p-3 rounded-lg border-2 text-left transition-all ${
-                formData.fitnessGoal === goal.value ? 'border-primary bg-primary/5' : 'border-border'
+                formData.fitnessGoal === goal.value ? 'border-primary bg-primary/10' : 'border-border'
               }`}
             >
               <span className="font-medium text-foreground text-sm">{goal.label}</span>

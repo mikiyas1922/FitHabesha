@@ -14,7 +14,7 @@ export function RoleStep({ formData, setFormData, roleConfig, onRoleChange }) {
               onClick={() => onRoleChange(value)}
               className={`p-4 rounded-xl border-2 text-left transition-all ${
                 formData.role === value
-                  ? 'border-primary bg-primary/5'
+                  ? 'border-primary bg-primary/10'
                   : 'border-border hover:border-primary/30'
               }`}
             >

@@ -259,8 +259,8 @@ export function AdminDashboard() {
                         <p className="font-medium text-foreground text-sm">{feedback.name}</p>
                         {feedback.urgent && <Badge variant="danger" className="text-xs">Urgent</Badge>}
                       </div>
-                      <p className="text-sm text-muted mt-1 line-clamp-2">{feedback.message}</p>
-                      <p className="text-xs text-muted mt-2">{feedback.time}</p>
+                      <p className={`text-sm mt-1 line-clamp-2 ${feedback.urgent ? 'text-foreground' : 'text-muted'}`}>{feedback.message}</p>
+                      <p className={`text-xs mt-2 ${feedback.urgent ? 'text-foreground' : 'text-muted'}`}>{feedback.time}</p>
                     </div>
                   ))
                 )}

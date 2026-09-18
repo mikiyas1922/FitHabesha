@@ -191,7 +191,7 @@ export function WalkInRegistration() {
                 onClick={() => setSelectedPlan(plan)}
                 className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
                   selectedPlan?.id === plan.id
-                    ? 'border-primary bg-primary/5'
+                    ? 'border-primary bg-primary/10'
                     : 'border-border hover:border-primary/30 bg-surface'
                 }`}
               >

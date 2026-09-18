@@ -165,7 +165,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions, onMo
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 top-12 w-80 rounded-lg border border-border bg-card shadow-lg">
+            <div className="absolute right-0 top-12 w-80 rounded-lg border border-border bg-card shadow-lg z-50">
               <div className="flex items-center justify-between p-4 border-b border-border">
                 <h3 className="font-semibold text-foreground">Notifications</h3>
                 {unreadCount > 0 && (
@@ -193,7 +193,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions, onMo
                     <div
                       key={notification._id}
                       className={`p-4 border-b border-border last:border-b-0 ${
-                        !notification.is_read ? 'bg-primary/5' : ''
+                        !notification.is_read ? 'bg-primary/10' : ''
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -205,7 +205,7 @@ export function Header({ role, title, subtitle, showSearch = true, actions, onMo
                           <p className={`text-sm font-medium ${!notification.is_read ? 'text-foreground' : 'text-muted'}`}>
                             {notification.title}
                           </p>
-                          <p className="text-xs text-muted mt-1">{notification.message}</p>
+                          <p className={`text-xs ${!notification.is_read ? 'text-foreground' : 'text-muted'} mt-1`}>{notification.message}</p>
                           <p className="text-xs text-muted mt-2">
                             {notification.created_at
                               ? new Date(notification.created_at).toLocaleString()

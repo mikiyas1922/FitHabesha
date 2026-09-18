@@ -506,7 +506,7 @@ export function WorkoutBuilder() {
 
       {/* Workout Summary */}
       {selectedExercises.length > 0 && (
-        <div className="rounded-xl border border-primary bg-primary/5 p-6">
+        <div className="rounded-xl border border-primary bg-primary/10 p-6">
           <h3 className="font-semibold text-foreground mb-4">Workout Summary</h3>
           <div className="grid md:grid-cols-4 gap-4 text-sm">
             <div>

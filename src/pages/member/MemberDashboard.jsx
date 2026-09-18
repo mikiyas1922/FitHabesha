@@ -260,7 +260,7 @@ export function MemberDashboard() {
                 <CardHeader action={<Link to="/member/workouts"><Button variant="ghost" size="sm">View All</Button></Link>}>
                   <CardTitle>Today's Scheduled Workout</CardTitle>
                 </CardHeader>
-                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20">
+                <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-2">
                     <div>
                       <p className="font-medium text-foreground text-lg">{todayWorkout.name}</p>
