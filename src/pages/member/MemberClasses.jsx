@@ -38,12 +38,27 @@ export function MemberClasses() {
         classesService.getClasses({ discipline: discipline || undefined, limit: 50 }),
         profileId
           ? bookingService.getMemberBookings(profileId, { page: 1, limit: 50 })
-          : Promise.resolve({ data: { data: { bookings: [] } } }),
+          : Promise.resolve([]),
       ])
 
       setClasses(normalizeListResponse(classResponse))
-      // Backend returns { success: true, data: { count, bookings: [...] }, message }
-      setBookings(bookingResponse?.data?.data?.bookings || [])
+      // Handle different response formats for bookings
+      console.log('Booking response:', bookingResponse)
+      let bookingsData = []
+      if (Array.isArray(bookingResponse)) {
+        bookingsData = bookingResponse
+      } else if (Array.isArray(bookingResponse?.data)) {
+        bookingsData = bookingResponse.data
+      } else if (Array.isArray(bookingResponse?.data?.data?.bookings)) {
+        bookingsData = bookingResponse.data.data.bookings
+      } else if (Array.isArray(bookingResponse?.data?.bookings)) {
+        bookingsData = bookingResponse.data.bookings
+      } else if (bookingResponse?.data?.data && typeof bookingResponse.data.data === 'object') {
+        // Handle nested data structure
+        bookingsData = bookingResponse.data.data.bookings || []
+      }
+      console.log('Processed bookings:', bookingsData)
+      setBookings(bookingsData)
     } catch (err) {
       setError(err.message || 'Failed to load classes')
       setClasses([])
