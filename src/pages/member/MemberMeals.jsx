@@ -14,6 +14,7 @@ import { assignedTrainerId, unwrapResource } from '../../utils/apiHelpers'
 export function MemberMeals() {
   const { user } = useAuth()
   const [mealPlans, setMealPlans] = useState([])
+  const [assignedMealPlan, setAssignedMealPlan] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedPlan, setSelectedPlan] = useState(null)
@@ -26,7 +27,18 @@ export function MemberMeals() {
       
       const profileResponse = await memberService.getCurrentMemberProfile()
       const profile = unwrapResource(profileResponse)
+
       const trainerId = assignedTrainerId(profile) || user?.trainer_id
+
+      // Check for assigned meal plan
+      if (profile?.active_meal_plan_id) {
+        try {
+          const assignedResponse = await templatesService.getMealPlanById(profile.active_meal_plan_id)
+          setAssignedMealPlan(assignedResponse)
+        } catch (err) {
+          console.log('Failed to load assigned meal plan:', err)
+        }
+      }
 
       if (!trainerId) {
         setError('No trainer assigned. Please contact support to get a trainer assigned.')
@@ -99,6 +111,48 @@ export function MemberMeals() {
           )
         })}
       </div>
+
+      {/* Assigned Meal Plan */}
+      {assignedMealPlan && (
+        <Card padding="md" className="border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="size-5 text-primary" />
+              Your Assigned Meal Plan
+            </CardTitle>
+            <CardDescription>Personalized nutrition plan from your trainer</CardDescription>
+          </CardHeader>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-semibold text-foreground text-lg">{assignedMealPlan.name}</p>
+                <p className="text-sm text-muted">{assignedMealPlan.description || 'No description'}</p>
+              </div>
+              <Badge variant="success">
+                Active
+              </Badge>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-muted">
+              <div className="flex items-center gap-1">
+                <Apple className="size-3" />
+                <span>{assignedMealPlan.items?.length || 0} meals</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Target className="size-3" />
+                <span>{assignedMealPlan.calories_target || 0} calories/day</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <TrendingUp className="size-3" />
+                <span>{assignedMealPlan.goal_type || 'General'}</span>
+              </div>
+            </div>
+            <Button size="sm" className="gap-1">
+              <Plus className="size-3" />
+              View Meal Plan
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Card padding="md">
         <CardHeader>

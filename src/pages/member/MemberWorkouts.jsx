@@ -15,6 +15,7 @@ import { assignedTrainerId, unwrapResource } from '../../utils/apiHelpers'
 export function MemberWorkouts() {
   const { user } = useAuth()
   const [workouts, setWorkouts] = useState([])
+  const [assignedWorkout, setAssignedWorkout] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -32,6 +33,16 @@ export function MemberWorkouts() {
       const profile = unwrapResource(profileResponse)
 
       const trainerId = assignedTrainerId(profile) || user?.trainer_id
+
+      // Check for assigned workout plan
+      if (profile?.active_workout_plan_id) {
+        try {
+          const assignedResponse = await templatesService.getWorkoutTemplateById(profile.active_workout_plan_id)
+          setAssignedWorkout(assignedResponse)
+        } catch (err) {
+          console.log('Failed to load assigned workout:', err)
+        }
+      }
 
       let workoutData = []
       if (trainerId) {
@@ -110,6 +121,52 @@ export function MemberWorkouts() {
           )
         })}
       </div>
+
+      {/* Assigned Workout Plan */}
+      {assignedWorkout && (
+        <Card padding="md" className="border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="size-5 text-primary" />
+              Your Assigned Workout Plan
+            </CardTitle>
+            <CardDescription>Personalized workout program from your trainer</CardDescription>
+          </CardHeader>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-semibold text-foreground text-lg">{assignedWorkout.name}</p>
+                <p className="text-sm text-muted">{assignedWorkout.description || 'No description'}</p>
+              </div>
+              <Badge variant={
+                assignedWorkout.difficulty === 'beginner' ? 'success' :
+                assignedWorkout.difficulty === 'intermediate' ? 'warning' :
+                'danger'
+              }>
+                {assignedWorkout.difficulty}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-muted">
+              <div className="flex items-center gap-1">
+                <Dumbbell className="size-3" />
+                <span>{assignedWorkout.exercises?.length || 0} exercises</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="size-3" />
+                <span>{assignedWorkout.duration_weeks || 0} weeks</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Target className="size-3" />
+                <span>{assignedWorkout.goal_type || 'General'}</span>
+              </div>
+            </div>
+            <Button size="sm" className="gap-1">
+              <Play className="size-3" />
+              Start Assigned Plan
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Card padding="md">
         <CardHeader>
