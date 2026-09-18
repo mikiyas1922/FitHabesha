@@ -77,7 +77,7 @@ export const walkIns = [
 export const adminStats = [
   { label: 'Total Members', value: 248, change: '+12% vs last mo', trend: 'up' },
   { label: 'Active Sessions', value: 34, change: '+5% vs last mo', trend: 'up' },
-  { label: 'Monthly Revenue', value: '$48,250', change: '+12% vs last mo', trend: 'up' },
+  { label: 'Monthly Revenue', value: '48,250', change: '+12% vs last mo', trend: 'up' },
   { label: 'Trainer Rating', value: '4.8/5.0', change: '+0.2', trend: 'up' },
 ]
 

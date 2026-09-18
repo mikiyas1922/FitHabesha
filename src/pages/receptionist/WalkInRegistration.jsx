@@ -235,9 +235,9 @@ export function WalkInRegistration() {
         </CardHeader>
         <div className="space-y-3">
           {[
-            { name: 'John Smith', time: '10:45 AM', plan: 'Day Pass', amount: '$15' },
-            { name: 'Jane Doe', time: '09:30 AM', plan: 'Week Pass', amount: '$75' },
-            { name: 'Mike Johnson', time: '08:15 AM', plan: 'Day Pass', amount: '$15' },
+            { name: 'John Smith', time: '10:45 AM', plan: 'Day Pass', amount: '15' },
+            { name: 'Jane Doe', time: '09:30 AM', plan: 'Week Pass', amount: '75' },
+            { name: 'Mike Johnson', time: '08:15 AM', plan: 'Day Pass', amount: '15' },
           ].map((walkIn, i) => (
             <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-surface">
               <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
@@ -249,7 +249,7 @@ export function WalkInRegistration() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-foreground">{walkIn.time}</p>
-                <p className="text-xs text-muted">{walkIn.amount}</p>
+                <p className="text-xs text-muted">ETB {walkIn.amount}</p>
               </div>
             </div>
           ))}

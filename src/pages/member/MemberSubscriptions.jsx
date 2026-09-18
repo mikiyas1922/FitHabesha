@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { DollarSign, AlertCircle, CheckCircle, Clock, CreditCard, Plus, Loader2 } from 'lucide-react'
+import { AlertCircle, CheckCircle, Clock, CreditCard, Plus, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'

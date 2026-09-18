@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, DollarSign, Calendar, Star, TrendingUp, ArrowUpRight, ArrowDownRight, MessageSquare, MoreVertical, Loader2 } from 'lucide-react'
+import { Users, Calendar, Star, TrendingUp, ArrowUpRight, ArrowDownRight, MessageSquare, MoreVertical, Loader2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Card, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card'
 import { PageHeader } from '../../components/ui/PageHeader'
@@ -108,7 +108,7 @@ export function AdminDashboard() {
     name: t.name || t.first_name && t.last_name ? `${t.first_name} ${t.last_name}` : 'Trainer',
     sessions: t.sessions || 50,
     rating: t.rating || 4.5,
-    earnings: t.earnings || '$30k',
+    earnings: t.earnings || '30k',
     specialty: t.specialty || 'Fitness Trainer',
   }))
 
@@ -186,30 +186,6 @@ export function AdminDashboard() {
               )
             })}
           </div>
-
-          {/* Revenue Chart */}
-          <Card padding="md">
-            <CardHeader>
-              <CardTitle>Revenue Trend (6 Months)</CardTitle>
-              <CardDescription>Total: $289.4K</CardDescription>
-            </CardHeader>
-            <div className="flex gap-2 mb-6">
-              <Button variant="ghost" size="sm">This Month</Button>
-              <Button variant="ghost" size="sm">Last 30 Days</Button>
-              <Button variant="ghost" size="sm">Custom</Button>
-            </div>
-            <div className="h-48 flex items-end gap-4">
-              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, i) => (
-                <div key={month} className="flex-1 flex flex-col items-center gap-2">
-                  <div 
-                    className="w-full rounded-t bg-primary transition-all hover:bg-primary/80"
-                    style={{ height: `${40 + (i * 15)}%` }}
-                  />
-                  <span className="text-xs text-muted">{month}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
 
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Top Trainers Leaderboard */}

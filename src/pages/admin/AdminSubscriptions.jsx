@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { DollarSign, AlertCircle, CheckCircle, Clock, Search, Filter, Download, TrendingUp, Loader2, Plus, Edit, CreditCard, Trash2 } from 'lucide-react'
+import { AlertCircle, CheckCircle, Clock, Search, Filter, Download, TrendingUp, Loader2, Plus, Edit, CreditCard, Trash2 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { subscriptionService } from '../../services/subscriptionService'
 import { adminService } from '../../services/adminService'
@@ -150,7 +150,7 @@ export function AdminSubscriptions() {
   const pendingPayments = subscriptions.filter(s => s.status === 'pending').length
   
   const subscriptionStats = [
-    { label: 'Monthly Revenue', value: `ETB ${monthlyRevenue.toLocaleString()}`, change: '+12%', trend: 'up', icon: DollarSign },
+    { label: 'Monthly Revenue', value: `ETB ${monthlyRevenue.toLocaleString()}`, change: '+12%', trend: 'up', icon: TrendingUp },
     { label: 'Active Subscriptions', value: String(activeSubscriptions.length), change: 'Current', trend: 'up', icon: CheckCircle },
     { label: 'Pending Payments', value: String(pendingPayments), change: 'Requires action', trend: 'down', icon: AlertCircle },
     { label: 'Total Subscriptions', value: String(subscriptions.length), change: 'All time', trend: 'up', icon: TrendingUp },
