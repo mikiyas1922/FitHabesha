@@ -53,12 +53,9 @@ src/
 ### Live today
 - **Auth** — login, register, logout, refresh
 - **Admin staff** — `POST /admin/register` with role assignment
+- starpay payment
 
-### Integration-ready (services + hooks wired)
-- Members list — `memberService.getAllMembers()`
-- Trainers list — `trainerService.getAllTrainers()`
-- Equipment list — `equipmentService.getAllEquipment()`
-- Lockers list — `lockerService.getAllLockers()`
+
 
 Pages use `useResourceList` to fetch from the API and gracefully fall back to mock data when endpoints are unavailable.
 
